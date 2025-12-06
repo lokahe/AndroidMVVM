@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">AndroidMVVM</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="reset">Reset</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="finish">Finish</string>
+    <string name="search">Search</string>
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="settings">Settings\n</string>
+    <string name="option_switch">Switch Option</string>
+    <string name="general">general</string>
+    <string name="option_list">List Option</string>
+    <string name="option_slider">Slider Option</string>
 </resources>
