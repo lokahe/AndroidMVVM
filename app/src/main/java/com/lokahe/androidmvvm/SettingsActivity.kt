@@ -15,6 +15,7 @@ import com.lokahe.androidmvvm.repository.dataStore
 import com.lokahe.androidmvvm.ui.preference.ListPreference
 import com.lokahe.androidmvvm.ui.preference.SliderDialogPreference
 import com.lokahe.androidmvvm.ui.preference.SwitchPreference
+import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.ui.widget.SettingScaffold
 import com.lokahe.androidmvvm.ui.widget.settingsCard
 import com.lokahe.androidmvvm.ui.widget.settingsDivider
@@ -30,8 +31,10 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ProvidePreferenceLocals(rememberNavController(), viewModel) {
-                SettingsScreen()
+            AndroidMVVMTheme {
+                ProvidePreferenceLocals(rememberNavController(), viewModel) {
+                    SettingsScreen()
+                }
             }
         }
     }

@@ -37,7 +37,6 @@ inline fun ListPreference(
     title: String,
     value: Any,
     summary: (Any) -> String = { "" },
-    summaryBySelected: Boolean = false,
     @ArrayRes names: Int,
     @ArrayRes values: Int,
     @ArrayRes icons: Int? = null,
@@ -47,9 +46,9 @@ inline fun ListPreference(
     crossinline onChange: (value: Any) -> Unit,
 ) {
     var openSelector by rememberSaveable { mutableStateOf(false) }
-    var currentValue by rememberSaveable { mutableStateOf(value) }
-    val items = toItems(currentValue, names, values, icons, iconsMap)
     if (openSelector) {
+        var currentValue by rememberSaveable { mutableStateOf(value) }
+        val items = toItems(currentValue, names, values, icons, iconsMap)
         Dialog(
             title = title,
             contentPaddingValues = contentPaddingValues,
@@ -73,7 +72,7 @@ inline fun ListPreference(
         title = title,
         modifier = modifier,
         enabled = enabled,
-        summary = if (summaryBySelected) getCurrentItem(value, items)?.name else summary(value)
+        summary = summary(value)
     ) {
         openSelector = true
     }
