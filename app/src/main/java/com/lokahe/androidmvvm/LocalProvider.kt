@@ -1,5 +1,8 @@
 package com.lokahe.androidmvvm
 
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -16,6 +19,9 @@ val LocalViewModel = compositionLocalOf<ViewModel> { noLocalProvidedFor("LocalVi
 
 val LocalPreference = compositionLocalOf<UserPreferences> { noLocalProvidedFor("LocalPreference") }
 
+val LocalDrawerState =
+    compositionLocalOf<DrawerState> { noLocalProvidedFor("LocalDrawerState") }
+
 val LocalNavController =
     compositionLocalOf<NavController> { noLocalProvidedFor("LocalNavController") }
 
@@ -28,16 +34,18 @@ val LocalNavController =
 //}
 
 @Composable
-fun ProvidePreferenceLocals(
+fun ProvideLocals(
     navController: NavController,
     viewModel: ViewModel,
     theme: PreferenceTheme = preferenceTheme(),
+    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalNavController provides navController,
         LocalPreferenceTheme provides theme,
         LocalViewModel provides viewModel,
+        LocalDrawerState provides drawerState,
         content = content,
     )
 }

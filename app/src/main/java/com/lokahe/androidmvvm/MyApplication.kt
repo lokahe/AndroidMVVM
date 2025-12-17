@@ -15,6 +15,8 @@ class MyApplication : Application() {
     companion object {
         val liveActivities = mutableSetOf<WeakReference<Activity>>()
 
+        val application = MyApplication()
+
         @JvmStatic
         fun <T : Activity> findActivity(clazz: Class<T>): T? {
             val iterator = liveActivities.iterator()

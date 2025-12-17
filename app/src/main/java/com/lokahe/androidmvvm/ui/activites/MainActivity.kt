@@ -1,0 +1,214 @@
+package com.lokahe.androidmvvm.ui.activites
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.lokahe.androidmvvm.LocalDrawerState
+import com.lokahe.androidmvvm.LocalNavController
+import com.lokahe.androidmvvm.ProvideLocals
+import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.SIDE_MENU_ITEMS
+import com.lokahe.androidmvvm.Screen
+import com.lokahe.androidmvvm.repository.UserPreferencesRepository
+import com.lokahe.androidmvvm.repository.dataStore
+import com.lokahe.androidmvvm.ui.screens.AccountScreen
+import com.lokahe.androidmvvm.ui.screens.MainScreen
+import com.lokahe.androidmvvm.ui.screens.NotificationScreen
+import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
+import com.lokahe.androidmvvm.viewmodels.MainViewModel
+import com.lokahe.androidmvvm.viewmodels.ViewModelFactory
+import kotlinx.coroutines.launch
+
+class MainActivity : AppCompatActivity() {
+
+    private val viewModel: MainViewModel by viewModels {
+        ViewModelFactory(UserPreferencesRepository(dataStore))
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            AndroidMVVMTheme {
+                val navController = rememberNavController()
+                ProvideLocals(
+                    navController = navController,
+                    viewModel = viewModel
+                ) {
+                    SideMenu {
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.Home.route
+                        ) {
+                            composable(Screen.Home.route) { MainScreen() }
+                            composable(Screen.Account.route) { AccountScreen() }
+                            composable(Screen.Notifications.route) { NotificationScreen() }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScaffold(
+    bottomBar: @Composable () -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit = {}
+) {
+    val scope = rememberCoroutineScope()
+    val drawerState = LocalDrawerState.current
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.home)) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        scope.launch { drawerState.open() }
+                    }) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                    }
+                }
+            )
+        },
+        bottomBar = bottomBar
+    ) { paddingValues ->
+        content(paddingValues)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SideMenu(content: @Composable () -> Unit = {}) {
+    val context = LocalContext.current
+    val drawerState = LocalDrawerState.current
+    val navController = LocalNavController.current
+    val scope = rememberCoroutineScope()
+    var selectedMenuItem by remember { mutableStateOf(R.string.home) }
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            DrawerContent(
+                selectedItem = selectedMenuItem,
+                onItemSelected = { item ->
+                    selectedMenuItem = item
+                    scope.launch { drawerState.close() }
+                    when (item) {
+                        R.string.home -> {
+                            // Handle Home navigation
+                            navController.navigate(Screen.Home.route)
+                        }
+
+                        R.string.account -> {
+                            // Handle Account navigation
+                            navController.navigate(Screen.Account.route)
+                        }
+
+                        R.string.notifications -> {
+                            // Handle Notifications navigation
+                            navController.navigate(Screen.Notifications.route)
+                        }
+
+                        R.string.settings -> {
+                            // Handle Settings navigation
+                            context.startActivity(Intent(context, SettingsActivity::class.java))
+                        }
+                    }
+                }
+            )
+        }
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun DrawerContent(
+    selectedItem: Int,
+    onItemSelected: (Int) -> Unit
+) {
+    ModalDrawerSheet {
+        // Drawer Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier.padding(
+                        end = 16.dp
+                    )
+                )
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "John Doe",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = "john.doe@example.com",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SIDE_MENU_ITEMS.forEach { (res, icon) ->
+            NavigationDrawerItem(
+                icon = { Icon(icon, contentDescription = stringResource(res)) },
+                label = { Text(stringResource(res)) },
+                selected = selectedItem == res,
+                onClick = { onItemSelected(res) },
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            )
+        }
+    }
+}

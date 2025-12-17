@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm
+package com.lokahe.androidmvvm.ui.activites
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -10,6 +10,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.rememberNavController
+import com.lokahe.androidmvvm.LocalViewModel
+import com.lokahe.androidmvvm.ProvideLocals
+import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.repository.UserPreferencesRepository
 import com.lokahe.androidmvvm.repository.dataStore
 import com.lokahe.androidmvvm.ui.preference.ListPreference
@@ -20,11 +23,11 @@ import com.lokahe.androidmvvm.ui.widget.SettingScaffold
 import com.lokahe.androidmvvm.ui.widget.settingsCard
 import com.lokahe.androidmvvm.ui.widget.settingsDivider
 import com.lokahe.androidmvvm.viewmodels.SettingsViewModel
-import com.lokahe.androidmvvm.viewmodels.SettingsViewModelFactory
+import com.lokahe.androidmvvm.viewmodels.ViewModelFactory
 
 class SettingsActivity : AppCompatActivity() {
     private val viewModel: SettingsViewModel by viewModels {
-        SettingsViewModelFactory(UserPreferencesRepository(dataStore))
+        ViewModelFactory(UserPreferencesRepository(dataStore))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +35,7 @@ class SettingsActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             AndroidMVVMTheme {
-                ProvidePreferenceLocals(rememberNavController(), viewModel) {
+                ProvideLocals(rememberNavController(), viewModel) {
                     SettingsScreen()
                 }
             }

@@ -1,5 +1,6 @@
 package com.lokahe.androidmvvm
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -8,7 +9,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
+import com.lokahe.androidmvvm.MyApplication.Companion.application
 
+fun s(@StringRes id: Int): String = application.getString(id)
 fun Int.max(max: Int): Int = this.coerceAtMost(max)
 fun Int.min(min: Int): Int = this.coerceAtLeast(min)
 fun Int.limit(min: Int, max: Int): Int = this.coerceAtLeast(min).coerceAtMost(max)
