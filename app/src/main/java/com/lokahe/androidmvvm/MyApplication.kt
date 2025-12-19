@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 import android.util.Log
-import androidx.core.app.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.HiltAndroidApp
 import java.lang.ref.WeakReference
 import android.os.Build.VERSION.SDK_INT as API
@@ -70,7 +70,7 @@ class MyApplication : Application() {
             override fun onActivityStarted(activity: Activity) {
                 Log.d(
                     TAG, "onActivityStarted: ${activity.javaClass.simpleName}" +
-                            if (activity is ComponentActivity) "${activity.lifecycle.currentState}" else ""
+                            if (activity is AppCompatActivity) "${activity.lifecycle.currentState}" else ""
                 )
             }
 
@@ -78,7 +78,7 @@ class MyApplication : Application() {
                 Log.d(
                     TAG,
                     "onActivityResumed: ${activity.javaClass.simpleName}" +
-                            if (activity is ComponentActivity) "${activity.lifecycle.currentState}" else ""
+                            if (activity is AppCompatActivity) "${activity.lifecycle.currentState}" else ""
                 )
             }
 
@@ -86,7 +86,7 @@ class MyApplication : Application() {
                 Log.d(
                     TAG,
                     "onActivityPaused: ${activity.javaClass.simpleName}" +
-                            if (activity is ComponentActivity) "${activity.lifecycle.currentState}" else ""
+                            if (activity is AppCompatActivity) "${activity.lifecycle.currentState}" else ""
                 )
             }
 
@@ -94,7 +94,7 @@ class MyApplication : Application() {
                 Log.d(
                     TAG,
                     "onActivityStopped: ${activity.javaClass.simpleName}" +
-                            if (activity is ComponentActivity) "${activity.lifecycle.currentState}" else ""
+                            if (activity is AppCompatActivity) "${activity.lifecycle.currentState}" else ""
                 )
             }
 
@@ -102,7 +102,7 @@ class MyApplication : Application() {
                 Log.d(
                     TAG,
                     "onActivitySaveInstanceState: ${activity.javaClass.simpleName}" +
-                            if (activity is ComponentActivity) "${activity.lifecycle.currentState}" else ""
+                            if (activity is AppCompatActivity) "${activity.lifecycle.currentState}" else ""
                 )
             }
         })
