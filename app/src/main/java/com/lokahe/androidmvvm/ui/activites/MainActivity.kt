@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.activity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -47,21 +48,18 @@ import com.lokahe.androidmvvm.ProvideLocals
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.SIDE_MENU_ITEMS
 import com.lokahe.androidmvvm.Screen
-import com.lokahe.androidmvvm.repository.UserPreferencesRepository
-import com.lokahe.androidmvvm.repository.dataStore
 import com.lokahe.androidmvvm.ui.screens.AccountScreen
 import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.NotificationScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
-import com.lokahe.androidmvvm.viewmodels.ViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel: MainViewModel by viewModels {
-        ViewModelFactory(UserPreferencesRepository(dataStore))
-    }
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +79,9 @@ class MainActivity : AppCompatActivity() {
                             composable(Screen.Home.route) { MainScreen() }
                             composable(Screen.Account.route) { AccountScreen() }
                             composable(Screen.Notifications.route) { NotificationScreen() }
+                            activity(Screen.Settings.route) {
+                                activityClass = SettingsActivity::class
+                            }
                         }
                     }
                 }
@@ -151,7 +152,7 @@ fun SideMenu(content: @Composable () -> Unit = {}) {
 
                         R.string.settings -> {
                             // Handle Settings navigation
-                            context.startActivity(Intent(context, SettingsActivity::class.java))
+                            navController.navigate(Screen.Settings.route)
                         }
                     }
                 }

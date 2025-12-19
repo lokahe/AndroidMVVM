@@ -13,8 +13,6 @@ import androidx.navigation.compose.rememberNavController
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.ProvideLocals
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.repository.UserPreferencesRepository
-import com.lokahe.androidmvvm.repository.dataStore
 import com.lokahe.androidmvvm.ui.preference.ListPreference
 import com.lokahe.androidmvvm.ui.preference.SliderDialogPreference
 import com.lokahe.androidmvvm.ui.preference.SwitchPreference
@@ -23,12 +21,11 @@ import com.lokahe.androidmvvm.ui.widget.SettingScaffold
 import com.lokahe.androidmvvm.ui.widget.settingsCard
 import com.lokahe.androidmvvm.ui.widget.settingsDivider
 import com.lokahe.androidmvvm.viewmodels.SettingsViewModel
-import com.lokahe.androidmvvm.viewmodels.ViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SettingsActivity : AppCompatActivity() {
-    private val viewModel: SettingsViewModel by viewModels {
-        ViewModelFactory(UserPreferencesRepository(dataStore))
-    }
+    private val viewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

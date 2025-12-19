@@ -1,6 +1,5 @@
 package com.lokahe.androidmvvm.repository
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -8,16 +7,16 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.lokahe.androidmvvm.models.UserPreferences
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
-class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
+@Singleton
+class UserPreferencesRepository @Inject constructor(private val dataStore: DataStore<Preferences>) {
 
     private object PreferencesKeys {
         val USER_NAME = stringPreferencesKey("user_name")

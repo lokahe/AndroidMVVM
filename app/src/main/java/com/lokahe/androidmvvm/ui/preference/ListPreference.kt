@@ -174,7 +174,12 @@ fun RadioButtonItem(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .selectable(selected, true, Role.RadioButton, onClick)
+                .selectable(
+                    selected = selected,
+                    enabled = true,
+                    role = Role.RadioButton,
+                    onClick = onClick
+                )
                 .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

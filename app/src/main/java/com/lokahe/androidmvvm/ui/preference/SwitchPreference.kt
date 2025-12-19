@@ -53,7 +53,12 @@ fun SwitchPreference(
         summary = summary,
         icon = icon,
         enabled = enabled,
-        modifier = modifier.toggleable(value, enabled(), Role.Switch, onValueChange),
+        modifier = modifier.toggleable(
+            value = value,
+            enabled = enabled(),
+            role = Role.Switch,
+            onValueChange = onValueChange
+        ),
         widgetContainer = {
             val theme = LocalPreferenceTheme.current
             Switch(

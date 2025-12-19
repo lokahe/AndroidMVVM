@@ -5,10 +5,12 @@ import android.app.Application
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ComponentActivity
+import dagger.hilt.android.HiltAndroidApp
 import java.lang.ref.WeakReference
 import android.os.Build.VERSION.SDK_INT as API
 import android.os.Build.VERSION_CODES as APIS
 
+@HiltAndroidApp
 class MyApplication : Application() {
     val TAG = "MyApplication"
 
