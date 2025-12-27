@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.map
 import java.io.IOException
 
 @Singleton
-class UserPreferencesRepository @Inject constructor(private val dataStore: DataStore<Preferences>) {
+class PreferencesRepository @Inject constructor(private val dataStore: DataStore<Preferences>) {
 
     private object PreferencesKeys {
         val USER_NAME = stringPreferencesKey("user_name")

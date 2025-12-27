@@ -24,4 +24,8 @@
     <string name="home">Home</string>
     <string name="account">account</string>
     <string name="notifications">notifications</string>
+    <string name="persons">persons</string>
+    <string name="addRandom">Add Random</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
 </resources>

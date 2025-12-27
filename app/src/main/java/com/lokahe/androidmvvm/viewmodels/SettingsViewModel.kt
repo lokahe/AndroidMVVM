@@ -3,7 +3,7 @@ package com.lokahe.androidmvvm.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.models.UserPreferences
-import com.lokahe.androidmvvm.repository.UserPreferencesRepository
+import com.lokahe.androidmvvm.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: UserPreferencesRepository
+    private val repository: PreferencesRepository
 ) : ViewModel() {
 
     // Expose preferences as StateFlow for UI observation

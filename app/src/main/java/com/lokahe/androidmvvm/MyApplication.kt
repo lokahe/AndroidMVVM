@@ -17,7 +17,10 @@ class MyApplication : Application() {
     companion object {
         val liveActivities = mutableSetOf<WeakReference<Activity>>()
 
-        val application = MyApplication()
+
+        // 1. CHANGE: Use lateinit var, do NOT instantiate it here.
+        lateinit var application: MyApplication
+            private set // Optional: Prevent external classes from overwriting it
 
         @JvmStatic
         fun <T : Activity> findActivity(clazz: Class<T>): T? {
@@ -36,6 +39,9 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // 2. ASSIGN: Capture the valid context here
+        application = this
 
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {

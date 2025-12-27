@@ -51,6 +51,7 @@ import com.lokahe.androidmvvm.Screen
 import com.lokahe.androidmvvm.ui.screens.AccountScreen
 import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.NotificationScreen
+import com.lokahe.androidmvvm.ui.screens.PersonsScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                         ) {
                             composable(Screen.Home.route) { MainScreen() }
                             composable(Screen.Account.route) { AccountScreen() }
-                            composable(Screen.Notifications.route) { NotificationScreen() }
+                            composable(Screen.Persons.route) { PersonsScreen() }
                             activity(Screen.Settings.route) {
                                 activityClass = SettingsActivity::class
                             }
@@ -145,9 +146,9 @@ fun SideMenu(content: @Composable () -> Unit = {}) {
                             navController.navigate(Screen.Account.route)
                         }
 
-                        R.string.notifications -> {
+                        R.string.persons -> {
                             // Handle Notifications navigation
-                            navController.navigate(Screen.Notifications.route)
+                            navController.navigate(Screen.Persons.route)
                         }
 
                         R.string.settings -> {
