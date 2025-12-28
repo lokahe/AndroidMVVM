@@ -28,4 +28,15 @@
     <string name="addRandom">Add Random</string>
     <string name="male">Male</string>
     <string name="female">Female</string>
+    <string name="guest">guest</string>
+    <string name="signInUp">Sign In/Up</string>
+    <string name="logout">Logout</string>
+    <string name="login">Login</string>
+    <string name="confirm">Confirm</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="password_repeat">Password Repeat</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="sign_in">Sign In</string>
+    <string name="invalid_email_format">Invalid email format</string>
 </resources>
