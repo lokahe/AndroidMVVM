@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm.network
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -59,6 +60,7 @@ class UserManager @Inject constructor(
             try {
                 gson.fromJson(json, LoginResponse::class.java)
             } catch (e: Exception) {
+                Log.e("UserManager", "Error deserializing user data: ${e.message}")
                 null
             }
         } else {

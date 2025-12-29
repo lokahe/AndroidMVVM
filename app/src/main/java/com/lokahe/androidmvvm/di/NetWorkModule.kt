@@ -39,7 +39,7 @@ object NetWorkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(Api.URL) // TODO: Replace with your actual base URL
+            .baseUrl(Api.URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

@@ -54,10 +54,8 @@ class MainViewModel @Inject constructor(
 
                 if (isValid) {
                     // Token is good, user stays logged in (state is likely already observing userManager)
-                    Log.d("AutoLogin", "Token verified successfully")
                 } else {
                     // Token expired or invalid -> Logout locally
-                    Log.d("AutoLogin", "Token invalid, clearing user")
                     userManager.clearUser()
                 }
             }
@@ -103,11 +101,9 @@ class MainViewModel @Inject constructor(
                 // Handle success (e.g., show toast, navigate to login)
                 toast(message)
                 dismissDialog()
-                Log.d("Register", "Success: $message")
             }.onFailure { error ->
                 // Handle error (e.g., show error dialog)
                 toast(error.message ?: R.string.unkown_error.toString())
-                Log.e("Register", "Error: ${error.message}")
             }
         }
     }

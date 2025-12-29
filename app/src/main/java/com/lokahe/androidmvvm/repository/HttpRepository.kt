@@ -52,7 +52,6 @@ class HttpRepository @Inject constructor(
             val request = LoginRequest(email, md5(password))
             val response = apiService.login(request)
             if (response.isSuccessful && response.body()?.userToken?.isNotEmpty() == true) {
-                Log.d("Login", "Success: ${response.body()?.userToken}")
                 userManager.saveUser(response.body()!!)
                 Result.success(response.body()?.message ?: s(R.string.registration_successful))
             } else {
