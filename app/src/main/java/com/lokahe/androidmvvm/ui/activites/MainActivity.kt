@@ -33,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -188,14 +189,15 @@ fun DrawerContent(
     onItemSelected: (Int) -> Unit
 ) {
     val viewModel = LocalViewModel.current as MainViewModel
-    val isLoggedIn by viewModel.isLoggedIn
+    val user by viewModel.currentUser.collectAsState()
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     ModalDrawerSheet {
         // Drawer Header
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = {
-                    onItemSelected(if (isLoggedIn) R.string.account else R.string.login)
+                    onItemSelected(R.string.account)
                 }
                 ),
             color = MaterialTheme.colorScheme.primaryContainer
@@ -217,12 +219,12 @@ fun DrawerContent(
                         .weight(1f)
                 ) {
                     Text(
-                        text = if (isLoggedIn) "John Doe" else stringResource(R.string.guest),
+                        text = user?.name ?: stringResource(R.string.guest),
                         modifier = Modifier.padding(bottom = 4.dp),
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = if (isLoggedIn) "john.doe@example.com" else stringResource(R.string.signInUp),
+                        text = user?.email ?: stringResource(R.string.signInUp),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

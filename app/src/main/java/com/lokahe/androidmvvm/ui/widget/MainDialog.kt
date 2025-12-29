@@ -15,8 +15,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType.Companion.Password
+import androidx.compose.ui.autofill.ContentType.Companion.Username
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalAutofillManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -57,56 +62,81 @@ fun MainDialog() {
 
         is AppDialog.Login -> {
             var email by remember { mutableStateOf("") }
-            var isEmailError by remember { mutableStateOf(false) }
+            var name by remember { mutableStateOf("") }
             var password by remember { mutableStateOf("") }
             var passwordRepeat by remember { mutableStateOf("") }
+            var emailError by remember { mutableStateOf(false) }
             var repeatError by remember { mutableStateOf(false) }
-            var signUp by remember { mutableStateOf(false) }
+            val signUp by viewModel.isNewAccount
+            val autofillManager = LocalAutofillManager.current
             AlertDialog(
                 onDismissRequest = { viewModel.dismissDialog() },
                 title = { Text(text = stringResource(R.string.signInUp)) },
                 text = {
                     Column {
                         OutlinedTextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics { contentType = Username }
+                                .padding(bottom = 8.dp)
+                                .onFocusChanged { focusState ->
+                                    if (!focusState.isFocused) {
+                                        if (EMAIL_ADDRESS.matcher(email).matches()) {
+                                            viewModel.isNewAccount(email)
+                                        } else if (email.isNotEmpty()) {
+                                            emailError = true
+                                            viewModel.resetNewAccountCheck()
+                                        }
+                                    }
+                                },
                             value = email,
                             onValueChange = {
                                 email = it
-                                isEmailError = false
+                                emailError = false
+                                viewModel.resetNewAccountCheck()
                             },
                             label = {
                                 Text(
                                     stringResource(
-                                        if (isEmailError) R.string.invalid_email_format
+                                        if (emailError) R.string.invalid_email_format
                                         else R.string.email
                                     )
                                 )
                             },
-                            isError = isEmailError,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                                .onFocusChanged { focusState ->
-                                    if (!focusState.isFocused) {
-                                        if (EMAIL_ADDRESS.matcher(email).matches()
-                                        ) {
-                                            signUp = !viewModel.isSignedUp(email)
-                                        } else if (email.isNotEmpty()) {
-                                            isEmailError = true
-                                            signUp = false
-                                        }
-                                    }
-                                },
+                            isError = emailError,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Email, // or default
+                                autoCorrectEnabled = false // Recommended for usernames/emails
+                            ),
                             singleLine = true
                         )
+                        if (signUp) {
+                            if (name.isEmpty() && EMAIL_ADDRESS.matcher(email).matches()) {
+                                name = email.subSequence(0, email.indexOf("@")) as String
+                            }
+                            OutlinedTextField(
+                                value = name,
+                                onValueChange = { name = it },
+                                label = { Text(stringResource(R.string.name)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Text
+                                )
+                            )
+                        }
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
                             label = { Text(stringResource(R.string.password)) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics { contentType = Password },
                             singleLine = true,
                             visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Password,
+                                autoCorrectEnabled = false // Important: Turn off dictionary for passwords
                             )
                         )
                         if (signUp) {
@@ -137,12 +167,14 @@ fun MainDialog() {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.dismissDialog()
                             // Pass credentials to your ViewModel login function
-                            viewModel.login(email, password)
+                            if (signUp) viewModel.signUp(email, password, name)
+                            else viewModel.login(email, password)
+                            autofillManager?.commit()
+//                            CredentialsClient.save()
                         },
                         enabled = EMAIL_ADDRESS.matcher(email).matches() && password.isNotEmpty()
-                                && ((signUp && password == passwordRepeat) || !signUp)
+                                && ((signUp && password == passwordRepeat && name.isNotEmpty()) || !signUp)
                     ) {
                         Text(stringResource(if (signUp) R.string.sign_up else R.string.sign_in))
                     }

@@ -1,5 +1,6 @@
 package com.lokahe.androidmvvm
 
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -15,6 +16,10 @@ fun s(@StringRes id: Int): String = application.getString(id)
 fun Int.max(max: Int): Int = this.coerceAtMost(max)
 fun Int.min(min: Int): Int = this.coerceAtLeast(min)
 fun Int.limit(min: Int, max: Int): Int = this.coerceAtLeast(min).coerceAtMost(max)
+
+fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(application, message, duration).show()
+}
 
 @Composable
 fun TextUnit.toDp(): Dp = with(LocalDensity.current) { toPx().toDp() }
@@ -95,12 +100,6 @@ fun Any.expextSize(any: Any): Int =
     when (this) {
         is Set<*> -> if (this.contains(any)) this.size - 1 else this.size + 1
         else -> 0
-    }
-
-fun Any.isEmpty(): Boolean =
-    when (this) {
-        is Set<*> -> this.isEmpty()
-        else -> true
     }
 
 fun Any.size(): Int =

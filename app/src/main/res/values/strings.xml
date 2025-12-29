@@ -39,4 +39,9 @@
     <string name="sign_up">Sign Up</string>
     <string name="sign_in">Sign In</string>
     <string name="invalid_email_format">Invalid email format</string>
+    <string name="registration_successful">Sign up successful</string>
+    <string name="registration_failed">Sign up failed</string>
+    <string name="unkown_error">Unknown error</string>
+    <string name="name">name</string>
+    <string name="desc_random_person">Random Person</string>
 </resources>

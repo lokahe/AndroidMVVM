@@ -60,6 +60,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.material)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.material.icons.extended)
 
     // Room database
     implementation(libs.androidx.room.ktx)
@@ -70,8 +72,17 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
 
-    implementation(libs.coil.compose)
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
+    // Gson Converter (to convert JSON to Kotlin objects)
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // OkHttp (for logging and interceptors)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -79,5 +90,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation(libs.androidx.material.icons.extended)
 }
