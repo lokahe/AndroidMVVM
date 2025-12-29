@@ -21,12 +21,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.ui.activites.MainScaffold
+import com.lokahe.androidmvvm.ui.widget.MainScaffold
 
 @Composable
 fun NotificationScreen() {
     val viewModel = LocalViewModel.current
-    MainScaffold() { contentPadding ->
+    MainScaffold(title = stringResource(R.string.notifications)) { contentPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -57,7 +57,9 @@ fun NotificationScreen() {
                                     )
                                 )
                                 Text(
-                                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth(),
                                     text = "Post ${index + 1}",
                                     style = MaterialTheme.typography.titleMedium
                                 )

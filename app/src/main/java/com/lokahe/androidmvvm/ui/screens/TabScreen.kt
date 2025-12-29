@@ -25,7 +25,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,7 +40,10 @@ val tabs = listOf("Home", "Explore", "Profile")
 val currentIndex = mutableStateOf(0)
 
 fun bottomTabNavigation(): @Composable () -> Unit = {
-    NavigationBar {
+    NavigationBar(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+    ) {
         var selectedTabIndex by remember { currentIndex }
         tabs.forEachIndexed { index, title ->
             NavigationBarItem(
@@ -70,7 +72,6 @@ fun TabScreen(paddingValues: PaddingValues, showTab: Boolean = true) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
     ) {
         // Tab Row
         if (showTab) {
@@ -86,20 +87,21 @@ fun TabScreen(paddingValues: PaddingValues, showTab: Boolean = true) {
         }
         // Tab Content
         when (selectedTabIndex) {
-            0 -> HomeScreen()
-            1 -> ExploreScreen()
-            2 -> ProfileScreen()
+            0 -> HomeScreen(paddingValues)
+            1 -> ExploreScreen(paddingValues)
+            2 -> ProfileScreen(paddingValues)
         }
     }
 }
 
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(contentPadding: PaddingValues = PaddingValues()) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp),
+        contentPadding = contentPadding
     ) {
         item {
             Text(
@@ -115,11 +117,12 @@ fun HomeScreen() {
 }
 
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(contentPadding: PaddingValues) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(contentPadding)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = "Explore",
@@ -172,11 +175,12 @@ fun ExploreScreen() {
 }
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(contentPadding: PaddingValues) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(contentPadding)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = "Profile",

@@ -2,16 +2,15 @@ package com.lokahe.androidmvvm
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 
 val SIDE_MENU_ITEMS = listOf(
-    Pair(R.string.home, Icons.Filled.Home),
-    Pair(R.string.account, Icons.Filled.Person),
-    Pair(R.string.persons, Icons.Filled.People),
-    Pair(R.string.settings, Icons.Filled.Settings)
+    Triple(Screen.Home, Icons.Filled.Home, s(R.string.home)),
+    Triple(Screen.Account, Icons.Filled.Person, s(R.string.account)),
+    Triple(Screen.Persons, Icons.Filled.People, s(R.string.persons)),
+    Triple(Screen.Settings, Icons.Filled.Settings, s(R.string.settings))
 )
 
 sealed class Screen(val route: String) {

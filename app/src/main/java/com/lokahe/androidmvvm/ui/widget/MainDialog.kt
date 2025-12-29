@@ -3,7 +3,6 @@ package com.lokahe.androidmvvm.ui.widget
 import android.util.Patterns.EMAIL_ADDRESS
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
@@ -24,7 +23,6 @@ import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.viewmodels.AppDialog
@@ -78,7 +76,6 @@ fun MainDialog() {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .semantics { contentType = Username }
-                                .padding(bottom = 8.dp)
                                 .onFocusChanged { focusState ->
                                     if (!focusState.isFocused) {
                                         if (EMAIL_ADDRESS.matcher(email).matches()) {
@@ -162,6 +159,20 @@ fun MainDialog() {
                                 )
                             )
                         }
+//                        Row(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(top = 8.dp)
+//                        ) {
+//                            IconButton(onClick = {
+//
+//                            }) {
+//                                Icon(
+//                                    painter = painterResource(id = R.drawable.ic_google), // You need to add ic_google.xml to res/drawable
+//                                    contentDescription = "Google" // Provide a content description for accessibility
+//                                )
+//                            }
+//                        }
                     }
                 },
                 confirmButton = {

@@ -1,18 +1,13 @@
 package com.lokahe.androidmvvm.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,15 +20,14 @@ import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.size
-import com.lokahe.androidmvvm.ui.activites.MainScaffold
+import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.ui.widget.personItem
-import com.lokahe.androidmvvm.ui.widget.text
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
 fun PersonsScreen() {
     val viewModel: MainViewModel = LocalViewModel.current as MainViewModel
-    MainScaffold() { contentPadding ->
+    MainScaffold(stringResource(R.string.persons)) { contentPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
