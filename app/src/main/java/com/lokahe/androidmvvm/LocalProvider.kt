@@ -17,8 +17,6 @@ val LocalTheme =
 
 val LocalViewModel = compositionLocalOf<ViewModel> { noLocalProvidedFor("LocalViewModel") }
 
-val LocalPreference = compositionLocalOf<UserPreferences> { noLocalProvidedFor("LocalPreference") }
-
 val LocalDrawerState =
     compositionLocalOf<DrawerState> { noLocalProvidedFor("LocalDrawerState") }
 

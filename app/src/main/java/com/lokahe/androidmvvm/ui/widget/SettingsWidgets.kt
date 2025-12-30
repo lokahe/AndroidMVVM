@@ -128,7 +128,7 @@ fun SettingsCard(
     if (title != null) {
         Text(
             text = title,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .padding(theme.padding.copy(horizontal = 0.dp))
                 .wrapContentHeight(),
             style = MaterialTheme.typography.titleMedium

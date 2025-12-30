@@ -1,7 +1,6 @@
 package com.lokahe.androidmvvm.ui.theme
 
 import android.os.Build
-import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.lokahe.androidmvvm.LocalViewModel
-import com.lokahe.androidmvvm.toHexColor
 import com.lokahe.androidmvvm.utils.Utils.Companion.createColorScheme
 import com.lokahe.androidmvvm.viewmodels.BaseViewModel
 
