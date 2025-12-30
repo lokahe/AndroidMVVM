@@ -1,24 +1,91 @@
 package com.lokahe.androidmvvm
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
+import androidx.core.graphics.ColorUtils
+import com.google.android.material.color.utilities.DynamicScheme
 import com.lokahe.androidmvvm.MyApplication.Companion.application
 
 fun s(@StringRes id: Int): String = application.getString(id)
 fun Int.max(max: Int): Int = this.coerceAtMost(max)
 fun Int.min(min: Int): Int = this.coerceAtLeast(min)
 fun Int.limit(min: Int, max: Int): Int = this.coerceAtLeast(min).coerceAtMost(max)
+fun Int.argb(): Int {
+    return 0xFF shl 24 or this
+}
 
 fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(application, message, duration).show()
+}
+
+fun Int.toHexColor(): String {
+    return String.format("#%08X", this)
+}
+
+@SuppressLint("RestrictedApi")
+fun DynamicScheme.toColorScheme(): ColorScheme {
+    return ColorScheme(
+        primary = androidx.compose.ui.graphics.Color(primary),
+        onPrimary = androidx.compose.ui.graphics.Color(onPrimary),
+        primaryContainer = androidx.compose.ui.graphics.Color(primaryContainer),
+        onPrimaryContainer = androidx.compose.ui.graphics.Color(onPrimaryContainer),
+        inversePrimary = androidx.compose.ui.graphics.Color(inversePrimary),
+        secondary = androidx.compose.ui.graphics.Color(secondary),
+        onSecondary = androidx.compose.ui.graphics.Color(onSecondary),
+        secondaryContainer = androidx.compose.ui.graphics.Color(secondaryContainer),
+        onSecondaryContainer = androidx.compose.ui.graphics.Color(onSecondaryContainer),
+        tertiary = androidx.compose.ui.graphics.Color(tertiary),
+        onTertiary = androidx.compose.ui.graphics.Color(onTertiary),
+        tertiaryContainer = androidx.compose.ui.graphics.Color(tertiaryContainer),
+        onTertiaryContainer = androidx.compose.ui.graphics.Color(onTertiaryContainer),
+        background = androidx.compose.ui.graphics.Color(background),
+        onBackground = androidx.compose.ui.graphics.Color(onBackground),
+        surface = androidx.compose.ui.graphics.Color(surface),
+        onSurface = androidx.compose.ui.graphics.Color(onSurface),
+        surfaceVariant = androidx.compose.ui.graphics.Color(surfaceVariant),
+        onSurfaceVariant = androidx.compose.ui.graphics.Color(onSurfaceVariant),
+        surfaceTint = androidx.compose.ui.graphics.Color(primary),
+        inverseSurface = androidx.compose.ui.graphics.Color(inverseSurface),
+        inverseOnSurface = androidx.compose.ui.graphics.Color(inverseOnSurface),
+        error = androidx.compose.ui.graphics.Color(error),
+        onError = androidx.compose.ui.graphics.Color(onError),
+        errorContainer = androidx.compose.ui.graphics.Color(errorContainer),
+        onErrorContainer = androidx.compose.ui.graphics.Color(onErrorContainer),
+        outline = androidx.compose.ui.graphics.Color(outline),
+        outlineVariant = androidx.compose.ui.graphics.Color(outlineVariant),
+        scrim = androidx.compose.ui.graphics.Color(scrim),
+        // Add default values for new M3 colors if needed, but the above covers the core
+        surfaceBright = androidx.compose.ui.graphics.Color(surfaceBright),
+        surfaceDim = androidx.compose.ui.graphics.Color(surfaceDim),
+        surfaceContainer = androidx.compose.ui.graphics.Color(surfaceContainer),
+        surfaceContainerHigh = androidx.compose.ui.graphics.Color(surfaceContainerHigh),
+        surfaceContainerHighest = androidx.compose.ui.graphics.Color(surfaceContainerHighest),
+        surfaceContainerLow = androidx.compose.ui.graphics.Color(surfaceContainerLow),
+        surfaceContainerLowest = androidx.compose.ui.graphics.Color(surfaceContainerLowest),
+    )
+}
+
+fun Color.isDark(): Boolean {
+    // Convert Compose Color to Android ColorInt
+    val colorInt = android.graphics.Color.argb(
+        (alpha * 255).toInt(),
+        (red * 255).toInt(),
+        (green * 255).toInt(),
+        (blue * 255).toInt()
+    )
+    // Luminance threshold is typically 0.5
+    return ColorUtils.calculateLuminance(colorInt) < 0.5
 }
 
 @Composable

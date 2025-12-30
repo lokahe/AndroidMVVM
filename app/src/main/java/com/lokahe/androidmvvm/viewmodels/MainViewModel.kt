@@ -1,12 +1,12 @@
 package com.lokahe.androidmvvm.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.models.Person
+import com.lokahe.androidmvvm.models.network.UpdateAvatarRequest
 import com.lokahe.androidmvvm.network.UserManager
 import com.lokahe.androidmvvm.repository.DataBaseRepository
 import com.lokahe.androidmvvm.repository.HttpRepository
@@ -21,20 +21,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-sealed class AppDialog {
-    data object None : AppDialog()
-    data object Logout : AppDialog()
-    data object Login : AppDialog()
-    // Add more later easily: data object DeleteAccount : AppDialog()
-}
-
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val preferencesRepository: PreferencesRepository,
-    private val dataBaseRepository: DataBaseRepository,
+    private val prefRepository: PreferencesRepository,
+    private val dbRepository: DataBaseRepository,
     private val httpRepository: HttpRepository,
     private val userManager: UserManager
-) : ViewModel() {
+) : BaseViewModel(prefRepository, userManager) {
 
     init {
         // 2. Trigger the check immediately when ViewModel is created (App Start)
@@ -43,23 +36,20 @@ class MainViewModel @Inject constructor(
 
     private fun checkAutoLogin() {
         viewModelScope.launch {
-//            _isLoading.value = true
             // Get the saved token
             // Note: We use .firstOrNull() to get the current value from the Flow once
             val token = userManager.userTokenFlow.firstOrNull()
-
             if (!token.isNullOrEmpty()) {
+                showDialog(AppDialog.Loading)
                 // Verify with server
-                val isValid = httpRepository.verifyToken(token)
-
-                if (isValid) {
+                if (httpRepository.verifyToken(token)) {
                     // Token is good, user stays logged in (state is likely already observing userManager)
                 } else {
                     // Token expired or invalid -> Logout locally
                     userManager.clearUser()
                 }
             }
-//            _isLoading.value = false
+            showDialog(AppDialog.None)
         }
     }
 
@@ -85,7 +75,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val result = httpRepository.login(email, password)
             result.onSuccess { message ->
-                // Handle success (e.g., show toast, navigate to login)
                 toast(message)
                 dismissDialog()
             }.onFailure { error ->
@@ -98,17 +87,75 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val result = httpRepository.register(email, password, name)
             result.onSuccess { message ->
-                // Handle success (e.g., show toast, navigate to login)
                 toast(message)
                 dismissDialog()
             }.onFailure { error ->
-                // Handle error (e.g., show error dialog)
                 toast(error.message ?: R.string.unkown_error.toString())
             }
         }
     }
 
-    // State for the signed up
+    fun updateAvatar(url: String) {
+        viewModelScope.launch {
+            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
+            val token = userManager.userTokenFlow.firstOrNull()
+            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
+            val result = httpRepository.updateProperty(
+                objectId = objectId,
+                token = token,
+                request = UpdateAvatarRequest(url)
+            )
+            result.onSuccess { message ->
+                toast(message)
+            }.onFailure { error ->
+                toast(error.message ?: R.string.unkown_error.toString())
+            }
+        }
+    }
+
+    fun updateUserProfile(
+        phone: String,
+        address: String,
+        birthDate: String,
+        description: String,
+        gender: String
+    ) {
+        viewModelScope.launch {
+            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
+            val token = userManager.userTokenFlow.firstOrNull()
+            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
+
+            val updateMap = mapOf(
+                "phone" to phone,
+                "address" to address,
+                "birthDate" to birthDate,
+                "description" to description,
+                "gender" to gender
+            )
+
+            val result = httpRepository.updateProperty(
+                objectId = objectId,
+                token = token,
+                request = updateMap
+            )
+            result.onSuccess { message ->
+                toast(message)
+                userManager.saveUser(
+                    currentUser.value!!.copy(
+                        phone = phone,
+                        address = address,
+                        birthDate = birthDate,
+                        description = description,
+                        gender = gender
+                    )
+                )
+            }.onFailure { error ->
+                toast(error.message ?: R.string.unkown_error.toString())
+            }
+        }
+    }
+
+    // State for the check is signed up
     private val _isNewAccount = mutableStateOf(false)
     val isNewAccount: State<Boolean> = _isNewAccount
     fun isNewAccount(email: String) {
@@ -120,7 +167,6 @@ class MainViewModel @Inject constructor(
     fun resetNewAccountCheck() {
         _isNewAccount.value = false
     }
-
 
     // State for the currently visible dialog
     private val _activeDialog = mutableStateOf<AppDialog>(AppDialog.None)
@@ -144,13 +190,13 @@ class MainViewModel @Inject constructor(
 
     private fun fetchPersons() {
         viewModelScope.launch {
-            _persons.value = dataBaseRepository.getAllPersons()
+            _persons.value = dbRepository.getAllPersons()
         }
     }
 
     fun addPerson(person: Person) {
         viewModelScope.launch {
-            dataBaseRepository.insertPerson(person)
+            dbRepository.insertPerson(person)
             fetchPersons()
         }
     }

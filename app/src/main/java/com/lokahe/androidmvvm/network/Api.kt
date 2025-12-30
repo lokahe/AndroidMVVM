@@ -14,4 +14,6 @@ object Api {
     const val VERIFY_TOKEN = "$APP_ID/$RESET_API_KEY/users/isvalidusertoken/{token}"
 
     const val LOGOUt = "$APP_ID/$RESET_API_KEY/users/logout"
+
+    const val UPDATE_PROPERTY = "$APP_ID/$RESET_API_KEY/users/{user-id}"
 }

@@ -74,7 +74,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.lokahe.androidmvvm.LocalNavController
-import com.lokahe.androidmvvm.LocalPreferenceTheme
+import com.lokahe.androidmvvm.LocalTheme
 import com.lokahe.androidmvvm.copy
 import jp.co.omronsoft.iwnnime.mlbeta.compose.widget.drawVerticalScrollbar
 
@@ -124,7 +124,7 @@ fun SettingsCard(
     title: String? = null,
     content: @Composable () -> Unit
 ) {
-    val theme = LocalPreferenceTheme.current
+    val theme = LocalTheme.current
     if (title != null) {
         Text(
             text = title,
@@ -170,7 +170,7 @@ fun SettingScaffold(
 ) {
     val navController = if (useNav) LocalNavController.current else null
     val activity = LocalActivity.current as ComponentActivity?
-    val theme = LocalPreferenceTheme.current
+    val theme = LocalTheme.current
     val scrollBehavior =
         if (collapsingTopBar)
             TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())

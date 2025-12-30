@@ -31,8 +31,11 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AndroidMVVMTheme {
-                ProvideLocals(rememberNavController(), viewModel) {
+            ProvideLocals(
+                navController = rememberNavController(),
+                viewModel = viewModel
+            ) {
+                AndroidMVVMTheme {
                     SettingsScreen()
                 }
             }
@@ -51,9 +54,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = LocalViewModel.current as Sett
             titleRes = R.string.general
         ) {
             SwitchPreference(
-                title = stringResource(R.string.option_switch),
-                value = preferences.isLoggedIn,
-            ) { viewModel.updateLoginStatus(it) }
+                title = stringResource(R.string.use_avatar_color),
+                summary = stringResource(R.string.summary_use_avatar_color),
+                value = preferences.useAvatarColor,
+            ) { viewModel.updateUseAvatarColor(it) }
             settingsDivider()
             ListPreference(
                 title = stringResource(R.string.option_list),

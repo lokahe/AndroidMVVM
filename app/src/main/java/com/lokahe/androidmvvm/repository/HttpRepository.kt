@@ -91,4 +91,31 @@ class HttpRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun updateProperty(
+        objectId: String,
+        token: String,
+        request: Any
+    ): Result<String> {
+        return try {
+            val response = apiService.updateProperty(
+                objectId = objectId,
+                token = token,
+                request = request
+            )
+            if (response.isSuccessful && response.body() != null) {
+                userManager.saveUser(response.body()!!)
+                Result.success(response.body()?.message ?: "")
+            } else {
+                Log.e("updateProperty", "Error: ${response.body()?.message}")
+                Result.failure(
+                    Exception(
+                        response.body()?.message ?: ""
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

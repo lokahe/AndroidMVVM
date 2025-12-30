@@ -9,6 +9,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.lokahe.androidmvvm.models.network.LoginResponse
+import com.lokahe.androidmvvm.ui.theme.ColorSeed
+import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +28,7 @@ class UserManager @Inject constructor(
     companion object {
         private val USER_DATA_KEY = stringPreferencesKey("user_data")
         private val USER_TOKEN_KEY = stringPreferencesKey("user_token")
+        private val USER_COLOR_SEED_KEY = stringPreferencesKey("user_color_seed")
     }
 
     /**
@@ -41,13 +44,15 @@ class UserManager @Inject constructor(
     suspend fun saveUser(response: LoginResponse) {
         context.userStore.edit { prefs ->
             // 1. Save the token specifically (often needed for Interceptors)
-            response.userToken?.let { token ->
-                prefs[USER_TOKEN_KEY] = token
-            }
-
+            response.userToken?.let { prefs[USER_TOKEN_KEY] = it }
             // 2. Save the entire object as a JSON string
-            val json = gson.toJson(response)
-            prefs[USER_DATA_KEY] = json
+            prefs[USER_DATA_KEY] = gson.toJson(response)
+            // 3. calculate and save color seed
+            response.avatar?.let {
+                Utils.calculateMainColor(it)?.let { seed ->
+                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
+                }
+            }
         }
     }
 
@@ -55,16 +60,27 @@ class UserManager @Inject constructor(
      * Retrieves the full User object as a Flow
      */
     val userFlow: Flow<LoginResponse?> = context.userStore.data.map { prefs ->
-        val json = prefs[USER_DATA_KEY]
-        if (json != null) {
+        prefs[USER_DATA_KEY]?.let {
             try {
-                gson.fromJson(json, LoginResponse::class.java)
+                gson.fromJson(it, LoginResponse::class.java)
             } catch (e: Exception) {
                 Log.e("UserManager", "Error deserializing user data: ${e.message}")
                 null
             }
-        } else {
-            null
+        }
+    }
+
+    /**
+     * Retrieves the ColorSeed object as a Flow
+     */
+    val colorSeedFlow: Flow<ColorSeed?> = context.userStore.data.map { prefs ->
+        prefs[USER_COLOR_SEED_KEY]?.let {
+            try {
+                gson.fromJson(it, ColorSeed::class.java)
+            } catch (e: Exception) {
+                Log.e("UserManager", "Error deserializing ColorSeed: ${e.message}")
+                null
+            }
         }
     }
 
@@ -75,6 +91,7 @@ class UserManager @Inject constructor(
         context.userStore.edit { prefs ->
             prefs.remove(USER_DATA_KEY)
             prefs.remove(USER_TOKEN_KEY)
+            prefs.remove(USER_COLOR_SEED_KEY)
         }
     }
 }

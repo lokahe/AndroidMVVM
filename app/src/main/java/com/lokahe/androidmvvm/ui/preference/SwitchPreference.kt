@@ -14,7 +14,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import com.lokahe.androidmvvm.LocalPreferenceTheme
+import com.lokahe.androidmvvm.LocalTheme
 
 inline fun LazyListScope.switchpreference(
     modifier: Modifier = Modifier,
@@ -60,7 +60,7 @@ fun SwitchPreference(
             onValueChange = onValueChange
         ),
         widgetContainer = {
-            val theme = LocalPreferenceTheme.current
+            val theme = LocalTheme.current
             Switch(
                 checked = value,
                 onCheckedChange = onValueChange,

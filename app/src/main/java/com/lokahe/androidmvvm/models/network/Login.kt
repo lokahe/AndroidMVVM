@@ -47,6 +47,24 @@ data class LoginResponse(
     @SerializedName("email")
     val email: String,
 
+    @SerializedName("objectId")
+    val objectId: String,
+
+    // added properties
+    @SerializedName("avatar")
+    val avatar: String?,
+    @SerializedName("phone")
+    val phone: String?,
+    @SerializedName("address")
+    val address: String?,
+    @SerializedName("birthDate")
+    val birthDate: String?,
+    @SerializedName("description")
+    val description: String?,
+    @SerializedName("gender")
+    val gender: String?,
+
+    // base
     @SerializedName("message")
     val message: String?,
 

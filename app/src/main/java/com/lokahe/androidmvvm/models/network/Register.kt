@@ -45,6 +45,9 @@ data class RegisterResponse(
     @SerializedName("email")
     val email: String,
 
+    @SerializedName("objectId")
+    val objectId: String,
+
     @SerializedName("message")
     val message: String?,
 

@@ -1,14 +1,24 @@
 package com.lokahe.androidmvvm.ui.theme
 
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.lokahe.androidmvvm.LocalViewModel
+import com.lokahe.androidmvvm.toHexColor
+import com.lokahe.androidmvvm.utils.Utils.Companion.createColorScheme
+import com.lokahe.androidmvvm.viewmodels.BaseViewModel
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -35,18 +45,22 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun AndroidMVVMTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val context = LocalContext.current
+    val viewModel = LocalViewModel.current as BaseViewModel
+    val seed by viewModel.colorSeed.collectAsState()
+    val prefs by viewModel.userPreferences.collectAsState()
+    val colorScheme: ColorScheme by remember {
+        derivedStateOf {
+            if (prefs.useAvatarColor && seed != null) {
+                createColorScheme(seed!!, darkTheme)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            } else {
+                if (darkTheme) DarkColorScheme else LightColorScheme
+            }
         }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
 
     MaterialTheme(

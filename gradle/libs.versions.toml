@@ -17,6 +17,7 @@ navigationCompose = "2.9.6"
 room = "2.6.1"
 ksp = "2.0.21-1.0.27" # Matches Kotlin 2.0.21
 coil = "2.7.0"
+paletteKtx = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -45,6 +46,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
+androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

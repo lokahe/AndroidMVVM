@@ -1,60 +1,45 @@
 package com.lokahe.androidmvvm.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lokahe.androidmvvm.models.UserPreferences
+import com.lokahe.androidmvvm.network.UserManager
 import com.lokahe.androidmvvm.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: PreferencesRepository
-) : ViewModel() {
+    private val prefRepository: PreferencesRepository,
+    private val userManager: UserManager
+) : BaseViewModel(prefRepository, userManager) {
 
-    // Expose preferences as StateFlow for UI observation
-    val userPreferences: StateFlow<UserPreferences> = repository.observeUserPreferences()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = runBlocking {
-                repository.observeUserPreferences().first()
-            }
-        )
-
-    fun updateUserName(name: String) {
+    fun updateUseAvatarColor(useAvatarColor: Boolean) {
         viewModelScope.launch {
-            repository.updateUserName(name)
+            prefRepository.updateUseAvatarColor(useAvatarColor)
         }
     }
 
     fun updateUserAge(age: Int) {
         viewModelScope.launch {
-            repository.updateUserAge(age)
+            prefRepository.updateUserAge(age)
         }
     }
 
     fun updateLoginStatus(isLoggedIn: Boolean) {
         viewModelScope.launch {
-            repository.updateLoginStatus(isLoggedIn)
+            prefRepository.updateLoginStatus(isLoggedIn)
         }
     }
 
     fun updateGender(gender: String) {
         viewModelScope.launch {
-            repository.updateGender(gender)
+            prefRepository.updateGender(gender)
         }
     }
 
     fun clearData() {
         viewModelScope.launch {
-            repository.clearAllData()
+            prefRepository.clearAllData()
         }
     }
 }

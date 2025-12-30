@@ -44,4 +44,8 @@
     <string name="unkown_error">Unknown error</string>
     <string name="name">name</string>
     <string name="desc_random_person">Random Person</string>
+    <string name="pick_from_gallery">Select from Gallery</string>
+    <string name="avatar">avatar</string>
+    <string name="use_avatar_color">Use avatar color</string>
+    <string name="summary_use_avatar_color">use main color of avatar as theme color, needed login an selected a avatar.</string>
 </resources>

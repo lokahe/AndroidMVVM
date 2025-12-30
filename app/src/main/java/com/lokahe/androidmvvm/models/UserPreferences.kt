@@ -4,5 +4,6 @@ data class UserPreferences(
     val userName: String,
     val userAge: Int,
     val userGender: String,
-    val isLoggedIn: Boolean
+    val isLoggedIn: Boolean,
+    val useAvatarColor: Boolean
 )

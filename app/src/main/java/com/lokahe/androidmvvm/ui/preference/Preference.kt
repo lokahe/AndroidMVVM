@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.lokahe.androidmvvm.LocalPreferenceTheme
+import com.lokahe.androidmvvm.LocalTheme
 import com.lokahe.androidmvvm.copy
 
 fun LazyListScope.preference(
@@ -45,7 +45,7 @@ fun Preference(
     widgetContainer: @Composable () -> Unit = {},
     onClick: (() -> Unit)? = null
 ) {
-    val theme = LocalPreferenceTheme.current
+    val theme = LocalTheme.current
     val textColor =
         if (enabled()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
             alpha = theme.disabledOpacity

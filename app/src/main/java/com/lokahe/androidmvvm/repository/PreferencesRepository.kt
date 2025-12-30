@@ -23,6 +23,8 @@ class PreferencesRepository @Inject constructor(private val dataStore: DataStore
         val USER_AGE = intPreferencesKey("user_age")
         val USER_GENDER = stringPreferencesKey("user_gender")
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
+
+        val USE_AVATAR_COLOR = booleanPreferencesKey("use_avatar_color")
     }
 
     fun observeUserPreferences(): Flow<UserPreferences> = dataStore.data
@@ -38,9 +40,17 @@ class PreferencesRepository @Inject constructor(private val dataStore: DataStore
                 userName = it[PreferencesKeys.USER_NAME] ?: "",
                 userAge = it[PreferencesKeys.USER_AGE] ?: 0,
                 userGender = it[PreferencesKeys.USER_GENDER] ?: "",
-                isLoggedIn = it[PreferencesKeys.IS_LOGGED_IN] ?: false
+                isLoggedIn = it[PreferencesKeys.IS_LOGGED_IN] ?: false,
+                useAvatarColor = it[PreferencesKeys.USE_AVATAR_COLOR] ?: false
             )
         }
+
+    suspend fun updateUseAvatarColor(useAvatarColor: Boolean) {
+        dataStore.edit {
+            it[PreferencesKeys.USE_AVATAR_COLOR] = useAvatarColor
+        }
+    }
+
 
     // Write data
     suspend fun updateUserName(name: String) {

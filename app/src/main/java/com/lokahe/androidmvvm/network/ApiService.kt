@@ -10,6 +10,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -28,4 +29,12 @@ interface ApiService {
 
     @GET(Api.LOGOUt)
     suspend fun logout(@Header("user-token") token: String): Response<BaseResponse>
+
+    @PUT(Api.UPDATE_PROPERTY)
+    suspend fun updateProperty(
+        @Path("user-id") objectId: String,
+        @Header("user-token") token: String,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body request: Any
+    ): Response<LoginResponse>
 }

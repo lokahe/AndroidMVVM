@@ -12,7 +12,7 @@ import com.lokahe.androidmvvm.models.UserPreferences
 import com.lokahe.androidmvvm.ui.preference.PreferenceTheme
 import com.lokahe.androidmvvm.ui.preference.preferenceTheme
 
-val LocalPreferenceTheme =
+val LocalTheme =
     compositionLocalOf<PreferenceTheme> { noLocalProvidedFor("LocalPreferenceTheme") }
 
 val LocalViewModel = compositionLocalOf<ViewModel> { noLocalProvidedFor("LocalViewModel") }
@@ -43,7 +43,7 @@ fun ProvideLocals(
 ) {
     CompositionLocalProvider(
         LocalNavController provides navController,
-        LocalPreferenceTheme provides theme,
+        LocalTheme provides theme,
         LocalViewModel provides viewModel,
         LocalDrawerState provides drawerState,
         content = content,
