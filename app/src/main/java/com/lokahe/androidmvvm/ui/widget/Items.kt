@@ -1,6 +1,5 @@
 package com.lokahe.androidmvvm.ui.widget
 
-import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -17,56 +16,133 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.layout.ContentScale.Companion.Crop
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.models.Person
-import com.lokahe.androidmvvm.models.Post
-import com.lokahe.androidmvvm.s
+import com.lokahe.androidmvvm.models.network.Post
+import com.lokahe.androidmvvm.models.network.User
+import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 
-fun LazyListScope.postItem(
-    index: Int,
-    post: Post? = null
+@Composable
+fun AvatarIcon(
+    modifier: Modifier = Modifier,
+    url: String
 ) {
-    item {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row {
-                    Icon(
-                        imageVector = Icons.Filled.Person,
-                        contentDescription = "Profile",
-                        modifier = Modifier.padding(
-                            end = 16.dp
-                        )
-                    )
-                    Text(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                        text = "Post ${index + 1}",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "Star",
-                        modifier = Modifier.padding(
-                            end = 16.dp
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
+    if (url.isNotEmpty()) {
+        AsyncImage(
+            model = url,
+            contentDescription = stringResource(R.string.avatar),
+            modifier = modifier.clip(RoundedCornerShape(20)),
+            contentScale = Crop
+        )
+    } else {
+        Icon(
+            modifier = modifier,
+            imageVector = Icons.Filled.Person,
+            contentDescription = ""
+        )
+    }
+}
+
+@Composable
+fun PostItem(
+    index: Int,
+    post: Post
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row {
+                AvatarIcon(
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .size(36.dp),
+                    url = post.avatar
+                )
                 Text(
-                    text = "This is sample content for post ${index + 1}. In a real app, this would show dynamic content.",
-                    style = MaterialTheme.typography.bodyMedium
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    text = genderLogo(post.author, post.authorGender),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = "Star",
+                    modifier = Modifier.padding(
+                        end = 16.dp
+                    )
                 )
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = post.content,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (post.images.isNotEmpty()) {
+                Row() {
+                    post.images.split(",").forEach {
+                        AsyncImage(
+                            model = it,
+                            contentDescription = stringResource(R.string.image),
+                            modifier = Modifier
+                                .size(36.dp)
+                                .padding(end = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UserItem(
+    index: Int,
+    user: User
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row {
+                AvatarIcon(
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .size(36.dp),
+                    url = user.avatar ?: ""
+                )
+                Text(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    text = genderLogo(user.name, user.gender),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = "Star",
+                    modifier = Modifier.padding(
+                        end = 16.dp
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = user.description ?: "",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
@@ -83,40 +159,17 @@ fun LazyListScope.personItem(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row {
-                    if (TextUtils.isEmpty(person.image)) {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "Profile",
-                            modifier = Modifier.padding(
-                                end = 16.dp
-                            )
-                        )
-                    } else {
-                        AsyncImage(
-                            model = person.image,
-                            contentDescription = "Profile",
-                            modifier = Modifier
-                                .padding(end = 16.dp)
-                                .size(40.dp)
-                                .clip(CircleShape)
-                        )
-                    }
+                    AvatarIcon(
+                        modifier = Modifier
+                            .padding(end = 16.dp)
+                            .size(36.dp),
+                        url = person.image
+                    )
                     Text(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                        text = androidx.compose.ui.text.buildAnnotatedString {
-                            append(person.name + " ")
-                            val isMale = person.gender == s(R.string.male)
-                            withStyle(
-                                style = androidx.compose.ui.text.SpanStyle(
-                                    color = if (isMale) androidx.compose.ui.graphics.Color.Blue
-                                    else androidx.compose.ui.graphics.Color.Magenta
-                                )
-                            ) {
-                                append(if (isMale) "\u2642" else "\u2640")
-                            }
-                        },
+                        text = genderLogo(person.name, person.gender),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Icon(

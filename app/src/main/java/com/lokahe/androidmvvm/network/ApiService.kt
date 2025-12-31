@@ -3,8 +3,10 @@ package com.lokahe.androidmvvm.network
 import com.lokahe.androidmvvm.models.network.BaseResponse
 import com.lokahe.androidmvvm.models.network.LoginRequest
 import com.lokahe.androidmvvm.models.network.LoginResponse
+import com.lokahe.androidmvvm.models.network.Post
 import com.lokahe.androidmvvm.models.network.RegisterRequest
 import com.lokahe.androidmvvm.models.network.RegisterResponse
+import com.lokahe.androidmvvm.models.network.User
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -17,9 +19,6 @@ import retrofit2.http.Query
 interface ApiService {
     @POST(Api.REGISTER)
     suspend fun register(@Body registerRequest: RegisterRequest): Response<RegisterResponse>
-
-    @GET(Api.REGISTERED)
-    suspend fun isRegistered(@Query("where") whereClause: String): Response<List<RegisterResponse>>
 
     @POST(Api.LOGIN)
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
@@ -37,4 +36,26 @@ interface ApiService {
         @Header("Content-Type") contentType: String = "application/json",
         @Body request: Any
     ): Response<LoginResponse>
+
+    @GET(Api.DATA_USERS)
+    suspend fun isRegistered(@Query("where") whereClause: String): Response<List<RegisterResponse>>
+
+    @GET(Api.DATA_USERS)
+    suspend fun getUsers(
+        @Query("pageSize") pageSize: Int,
+        @Query("offset") offset: Int
+    ): Response<List<User>>
+
+    @GET(Api.DATA_POSTS)
+    suspend fun getPosts(
+        @Query("pageSize") pageSize: Int,
+        @Query("offset") offset: Int
+    ): Response<List<Post>>
+
+    @POST(Api.DATA_POSTS)
+    suspend fun post(
+        @Header("user-token") token: String,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body request: Any
+    ): Response<Post>
 }

@@ -41,9 +41,11 @@ import com.lokahe.androidmvvm.ProvideLocals
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.SIDE_MENU_ITEMS
 import com.lokahe.androidmvvm.Screen
+import com.lokahe.androidmvvm.UserHeaderOption
 import com.lokahe.androidmvvm.ui.screens.AccountScreen
 import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.PersonsScreen
+import com.lokahe.androidmvvm.ui.screens.SendPostScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.ui.widget.MainDialog
 import com.lokahe.androidmvvm.ui.widget.UserHeader
@@ -74,6 +76,7 @@ class MainActivity : AppCompatActivity() {
                             composable(Screen.Home.route) { MainScreen() }
                             composable(Screen.Account.route) { AccountScreen() }
                             composable(Screen.Persons.route) { PersonsScreen() }
+                            composable(Screen.SendPost.route) { SendPostScreen() }
                             activity(Screen.Settings.route) {
                                 activityClass = SettingsActivity::class
                             }
@@ -132,7 +135,7 @@ fun DrawerContent(
     ModalDrawerSheet(
         modifier = Modifier.width(300.dp),
     ) {
-        UserHeader(onItemSelected)
+        UserHeader(option = UserHeaderOption.Sign, onItemSelected = onItemSelected)
         Spacer(modifier = Modifier.height(8.dp))
         SIDE_MENU_ITEMS.forEach { (screen, icon, label) ->
             NavigationDrawerItem(

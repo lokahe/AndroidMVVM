@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.AVATARS
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
@@ -264,7 +265,7 @@ fun MainDialog() {
                                             viewModel.dismissDialog()
                                         }
                                 ) {
-                                    coil.compose.AsyncImage(
+                                    AsyncImage(
                                         model = url,
                                         contentDescription = "Avatar $index",
                                         modifier = Modifier.fillMaxSize(),

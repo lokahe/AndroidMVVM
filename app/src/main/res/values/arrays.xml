@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="genders">
-        <item>Male</item>
-        <item>Female</item>
-        <item>Other</item>
+    <string-array name="dark_mode">
+        <item>Follow System</item>
+        <item>Light</item>
+        <item>Dark</item>
     </string-array>
+    <integer-array name="dark_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </integer-array>
+    <array name="dark_mode_icons">
+        <item>@drawable/ic_follow_system</item>
+        <item>@drawable/ic_light_mode</item>
+        <item>@drawable/ic_dark_mode</item>
+    </array>
 
     <string-array name="male_names">
         <item>Aaron</item>

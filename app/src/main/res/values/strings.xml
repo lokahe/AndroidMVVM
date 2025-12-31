@@ -48,4 +48,20 @@
     <string name="avatar">avatar</string>
     <string name="use_avatar_color">Use avatar color</string>
     <string name="summary_use_avatar_color">use main color of avatar as theme color, needed login an selected a avatar.</string>
+    <string name="users">Users</string>
+    <string name="mercury">Mercury</string>
+    <string name="lesbian">Lesbian</string>
+    <string name="gay">Gay</string>
+    <string name="bisexual">Bisexual</string>
+    <string name="asexual">Asexual</string>
+    <string name="transgender">Transgender</string>
+    <string name="heterosexuality">Heterosexuality</string>
+    <string name="nonbinary">Non binary</string>
+    <string name="neuter">Neuter</string>
+    <string name="intersex">Intersex</string>
+    <string name="add">Add</string>
+    <string name="send_post">Send post</string>
+    <string name="content">Content</string>
+    <string name="image">Image</string>
+    <string name="dark_mode">Dark mode</string>
 </resources>

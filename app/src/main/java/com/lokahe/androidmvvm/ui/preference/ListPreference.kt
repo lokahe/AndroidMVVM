@@ -3,7 +3,6 @@ package com.lokahe.androidmvvm.ui.preference
 import android.annotation.SuppressLint
 import androidx.annotation.ArrayRes
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -110,7 +110,7 @@ fun toItems(
     val context = LocalContext.current
     val names = context.resources.getStringArray(namesRes)
     val values: Array<out Any> = when (value) {
-        is Int -> arrayOf(context.resources.getIntArray(valuesRes))
+        is Int -> context.resources.getIntArray(valuesRes).toTypedArray()
         is String -> context.resources.getStringArray(valuesRes)
         else -> throw IllegalArgumentException("Unsupported type for value $value")
     }
@@ -186,7 +186,7 @@ fun RadioButtonItem(
         RadioButton(selected = selected, onClick = null)
         Spacer(modifier = Modifier.width(12.dp))
         if (item.icon != null) {
-            Image(
+            Icon(
                 painter = painterResource(id = item.icon),
                 contentDescription = null,
             )

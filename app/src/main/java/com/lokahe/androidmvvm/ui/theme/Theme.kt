@@ -42,13 +42,21 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun AndroidMVVMTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val viewModel = LocalViewModel.current as BaseViewModel
     val seed by viewModel.colorSeed.collectAsState()
     val prefs by viewModel.userPreferences.collectAsState()
+    val darkSys = isSystemInDarkTheme()
+    val darkTheme by derivedStateOf {
+        when (prefs.darkMode) {
+            0 -> darkSys
+            1 -> false
+            2 -> true
+            else -> darkSys
+        }
+    }
     val colorScheme: ColorScheme by remember {
         derivedStateOf {
             if (prefs.useAvatarColor && seed != null) {

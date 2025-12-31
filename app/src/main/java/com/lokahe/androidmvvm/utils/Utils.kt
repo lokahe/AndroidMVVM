@@ -5,6 +5,10 @@ import android.graphics.drawable.BitmapDrawable
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
@@ -12,6 +16,8 @@ import com.google.android.material.color.utilities.DynamicScheme
 import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.TonalPalette
 import com.google.android.material.color.utilities.Variant
+import com.lokahe.androidmvvm.AVATARS
+import com.lokahe.androidmvvm.GENDERS
 import com.lokahe.androidmvvm.MyApplication.Companion.application
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.argb
@@ -33,13 +39,17 @@ class Utils {
         }
 
         fun randomPerson(gender: String? = null): Person {
-            val gd = gender ?: listOf(s(R.string.female), s(R.string.male)).random()
+            val gd = gender ?: GENDERS.random().first
             return Person(
-                name = if (gd == s(R.string.female)) names0.random() else names1.random(),
+                name = when (gd) {
+                    GENDERS[0].first -> names0.random()
+                    GENDERS[1].first -> names1.random()
+                    else -> (names0 + names1).random()
+                },
                 description = s(R.string.desc_random_person),
                 age = (18..65).random(),
                 gender = gd,
-                image = "https://fastly.picsum.photos/id/336/200/200.jpg?hmac=VZ7MzNM30jINYNf5Oj_8zqPLTDAyKDk6eXWTGnNb4bU"
+                image = AVATARS.random()
                 //"https://picsum.photos/200"
             )
         }
@@ -96,5 +106,17 @@ class Utils {
                 tertiary, neutral, neutralVariant
             ).toColorScheme()
         }
+
+        fun genderLogo(name: String = "", gender: String?): AnnotatedString =
+            buildAnnotatedString {
+                append(name + if (name.isNotEmpty()) " " else "")
+                gender?.let { gender ->
+                    GENDERS.first { it.first == gender }.let {
+                        withStyle(
+                            style = SpanStyle(color = Color(it.third))
+                        ) { append(it.second) }
+                    }
+                }
+            }
     }
 }

@@ -60,11 +60,12 @@ fun SettingsScreen(viewModel: SettingsViewModel = LocalViewModel.current as Sett
             ) { viewModel.updateUseAvatarColor(it) }
             settingsDivider()
             ListPreference(
-                title = stringResource(R.string.option_list),
-                value = preferences.userGender,
-                names = R.array.genders,
-                values = R.array.genders
-            ) { viewModel.updateGender(it as String) }
+                title = stringResource(R.string.dark_mode),
+                value = preferences.darkMode,
+                names = R.array.dark_mode,
+                values = R.array.dark_mode_values,
+                icons = R.array.dark_mode_icons,
+            ) { viewModel.updateDarkMode(it as Int) }
             settingsDivider()
             SliderDialogPreference(
                 title = stringResource(R.string.option_slider),

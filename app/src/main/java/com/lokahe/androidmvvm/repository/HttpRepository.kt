@@ -3,7 +3,9 @@ package com.lokahe.androidmvvm.repository
 import android.util.Log
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.models.network.LoginRequest
+import com.lokahe.androidmvvm.models.network.Post
 import com.lokahe.androidmvvm.models.network.RegisterRequest
+import com.lokahe.androidmvvm.models.network.User
 import com.lokahe.androidmvvm.network.ApiService
 import com.lokahe.androidmvvm.network.UserManager
 import com.lokahe.androidmvvm.s
@@ -35,10 +37,8 @@ class HttpRepository @Inject constructor(
     suspend fun isUserRegistered(email: String): Boolean {
         // 1. Format the clause: email='john@doe.com'
         val whereClause = "email='$email'"
-
         // 2. Make the call
         val response = apiService.isRegistered(whereClause)
-
         if (response.isSuccessful) {
             val usersList = response.body()
             // 3. If list is not null and not empty, the user exists
@@ -57,7 +57,7 @@ class HttpRepository @Inject constructor(
             } else {
                 Result.failure(
                     Exception(
-                        response.body()?.message ?: R.string.registration_failed.toString()
+                        response.body()?.message ?: s(R.string.registration_failed)
                     )
                 )
             }
@@ -108,6 +108,53 @@ class HttpRepository @Inject constructor(
                 Result.success(response.body()?.message ?: "")
             } else {
                 Log.e("updateProperty", "Error: ${response.body()?.message}")
+                Result.failure(
+                    Exception(
+                        response.body()?.message ?: ""
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getUsers(pageSize: Int, offset: Int): Result<List<User>> {
+        return try {
+            val users = apiService.getUsers(pageSize, offset)
+            if (users.isSuccessful && users.body() != null && users.body()!!.isNotEmpty()) {
+                Result.success(users.body()!!)
+            } else {
+                Result.failure(
+                    Exception("")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getPosts(pageSize: Int, offset: Int): Result<List<Post>> {
+        return try {
+            val posts = apiService.getPosts(pageSize, offset)
+            if (posts.isSuccessful && posts.body() != null && posts.body()!!.isNotEmpty()) {
+                Result.success(posts.body()!!)
+            } else {
+                Result.failure(
+                    Exception("")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sendPost(token: String, request: Any): Result<String> {
+        return try {
+            val response = apiService.post(token = token, request = request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()?.message ?: "")
+            } else {
                 Result.failure(
                     Exception(
                         response.body()?.message ?: ""

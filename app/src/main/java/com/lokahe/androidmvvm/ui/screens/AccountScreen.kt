@@ -15,8 +15,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.UserHeaderOption
 import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.ui.widget.UserHeader
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
@@ -55,7 +56,29 @@ fun AccountScreen() {
                 .padding(contentPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            UserHeader()
+            UserHeader(option = UserHeaderOption.Edit) {
+                IconButton(
+                    modifier = Modifier.padding(start = 16.dp),
+                    onClick = {
+                        if (isEditing) {
+                            viewModel.updateUserProfile(
+                                phone = phone,
+                                address = address,
+                                birthDate = birthDate,
+                                description = description,
+                                gender = gender
+                            )
+                            isEditing = false
+                        } else {
+                            isEditing = true
+                        }
+                    }) {
+                    Icon(
+                        imageVector = if (isEditing) Icons.Default.Save else Icons.Default.Edit,
+                        contentDescription = stringResource(if (isEditing) R.string.save else R.string.edit)
+                    )
+                }
+            }
 
             Column(modifier = Modifier.padding(16.dp)) {
 
@@ -117,31 +140,6 @@ fun AccountScreen() {
                     minLines = 3
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        if (isEditing) {
-                            viewModel.updateUserProfile(
-                                phone = phone,
-                                address = address,
-                                birthDate = birthDate,
-                                description = description,
-                                gender = gender
-                            )
-                            isEditing = false
-                        } else {
-                            isEditing = true
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = if (isEditing) Icons.Default.Save else Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(text = if (isEditing) "Save" else "Edit Profile")
-                }
             }
         }
     }

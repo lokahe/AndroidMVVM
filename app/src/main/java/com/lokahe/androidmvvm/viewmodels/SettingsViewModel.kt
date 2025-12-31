@@ -19,6 +19,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateDarkMode(darkMode: Int) {
+        viewModelScope.launch {
+            prefRepository.updateDarkMode(darkMode)
+        }
+    }
+
+
     fun updateUserAge(age: Int) {
         viewModelScope.launch {
             prefRepository.updateUserAge(age)

@@ -1,12 +1,16 @@
 package com.lokahe.androidmvvm.viewmodels
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.AppDialog
+import com.lokahe.androidmvvm.PAGE_SIZE
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.models.Person
+import com.lokahe.androidmvvm.models.network.Post
 import com.lokahe.androidmvvm.models.network.UpdateAvatarRequest
+import com.lokahe.androidmvvm.models.network.User
 import com.lokahe.androidmvvm.network.UserManager
 import com.lokahe.androidmvvm.repository.DataBaseRepository
 import com.lokahe.androidmvvm.repository.HttpRepository
@@ -15,10 +19,13 @@ import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -171,7 +178,6 @@ class MainViewModel @Inject constructor(
     // State for the currently visible dialog
     private val _activeDialog = mutableStateOf<AppDialog>(AppDialog.None)
     val activeDialog: State<AppDialog> = _activeDialog
-
     fun showDialog(dialog: AppDialog) {
         _activeDialog.value = dialog
     }
@@ -180,7 +186,89 @@ class MainViewModel @Inject constructor(
         _activeDialog.value = AppDialog.None
     }
 
-    // State for the list of persons
+    // state for home tab index state
+    private var _homeTabIndex = mutableIntStateOf(0)
+    val homeTabIndex: State<Int> = _homeTabIndex
+    fun setHomeTabIndex(index: Int) {
+        _homeTabIndex.intValue = index
+    }
+
+    // State for the list of users
+    private val _users = MutableStateFlow<List<User>>(emptyList())
+    val users = _users.asStateFlow()
+
+    init {
+        fetchUsers(PAGE_SIZE, 0)
+    }
+
+    fun fetchUsers(pageSize: Int, offset: Int) {
+        viewModelScope.launch {
+            val result = httpRepository.getUsers(pageSize, offset)
+            result.onSuccess { users ->
+                _users.update { currentList ->
+                    if (offset == 0) users
+                    else currentList + users
+                }
+            }
+            result.onFailure { error ->
+                toast(error.message ?: R.string.unkown_error.toString())
+            }
+        }
+    }
+
+    // State for the list of posts
+    private val _posts = MutableStateFlow<List<Post>>(emptyList())
+    val posts = _posts.asStateFlow()
+
+    init {
+        fetchPosts(PAGE_SIZE, 0)
+    }
+
+    fun fetchPosts(pageSize: Int, offset: Int) {
+        viewModelScope.launch {
+            val result = httpRepository.getPosts(pageSize, offset)
+            result.onSuccess { posts ->
+                _posts.update { currentList ->
+                    if (offset == 0) posts
+                    else currentList + posts
+                }
+            }
+            result.onFailure { error ->
+                toast(error.message ?: R.string.unkown_error.toString())
+            }
+        }
+    }
+
+    fun sendPost(content: String, images: String) {
+        viewModelScope.launch {
+            val token = userManager.userTokenFlow.firstOrNull()
+            val user = userManager.userFlow.firstOrNull()
+            val date = System.currentTimeMillis()
+            if (!token.isNullOrEmpty() && user != null) {
+                val post = Post(
+                    content = content,
+                    images = images,
+                    parentId = "",
+                    ownerId = user.objectId,
+                    author = user.name,
+                    authorGender = user.gender ?: "",
+                    avatar = user.avatar ?: "",
+                    created = date,
+                    updated = date,
+                    message = null,
+                    code = null
+                )
+                val result = httpRepository.sendPost(token, post)
+                result.onSuccess { message ->
+                    toast(message)
+                }.onFailure { error ->
+                    toast(error.message ?: R.string.unkown_error.toString())
+                }
+            }
+        }
+    }
+
+    // State for the list of persons (Database)
     private val _persons = mutableStateOf<List<Person>>(emptyList())
     val persons: State<List<Person>> = _persons
 

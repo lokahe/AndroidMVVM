@@ -13,62 +13,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lokahe.androidmvvm.ui.widget.postItem
 
-val tabs = listOf("Home", "Explore", "Profile")
-val currentIndex = mutableStateOf(0)
-
-fun bottomTabNavigation(): @Composable () -> Unit = {
-    NavigationBar(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-    ) {
-        var selectedTabIndex by remember { currentIndex }
-        tabs.forEachIndexed { index, title ->
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        when (index) {
-                            0 -> Icons.Filled.Home
-                            1 -> Icons.Filled.Search
-                            2 -> Icons.Filled.Person
-                            else -> Icons.Filled.Home
-                        },
-                        contentDescription = title
-                    )
-                },
-                label = { Text(title) },
-                selected = selectedTabIndex == index,
-                onClick = { selectedTabIndex = index }
-            )
-        }
-    }
-}
+val tabs = listOf("Posts", "Explore", "Users")
 
 @Composable
-fun TabScreen(paddingValues: PaddingValues, showTab: Boolean = true) {
-    var selectedTabIndex by remember { currentIndex }
+fun TabScreen(
+    paddingValues: PaddingValues,
+    selectedTabIndexState: State<Int>,
+    onTabSelected: (Int) -> Unit = {},
+    showTab: Boolean = true
+) {
+    val selectedTabIndex by selectedTabIndexState
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +46,7 @@ fun TabScreen(paddingValues: PaddingValues, showTab: Boolean = true) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
+                        onClick = { onTabSelected(index) },
                         text = { Text(title) }
                     )
                 }
@@ -87,13 +54,12 @@ fun TabScreen(paddingValues: PaddingValues, showTab: Boolean = true) {
         }
         // Tab Content
         when (selectedTabIndex) {
-            0 -> HomeScreen(paddingValues)
+            0 -> PostsScreen(paddingValues)
             1 -> ExploreScreen(paddingValues)
-            2 -> ProfileScreen(paddingValues)
+            2 -> UsersScreen(paddingValues)
         }
     }
 }
-
 
 @Composable
 fun HomeScreen(contentPadding: PaddingValues = PaddingValues()) {
@@ -110,9 +76,9 @@ fun HomeScreen(contentPadding: PaddingValues = PaddingValues()) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
-        repeat(9) { index ->
-            postItem(index)
-        }
+//        repeat(9) { index ->
+//            postItem(index)
+//        }
     }
 }
 

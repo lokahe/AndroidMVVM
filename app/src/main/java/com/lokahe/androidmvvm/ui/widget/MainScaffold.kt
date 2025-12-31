@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 fun MainScaffold(
     title: String,
     bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
@@ -39,7 +40,8 @@ fun MainScaffold(
                 }
             )
         },
-        bottomBar = bottomBar
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton
     ) { paddingValues ->
         content(paddingValues)
     }

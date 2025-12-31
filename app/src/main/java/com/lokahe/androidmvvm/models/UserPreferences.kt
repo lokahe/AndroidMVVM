@@ -5,5 +5,7 @@ data class UserPreferences(
     val userAge: Int,
     val userGender: String,
     val isLoggedIn: Boolean,
-    val useAvatarColor: Boolean
+
+    val useAvatarColor: Boolean,
+    val darkMode: Int
 )
