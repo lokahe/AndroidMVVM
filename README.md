@@ -6,7 +6,7 @@ Registration + Login (Using Backendless as Backend)
 
 ViewModel+Repository+Hilt+Compose+Flow+Datastore+Room+Retrofit (newest frameworks)
 
-<img src="./screenshots/Screenshot_20260106_033402.png" width="200" /><img src="./screenshots/Screenshot_20260106_033429.png" width="200" /><img src="./screenshots/Screenshot_20260106_033748.png" width="200" /><img src="./screenshots/Screenshot_20260106_033833.png" width="200" /><img src="./screenshots/Screenshot_20260106_033912.png" width="200" />
+<img src="./screenshots/Screenshot_20260106_033402.png" width="180" /><img src="./screenshots/Screenshot_20260106_033429.png" width="180" /><img src="./screenshots/Screenshot_20260106_033748.png" width="180" /><img src="./screenshots/Screenshot_20260106_033833.png" width="180" /><img src="./screenshots/Screenshot_20260106_033912.png" width="180" />
 
 ## UI Layer (Compose)
 - Displays state from ViewModel (StateFlow)
