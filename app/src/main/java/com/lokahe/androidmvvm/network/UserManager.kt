@@ -48,7 +48,7 @@ class UserManager @Inject constructor(
             // 2. Save the entire object as a JSON string
             prefs[USER_DATA_KEY] = gson.toJson(response)
             // 3. calculate and save color seed
-            response.avatar.let {
+            response.avatar?.let {
                 Utils.calculateMainColor(it)?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }

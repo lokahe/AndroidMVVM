@@ -138,8 +138,12 @@ class HttpRepository @Inject constructor(
         return try {
             val posts =
                 if (whereClause.isNotEmpty())
-                    apiService.getPosts(whereClause, pageSize, offset)
-                else apiService.getPosts(pageSize, offset)
+                    apiService.getPosts(
+                        whereClause = whereClause,
+                        pageSize = pageSize,
+                        offset = offset
+                    )
+                else apiService.getPosts(pageSize = pageSize, offset = offset)
             if (posts.isSuccessful && posts.body() != null && posts.body()!!.isNotEmpty()) {
                 Result.success(posts.body()!!)
             } else {

@@ -49,12 +49,14 @@ interface ApiService {
     @GET(Api.DATA_POSTS)
     suspend fun getPosts(
         @Query("pageSize") pageSize: Int,
+        @Query("sortBy") sortBy: String = "created DESC",
         @Query("offset") offset: Int
     ): Response<List<Post>>
 
     @GET(Api.DATA_POSTS)
     suspend fun getPosts(
         @Query("where") whereClause: String,
+        @Query("sortBy") sortBy: String = "created DESC",
         @Query("pageSize") pageSize: Int,
         @Query("offset") offset: Int
     ): Response<List<Post>>

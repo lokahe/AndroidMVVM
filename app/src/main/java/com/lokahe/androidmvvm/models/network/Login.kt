@@ -52,17 +52,17 @@ data class LoginResponse(
 
     // added properties
     @SerializedName("avatar")
-    val avatar: String,
+    val avatar: String?,
     @SerializedName("phone")
-    val phone: String,
+    val phone: String?,
     @SerializedName("address")
-    val address: String,
+    val address: String?,
     @SerializedName("birthDate")
-    val birthDate: String,
+    val birthDate: String?,
     @SerializedName("description")
-    val description: String,
+    val description: String?,
     @SerializedName("gender")
-    val gender: String,
+    val gender: String?,
 
     // base
     @SerializedName("message")
