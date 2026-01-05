@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.lokahe.androidmvvm.HOME_TABS
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
@@ -50,13 +51,19 @@ fun MainScreen() {
                 }
             }
         }
-    ) {
+    ) { contentPadding ->
         TabScreen(
-            paddingValues = it,
             selectedTabIndexState = viewModel.homeTabIndex,
             onTabSelected = { index -> viewModel.setHomeTabIndex(index) },
+            HOME_TABS,
             showTab = false
-        )
+        ) { selectedTabIndex ->
+            when (selectedTabIndex) {
+                0 -> PostsScreen(contentPadding)
+                1 -> ExploreScreen(contentPadding)
+                2 -> UsersScreen(contentPadding)
+            }
+        }
     }
 }
 
@@ -71,14 +78,14 @@ fun bottomTabNavigation(
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
     ) {
         val selectedTabIndex by selectedTabIndexState
-        tabs.forEachIndexed { index, title ->
+        HOME_TABS.forEachIndexed { index, title ->
             NavigationBarItem(
                 modifier = Modifier.height(60.dp),
                 icon = {
                     Icon(
                         when (index) {
                             0 -> Icons.Filled.Home
-                            1 -> Icons.Filled.Search
+                            1 -> Icons.Filled.Image
                             2 -> Icons.Filled.People
                             else -> Icons.Filled.Home
                         },

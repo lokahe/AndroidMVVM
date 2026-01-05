@@ -64,4 +64,6 @@
     <string name="content">Content</string>
     <string name="image">Image</string>
     <string name="dark_mode">Dark mode</string>
+    <string name="send_successed">Send successed</string>
+    <string name="send_failed">Send failed</string>
 </resources>

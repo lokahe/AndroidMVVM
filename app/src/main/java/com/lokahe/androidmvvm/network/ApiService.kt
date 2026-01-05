@@ -52,6 +52,13 @@ interface ApiService {
         @Query("offset") offset: Int
     ): Response<List<Post>>
 
+    @GET(Api.DATA_POSTS)
+    suspend fun getPosts(
+        @Query("where") whereClause: String,
+        @Query("pageSize") pageSize: Int,
+        @Query("offset") offset: Int
+    ): Response<List<Post>>
+
     @POST(Api.DATA_POSTS)
     suspend fun post(
         @Header("user-token") token: String,

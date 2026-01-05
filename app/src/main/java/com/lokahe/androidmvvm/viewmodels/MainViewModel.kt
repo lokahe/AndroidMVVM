@@ -51,12 +51,13 @@ class MainViewModel @Inject constructor(
                 // Verify with server
                 if (httpRepository.verifyToken(token)) {
                     // Token is good, user stays logged in (state is likely already observing userManager)
+
                 } else {
                     // Token expired or invalid -> Logout locally
                     userManager.clearUser()
                 }
+                dismissDialog()
             }
-            showDialog(AppDialog.None)
         }
     }
 
@@ -218,20 +219,23 @@ class MainViewModel @Inject constructor(
 
     // State for the list of posts
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
+    private val _myPosts = MutableStateFlow<List<Post>>(emptyList())
     val posts = _posts.asStateFlow()
+    val myPosts = _myPosts.asStateFlow()
 
     init {
         fetchPosts(PAGE_SIZE, 0)
     }
 
-    fun fetchPosts(pageSize: Int, offset: Int) {
+    fun fetchPosts(pageSize: Int, offset: Int, objectId: String = "") {
         viewModelScope.launch {
-            val result = httpRepository.getPosts(pageSize, offset)
+            val whereClause = if (objectId.isNotEmpty()) "ownerId='$objectId'" else ""
+            val result = httpRepository.getPosts(pageSize, offset, whereClause)
             result.onSuccess { posts ->
-                _posts.update { currentList ->
-                    if (offset == 0) posts
-                    else currentList + posts
-                }
+                if (objectId.isNotEmpty())
+                    _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                else
+                    _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
             }
             result.onFailure { error ->
                 toast(error.message ?: R.string.unkown_error.toString())
@@ -239,7 +243,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun sendPost(content: String, images: String) {
+    fun sendPost(content: String, images: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             val token = userManager.userTokenFlow.firstOrNull()
             val user = userManager.userFlow.firstOrNull()
@@ -251,8 +255,8 @@ class MainViewModel @Inject constructor(
                     parentId = "",
                     ownerId = user.objectId,
                     author = user.name,
-                    authorGender = user.gender ?: "",
-                    avatar = user.avatar ?: "",
+                    authorGender = user.gender,
+                    avatar = user.avatar,
                     created = date,
                     updated = date,
                     message = null,
@@ -261,6 +265,7 @@ class MainViewModel @Inject constructor(
                 val result = httpRepository.sendPost(token, post)
                 result.onSuccess { message ->
                     toast(message)
+                    onSuccess()
                 }.onFailure { error ->
                     toast(error.message ?: R.string.unkown_error.toString())
                 }

@@ -134,9 +134,12 @@ class HttpRepository @Inject constructor(
         }
     }
 
-    suspend fun getPosts(pageSize: Int, offset: Int): Result<List<Post>> {
+    suspend fun getPosts(pageSize: Int, offset: Int, whereClause: String = ""): Result<List<Post>> {
         return try {
-            val posts = apiService.getPosts(pageSize, offset)
+            val posts =
+                if (whereClause.isNotEmpty())
+                    apiService.getPosts(whereClause, pageSize, offset)
+                else apiService.getPosts(pageSize, offset)
             if (posts.isSuccessful && posts.body() != null && posts.body()!!.isNotEmpty()) {
                 Result.success(posts.body()!!)
             } else {
@@ -153,11 +156,11 @@ class HttpRepository @Inject constructor(
         return try {
             val response = apiService.post(token = token, request = request)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()?.message ?: "")
+                Result.success(response.body()?.message ?: s(R.string.send_successed))
             } else {
                 Result.failure(
                     Exception(
-                        response.body()?.message ?: ""
+                        response.body()?.message ?: s(R.string.send_failed)
                     )
                 )
             }

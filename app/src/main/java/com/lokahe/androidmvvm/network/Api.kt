@@ -12,5 +12,7 @@ object Api {
     const val UPDATE_PROPERTY = "$APP_ID/$RESET_API_KEY/users/{user-id}"
     const val DATA_USERS = "$APP_ID/$RESET_API_KEY/data/Users" //?where=email%3D'<EMAIL>'
     const val DATA_POSTS = "$APP_ID/$RESET_API_KEY/data/Posts" //
+    const val UPLOAD_FILE = "$APP_ID/$RESET_API_KEY/files"
+
 
 }

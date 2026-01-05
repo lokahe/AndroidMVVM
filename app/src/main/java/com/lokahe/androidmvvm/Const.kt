@@ -6,6 +6,9 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 
+val HOME_TABS = listOf("Posts", "Gallery", "Users")
+val ACCOUNT_TABS = listOf("Posts", "Profile")
+
 const val PAGE_SIZE = 10
 val SIDE_MENU_ITEMS = listOf(
     Triple(Screen.Home, Icons.Filled.Home, s(R.string.home)),
@@ -28,6 +31,7 @@ val GENDERS = listOf(
 
 val AVATAR_IDS = (10..49).toList()
 val AVATARS = AVATAR_IDS.map { "https://picsum.photos/id/$it/200" }
+val GALLERIES = AVATAR_IDS.map { "https://picsum.photos/id/$it/400" }
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")

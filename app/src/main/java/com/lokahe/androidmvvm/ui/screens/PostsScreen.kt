@@ -29,9 +29,16 @@ import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostsScreen(paddingValues: PaddingValues) {
+fun PostsScreen(
+    paddingValues: PaddingValues,
+    ownerId: String = ""
+) {
     val viewModel = LocalViewModel.current as MainViewModel
-    val posts by viewModel.posts.collectAsState()
+    val posts by if (ownerId.isEmpty()) viewModel.posts.collectAsState()
+    else viewModel.myPosts.collectAsState()
+    if (ownerId.isNotEmpty() && posts.isEmpty()) {
+        viewModel.fetchPosts(PAGE_SIZE, 0, ownerId)
+    }
     val listState = rememberLazyListState()
     // Refresh state
     var isRefreshing by remember { mutableStateOf(false) }
@@ -58,7 +65,7 @@ fun PostsScreen(paddingValues: PaddingValues) {
     LaunchedEffect(isAtBottom) {
         if (isAtBottom && !isLoadingMore && !isRefreshing) {
             isLoadingMore = true
-            viewModel.fetchUsers(PAGE_SIZE, posts.size)
+            viewModel.fetchPosts(PAGE_SIZE, posts.size)
             isLoadingMore = false
         }
     }
@@ -67,11 +74,10 @@ fun PostsScreen(paddingValues: PaddingValues) {
         isRefreshing = isRefreshing,
         onRefresh = {
             isRefreshing = true
-            viewModel.fetchUsers(PAGE_SIZE, 0)
+            viewModel.fetchPosts(PAGE_SIZE, 0)
             isRefreshing = false
         },
         modifier = Modifier
-            .padding(paddingValues)
             .padding(horizontal = 16.dp)
             .fillMaxSize(),
         state = pullRefreshState
@@ -79,7 +85,10 @@ fun PostsScreen(paddingValues: PaddingValues) {
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                contentPadding = paddingValues
             ) {
                 itemsIndexed(posts) { index, user ->
                     PostItem(index, user)

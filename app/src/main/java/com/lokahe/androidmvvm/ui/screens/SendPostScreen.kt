@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.UserHeaderOption
@@ -38,6 +39,7 @@ import com.lokahe.androidmvvm.viewmodels.MainViewModel
 @Composable
 fun SendPostScreen() {
     val viewModel = LocalViewModel.current as MainViewModel
+    val navController = LocalNavController.current
     var content by remember { mutableStateOf("") }
     var images by remember { mutableStateOf("") }
     // Launcher for picking local image
@@ -93,7 +95,9 @@ fun SendPostScreen() {
                 IconButton(
                     modifier = Modifier.padding(start = 16.dp),
                     onClick = {
-                        viewModel.sendPost(content, images)
+                        viewModel.sendPost(content, images) {
+                            navController.popBackStack()
+                        }
                     }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
