@@ -3,6 +3,8 @@ package com.lokahe.androidmvvm.utils
 import android.annotation.SuppressLint
 import android.graphics.drawable.BitmapDrawable
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.AnnotatedString
@@ -22,9 +24,14 @@ import com.lokahe.androidmvvm.MyApplication.Companion.application
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.argb
 import com.lokahe.androidmvvm.models.Person
+import com.lokahe.androidmvvm.models.network.Post
+import com.lokahe.androidmvvm.models.network.User
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class Utils {
     companion object {
@@ -116,6 +123,38 @@ class Utils {
                             style = SpanStyle(color = Color(it.third))
                         ) { append(it.second) }
                     }
+                }
+            }
+
+        @Composable
+        fun postTitle(post: Post): AnnotatedString =
+            buildAnnotatedString {
+                append(post.author + "\n")
+                withStyle(
+                    style = SpanStyle(
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize
+                    )
+                ) {
+                    append(
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                            .withZone(ZoneId.systemDefault())
+                            .format(Instant.ofEpochMilli(post.created))
+                    )
+                }
+            }
+
+        @Composable
+        fun userTitle(user: User): AnnotatedString =
+            buildAnnotatedString {
+                append(user.name + "\n")
+                withStyle(
+                    style = SpanStyle(
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize
+                    )
+                ) {
+                    append(user.description)
                 }
             }
     }

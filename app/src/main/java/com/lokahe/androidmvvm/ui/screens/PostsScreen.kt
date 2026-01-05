@@ -78,7 +78,7 @@ fun PostsScreen(
             isRefreshing = false
         },
         modifier = Modifier
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 8.dp)
             .fillMaxSize(),
         state = pullRefreshState
     ) {
@@ -87,7 +87,7 @@ fun PostsScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 16.dp),
+                    .padding(top = 8.dp),
                 contentPadding = paddingValues
             ) {
                 itemsIndexed(posts) { index, user ->

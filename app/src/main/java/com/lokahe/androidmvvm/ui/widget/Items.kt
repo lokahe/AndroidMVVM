@@ -11,12 +11,15 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
@@ -28,6 +31,8 @@ import com.lokahe.androidmvvm.models.Person
 import com.lokahe.androidmvvm.models.network.Post
 import com.lokahe.androidmvvm.models.network.User
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
+import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
+import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
 
 @Composable
 fun AvatarIcon(
@@ -58,32 +63,52 @@ fun PostItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp)
+            .padding(bottom = 8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row(verticalAlignment = CenterVertically) {
                 AvatarIcon(
                     modifier = Modifier
                         .padding(end = 16.dp)
-                        .size(36.dp),
+                        .size(48.dp),
                     url = post.avatar
                 )
                 Text(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    text = genderLogo(post.author, post.authorGender),
+                    text = postTitle(post),
                     style = MaterialTheme.typography.titleMedium
+                )
+                Icon(
+                    imageVector = Icons.Filled.Share,
+                    contentDescription = "Share",
+                    modifier = Modifier
+                        .padding(
+                            end = 30.dp
+                        )
+                        .size(20.dp),
+                )
+                Icon(
+                    imageVector = Icons.Filled.ThumbUp,
+                    contentDescription = "Thumb up",
+                    modifier = Modifier
+                        .padding(
+                            end = 30.dp
+                        )
+                        .size(20.dp),
                 )
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = "Star",
-                    modifier = Modifier.padding(
-                        end = 16.dp
-                    )
+                    modifier = Modifier
+                        .padding(
+                            end = 8.dp
+                        )
+                        .size(20.dp),
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = post.content,
                 style = MaterialTheme.typography.bodyMedium
@@ -115,34 +140,31 @@ fun UserItem(
             .fillMaxWidth()
             .padding(bottom = 12.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Row {
                 AvatarIcon(
                     modifier = Modifier
                         .padding(end = 16.dp)
-                        .size(36.dp),
+                        .size(50.dp),
                     url = user.avatar ?: ""
                 )
                 Text(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    text = genderLogo(user.name, user.gender),
+                    text = userTitle(user),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = "Star",
-                    modifier = Modifier.padding(
-                        end = 16.dp
-                    )
+                    modifier = Modifier
+                        .padding(
+                            end = 10.dp
+                        )
+                        .size(20.dp),
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = user.description ?: "",
-                style = MaterialTheme.typography.bodyMedium
-            )
         }
     }
 }

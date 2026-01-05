@@ -74,13 +74,13 @@ fun bottomTabNavigation(
     NavigationBar(
         modifier = Modifier
             .fillMaxWidth()
-            .height(75.dp),
+            .height(80.dp),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
     ) {
         val selectedTabIndex by selectedTabIndexState
         HOME_TABS.forEachIndexed { index, title ->
             NavigationBarItem(
-                modifier = Modifier.height(60.dp),
+                modifier = Modifier.height(65.dp),
                 icon = {
                     Icon(
                         when (index) {
