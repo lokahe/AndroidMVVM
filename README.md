@@ -1,12 +1,25 @@
 # AndroidMVVM
 
 ## MVVM (Model-View-ViewModel) design pattern.
-A Simple Social App
-Registration + Login (Using Backendless as Backend)
+
+Registration + Login/out and some simple logic (Using Backendless as Backend)
 
 ViewModel+Repository+Hilt+Compose+Flow+Datastore+Room+Retrofit (newest frameworks)
 
 <img src="./screenshots/Screenshot_20260106_033402.png" width="160" /><img src="./screenshots/Screenshot_20260106_033429.png" width="160" /><img src="./screenshots/Screenshot_20260106_033748.png" width="160" /><img src="./screenshots/Screenshot_20260106_033833.png" width="160" /><img src="./screenshots/Screenshot_20260106_033912.png" width="160" />
+
+## Architecture: MVVM + UDF (Unidirectional Data Flow)
+
+```mermaid
+graph TD
+    User((User)) -->|Interacts| UI["UI Layer (Compose)"]
+    UI -->|Events| VM[ViewModel]
+    VM -->|UI State| UI
+    VM -->|Request Data| Repo[Repository]
+    Repo -->|Data| VM
+    Repo <-->|Read/Write| Local["Local Data Source\n(Room / DataStore)"]
+    Repo <-->|API Calls| Remote["Remote Data Source\n(Retrofit)"]
+```
 
 ## UI Layer (Compose)
 - Displays state from ViewModel (StateFlow)
@@ -41,7 +54,7 @@ ViewModel+Repository+Hilt+Compose+Flow+Datastore+Room+Retrofit (newest framework
 - Throws/returns domain-safe results
 
 
-## to use Backendless as backend, register https://backendless.com/ and follow the steps below:
+### to use Backendless as backend, register https://backendless.com/ and follow the steps below:
 ```kotlin
 // app/src/main/java/com/lokahe/androidmvvm/network/Api.kt
 
