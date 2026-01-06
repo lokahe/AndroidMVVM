@@ -1,9 +1,9 @@
-package com.lokahe.androidmvvm.repository
+package com.lokahe.androidmvvm.data.repository
 
-import com.lokahe.androidmvvm.dao.PersonDao
-import com.lokahe.androidmvvm.dao.PostDao
-import com.lokahe.androidmvvm.models.Person
-import com.lokahe.androidmvvm.models.Post
+import com.lokahe.androidmvvm.data.local.dao.PersonDao
+import com.lokahe.androidmvvm.data.local.dao.PostDao
+import com.lokahe.androidmvvm.data.models.Person
+import com.lokahe.androidmvvm.data.models.Post
 import javax.inject.Inject
 
 class DataBaseRepository @Inject constructor(

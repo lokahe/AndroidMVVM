@@ -2,9 +2,9 @@ package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lokahe.androidmvvm.models.UserPreferences
-import com.lokahe.androidmvvm.network.UserManager
-import com.lokahe.androidmvvm.repository.PreferencesRepository
+import com.lokahe.androidmvvm.data.models.UserPreferences
+import com.lokahe.androidmvvm.data.local.UserManager
+import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first

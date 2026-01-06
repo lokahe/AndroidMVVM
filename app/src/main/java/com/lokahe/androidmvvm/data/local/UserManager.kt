@@ -1,14 +1,11 @@
-package com.lokahe.androidmvvm.network
+package com.lokahe.androidmvvm.data.local
 
 import android.content.Context
 import android.util.Log
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
-import com.lokahe.androidmvvm.models.network.LoginResponse
+import com.lokahe.androidmvvm.data.models.network.LoginResponse
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,8 +13,6 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Singleton
-
-val Context.userStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
 @Singleton
 class UserManager @Inject constructor(
@@ -49,7 +44,7 @@ class UserManager @Inject constructor(
             prefs[USER_DATA_KEY] = gson.toJson(response)
             // 3. calculate and save color seed
             response.avatar?.let {
-                Utils.calculateMainColor(it)?.let { seed ->
+                Utils.Companion.calculateMainColor(it)?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
             }

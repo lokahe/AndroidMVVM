@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.models.network
+package com.lokahe.androidmvvm.data.models.network
 
 data class UpdateAvatarRequest(
     val avatar: String,

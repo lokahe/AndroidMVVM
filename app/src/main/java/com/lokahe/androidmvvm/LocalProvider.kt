@@ -8,7 +8,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
-import com.lokahe.androidmvvm.models.UserPreferences
 import com.lokahe.androidmvvm.ui.preference.PreferenceTheme
 import com.lokahe.androidmvvm.ui.preference.preferenceTheme
 

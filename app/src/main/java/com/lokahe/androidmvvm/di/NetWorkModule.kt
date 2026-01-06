@@ -1,7 +1,7 @@
 package com.lokahe.androidmvvm.di
 
-import com.lokahe.androidmvvm.network.Api
-import com.lokahe.androidmvvm.network.ApiService
+import com.lokahe.androidmvvm.data.remote.Api
+import com.lokahe.androidmvvm.data.remote.ApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

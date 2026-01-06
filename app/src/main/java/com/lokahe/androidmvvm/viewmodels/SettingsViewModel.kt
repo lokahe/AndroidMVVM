@@ -1,8 +1,8 @@
 package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.viewModelScope
-import com.lokahe.androidmvvm.network.UserManager
-import com.lokahe.androidmvvm.repository.PreferencesRepository
+import com.lokahe.androidmvvm.data.local.UserManager
+import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.launch

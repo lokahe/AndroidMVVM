@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.models.network
+package com.lokahe.androidmvvm.data.models.network
 
 import com.google.gson.annotations.SerializedName
 

@@ -1,10 +1,10 @@
-package com.lokahe.androidmvvm.dao
+package com.lokahe.androidmvvm.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.lokahe.androidmvvm.models.Post
+import com.lokahe.androidmvvm.data.models.Post
 
 @Dao
 interface PostDao {

@@ -1,12 +1,12 @@
-package com.lokahe.androidmvvm.network
+package com.lokahe.androidmvvm.data.remote
 
-import com.lokahe.androidmvvm.models.network.BaseResponse
-import com.lokahe.androidmvvm.models.network.LoginRequest
-import com.lokahe.androidmvvm.models.network.LoginResponse
-import com.lokahe.androidmvvm.models.network.Post
-import com.lokahe.androidmvvm.models.network.RegisterRequest
-import com.lokahe.androidmvvm.models.network.RegisterResponse
-import com.lokahe.androidmvvm.models.network.User
+import com.lokahe.androidmvvm.data.models.network.BaseResponse
+import com.lokahe.androidmvvm.data.models.network.LoginRequest
+import com.lokahe.androidmvvm.data.models.network.LoginResponse
+import com.lokahe.androidmvvm.data.models.network.Post
+import com.lokahe.androidmvvm.data.models.network.RegisterRequest
+import com.lokahe.androidmvvm.data.models.network.RegisterResponse
+import com.lokahe.androidmvvm.data.models.network.User
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
