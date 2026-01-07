@@ -56,7 +56,7 @@ graph TD
 
 ### to use Backendless as backend, register https://backendless.com/ and follow the steps below:
 ```kotlin
-// app/src/main/java/com/lokahe/androidmvvm/network/Api.kt
+// app/src/main/java/com/lokahe/androidmvvm/data/remote/Api.kt
 
 object Api {
     const val URL = "https://api.backendless.com/"
