@@ -1,5 +1,5 @@
 # AndroidMVVM
-![](https://img.shields.io/badge/Android-21%20--%2036-green.svg)
+![](https://img.shields.io/badge/Android-26%20--%2036-green.svg)
 
 ## Preview
 <img src="./screenshots/Screenshot_20260106_033402.png" width="160" /><img src="./screenshots/Screenshot_20260106_033429.png" width="160" /><img src="./screenshots/Screenshot_20260106_033748.png" width="160" /><img src="./screenshots/Screenshot_20260106_033833.png" width="160" /><img src="./screenshots/Screenshot_20260106_033912.png" width="160" />
