@@ -1,15 +1,12 @@
 # AndroidMVVM
+![](https://img.shields.io/badge/Android-21%20--%2036-green.svg)
 
-## MVVM (Model-View-ViewModel) design pattern.
-
-Registration + Login/out and some simple logic (Using Backendless as Backend)
-
-ViewModel+Repository+Hilt+Compose+Flow+Datastore+Room+Retrofit (newest frameworks)
-
+## Preview
 <img src="./screenshots/Screenshot_20260106_033402.png" width="160" /><img src="./screenshots/Screenshot_20260106_033429.png" width="160" /><img src="./screenshots/Screenshot_20260106_033748.png" width="160" /><img src="./screenshots/Screenshot_20260106_033833.png" width="160" /><img src="./screenshots/Screenshot_20260106_033912.png" width="160" />
 
-## Architecture: MVVM + UDF (Unidirectional Data Flow)
-
+## Architecture: MVVM (Model-View-ViewModel) + UDF (Unidirectional Data Flow)
+Registration + Login/out and some simple logic (Using Backendless as Backend)\
+ViewModel+Repository+Hilt+Compose+Flow+Datastore+Room+Retrofit (newest frameworks)
 ```mermaid
 graph TD
     User((User)) -->|Interacts| UI["UI Layer (Compose)"]
