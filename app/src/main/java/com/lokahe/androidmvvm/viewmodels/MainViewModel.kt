@@ -7,11 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.PAGE_SIZE
 import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.network.Post
+import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.network.UpdateAvatarRequest
 import com.lokahe.androidmvvm.data.models.network.User
-import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -227,18 +227,26 @@ class MainViewModel @Inject constructor(
         fetchPosts(PAGE_SIZE, 0)
     }
 
-    fun fetchPosts(pageSize: Int, offset: Int, objectId: String = "") {
+    fun fetchPosts(pageSize: Int, offset: Int, ownerId: String = "") {
         viewModelScope.launch {
-            val whereClause = if (objectId.isNotEmpty()) "ownerId='$objectId'" else ""
+            val whereClause = if (ownerId.isNotEmpty()) "ownerId='$ownerId'" else ""
             val result = httpRepository.getPosts(pageSize, offset, whereClause)
             result.onSuccess { posts ->
-                if (objectId.isNotEmpty())
+                if (ownerId.isNotEmpty())
                     _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
                 else
                     _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                for (post in posts)
+                    dbRepository.insertPost(post)
             }
             result.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
+                dbRepository.getAllPosts(pageSize, offset, if (ownerId.isEmpty()) null else ownerId)
+                    .let { posts ->
+                        if (ownerId.isNotEmpty())
+                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                        else
+                            _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                    }
             }
         }
     }
@@ -250,12 +258,12 @@ class MainViewModel @Inject constructor(
             val date = System.currentTimeMillis()
             if (!token.isNullOrEmpty() && user != null) {
                 val post = Post(
+                    objectId = "",
                     content = content,
                     images = images,
                     parentId = "",
                     ownerId = user.objectId,
                     author = user.name,
-                    authorGender = user.gender ?: "",
                     avatar = user.avatar ?: "",
                     created = date,
                     updated = date,

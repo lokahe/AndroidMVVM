@@ -2,29 +2,34 @@ package com.lokahe.androidmvvm.data.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.serialization.SerialName
+import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "posts")
 data class Post(
-    @PrimaryKey(autoGenerate = true)
-    @SerialName("id")
-    val id: Long,
-    @SerialName("author")
+    @PrimaryKey(autoGenerate = false)
+    @SerializedName("objectId")
+    val objectId: String,
+    @SerializedName("ownerId")
+    val ownerId: String,
+    @SerializedName("author")
     val author: String,
-    @SerialName("content")
+    @SerializedName("avatar")
+    val avatar: String,
+    @SerializedName("created")
+    val created: Long,
+    @SerializedName("updated")
+    val updated: Long,
+    @SerializedName("content")
     val content: String,
-    @SerialName("published")
-    val published: Boolean,
-    @SerialName("date")
-    val date: Long,
-    @SerialName("liked_by_me")
-    val likedByMe: Boolean,
-    @SerialName("likes")
-    val likes: Int = 0,
-    @SerialName("shares")
-    val shares: Int = 0,
-    @SerialName("views")
-    val views: Int = 0,
-    @SerialName("favor")
-    val favor: Boolean
+    @SerializedName("images")
+    val images: String,
+    @SerializedName("parentId")
+    val parentId: String,
+
+    // base
+    @SerializedName("message")
+    val message: String?,
+
+    @SerializedName("code")
+    val code: String?
 )

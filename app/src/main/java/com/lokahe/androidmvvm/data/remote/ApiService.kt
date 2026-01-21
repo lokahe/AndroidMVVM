@@ -1,9 +1,9 @@
 package com.lokahe.androidmvvm.data.remote
 
+import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.network.BaseResponse
 import com.lokahe.androidmvvm.data.models.network.LoginRequest
 import com.lokahe.androidmvvm.data.models.network.LoginResponse
-import com.lokahe.androidmvvm.data.models.network.Post
 import com.lokahe.androidmvvm.data.models.network.RegisterRequest
 import com.lokahe.androidmvvm.data.models.network.RegisterResponse
 import com.lokahe.androidmvvm.data.models.network.User

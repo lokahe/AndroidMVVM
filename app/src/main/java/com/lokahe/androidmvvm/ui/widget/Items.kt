@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.network.Post
+import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.network.User
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle

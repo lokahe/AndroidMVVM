@@ -11,12 +11,10 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(post: Post)
 
-    @Query("SELECT * FROM posts")
-    suspend fun getAllPosts(): List<Post>
-
-    @Query("SELECT * FROM posts WHERE id = :id")
-    suspend fun getPostById(id: Long): Post?
-
-    @Query("DELETE FROM posts WHERE id = :id")
-    suspend fun deletePostById(id: Long)
+    @Query("SELECT * FROM posts WHERE (:ownerId IS NULL OR ownerId = :ownerId)  ORDER BY created DESC LIMIT :pageSize OFFSET :offset")
+    suspend fun getAllPosts(
+        pageSize: Int,
+        offset: Int,
+        ownerId: String? = null
+    ): List<Post>
 }

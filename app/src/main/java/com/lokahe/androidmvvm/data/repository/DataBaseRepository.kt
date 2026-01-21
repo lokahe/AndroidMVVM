@@ -22,8 +22,16 @@ class DataBaseRepository @Inject constructor(
         return personDao.getAllPersons()
     }
 
-    suspend fun getAllPosts(): List<Post> {
-        return postDao.getAllPosts()
+    suspend fun getAllPosts(
+        pageSize: Int,
+        offset: Int,
+        ownerId: String? = null
+    ): List<Post> {
+        return postDao.getAllPosts(
+            pageSize = pageSize,
+            offset = offset,
+            ownerId = ownerId
+        )
     }
 
     suspend fun getPersonById(id: Int): Person? {
