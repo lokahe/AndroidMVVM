@@ -30,7 +30,7 @@ import com.lokahe.androidmvvm.viewmodels.MainViewModel
 @Composable
 fun MainScreen() {
     val viewModel = LocalViewModel.current as MainViewModel
-    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val isLoggedIn by viewModel.isSignedIn.collectAsState()
     val navController = LocalNavController.current
     MainScaffold(
         title = stringResource(R.string.app_name),

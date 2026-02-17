@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
-import com.lokahe.androidmvvm.data.models.network.LoginResponse
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,36 +36,36 @@ class UserManager @Inject constructor(
     /**
      * Saves the full LoginResponse object and the token separately for easy access
      */
-    suspend fun saveUser(response: LoginResponse) {
-        context.userStore.edit { prefs ->
-            // 1. Save the token specifically (often needed for Interceptors)
-            response.userToken?.let { prefs[USER_TOKEN_KEY] = it }
-            // 2. Save the entire object as a JSON string
-            prefs[USER_DATA_KEY] = gson.toJson(response)
-            // 3. calculate and save color seed
-            response.avatar?.let {
-                Utils.calculateMainColor(it)?.let { seed ->
-                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
-                }
-            }
-        }
-    }
+//    suspend fun saveUser(response: LoginResponse) {
+//        context.userStore.edit { prefs ->
+//            // 1. Save the token specifically (often needed for Interceptors)
+//            response.userToken?.let { prefs[USER_TOKEN_KEY] = it }
+//            // 2. Save the entire object as a JSON string
+//            prefs[USER_DATA_KEY] = gson.toJson(response)
+//            // 3. calculate and save color seed
+//            response.avatar?.let {
+//                Utils.calculateMainColor(it)?.let { seed ->
+//                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
+//                }
+//            }
+//        }
+//    }
 
     suspend fun saveToken(accessToken: String?) {
         context.userStore.edit { prefs -> accessToken?.let { prefs[USER_TOKEN_KEY] = it } }
     }
 
-    suspend fun saveUser(userJson: String) {
-        context.userStore.edit { prefs -> prefs[USER_DATA_KEY] = userJson }
+    suspend fun saveUser(user: User) {
+        context.userStore.edit { prefs -> prefs[USER_DATA_KEY] = gson.toJson(user) }
     }
 
     /**
      * Retrieves the full User object as a Flow
      */
-    val userFlow: Flow<LoginResponse?> = context.userStore.data.map { prefs ->
+    val userFlow: Flow<User?> = context.userStore.data.map { prefs ->
         prefs[USER_DATA_KEY]?.let {
             try {
-                gson.fromJson(it, LoginResponse::class.java)
+                gson.fromJson(it, User::class.java)
             } catch (e: Exception) {
                 Log.e("UserManager", "Error deserializing user data: ${e.message}")
                 null

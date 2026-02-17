@@ -27,5 +27,14 @@ data class User(
     @SerializedName("email")
     val email: String,
     @SerializedName("phone")
-    val phone: String
+    val phone: String,
+    @SerializedName("user_metadata")
+    val userMetadata: UserMetadata,
+)
+
+data class UserMetadata(
+    @SerializedName("full_name")
+    val fullName: String,
+    @SerializedName("avatar_url")
+    val avatarUrl: String
 )

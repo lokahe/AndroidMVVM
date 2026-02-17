@@ -36,13 +36,13 @@ fun UserHeader(
 ) {
     val viewModel = LocalViewModel.current as MainViewModel
     val user by viewModel.currentUser.collectAsState()
-    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val isLoggedIn by viewModel.isSignedIn.collectAsState()
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = {
                 if (isLoggedIn) onItemSelected(Screen.Account)
-                else viewModel.showDialog(AppDialog.Login)
+                else viewModel.showDialog(AppDialog.SignIn)
             }),
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
@@ -56,9 +56,9 @@ fun UserHeader(
                     .size(50.dp)
                     .clickable(onClick = {
                         if (isLoggedIn) viewModel.showDialog(AppDialog.Avatar)
-                        else viewModel.showDialog(AppDialog.Login)
+                        else viewModel.showDialog(AppDialog.SignIn)
                     }),
-                url = user?.avatar ?: ""
+                url = user?.userMetadata?.avatarUrl ?: ""
             )
             Column(
                 modifier = Modifier
@@ -66,7 +66,7 @@ fun UserHeader(
                     .weight(1f)
             ) {
                 Text(
-                    text = user?.name ?: stringResource(R.string.guest),
+                    text = user?.userMetadata?.fullName ?: stringResource(R.string.guest),
                     modifier = Modifier.padding(bottom = 4.dp),
                     style = MaterialTheme.typography.titleLarge
                 )
@@ -80,7 +80,7 @@ fun UserHeader(
                     IconButton(
                         modifier = Modifier.padding(start = 16.dp),
                         onClick = {
-                            viewModel.showDialog(if (isLoggedIn) AppDialog.Logout else AppDialog.Login)
+                            viewModel.showDialog(if (isLoggedIn) AppDialog.SignOut else AppDialog.SignIn)
                         }) {
                         Icon(
                             imageVector = if (isLoggedIn) Icons.AutoMirrored.Filled.Logout

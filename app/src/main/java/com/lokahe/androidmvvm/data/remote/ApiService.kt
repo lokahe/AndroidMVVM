@@ -4,6 +4,7 @@ import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.SetPasswordRequest
 import com.lokahe.androidmvvm.data.models.supabase.SignRequest
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
@@ -54,6 +55,20 @@ interface ApiService {
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String
     ): Response<com.lokahe.androidmvvm.data.models.supabase.User>
+
+    @POST("auth/v1/token?grant_type=refresh_token")
+    suspend fun refreshToken(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body body: RefreshTokenRequest
+    ): Response<Any>
+
+    @POST("auth/v1/logout")
+    suspend fun signOut(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String
+    ): Response<Any>
+
 
     @POST("auth/v1/otp")
     suspend fun sign( //opt

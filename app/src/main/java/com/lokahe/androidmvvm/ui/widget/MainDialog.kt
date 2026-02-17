@@ -59,259 +59,276 @@ import com.lokahe.androidmvvm.AVATARS
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.has
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
 fun MainDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
-    val context = LocalContext.current
     val activeDialog by viewModel.activeDialog
-    when (activeDialog) {
-        is AppDialog.Logout -> {
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissDialog() },
-                title = { Text(text = stringResource(R.string.logout)) },
-                text = { Text(text = "Are you sure you want to logout?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.dismissDialog()
-                            viewModel.logout()
-                        }
-                    ) {
-                        Text(stringResource(R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { viewModel.dismissDialog() }
-                    ) {
-                        Text(stringResource(R.string.cancel))
+    if (activeDialog.has(AppDialog.SignOut.index)) SignOutDialog()
+    if (activeDialog.has(AppDialog.SignIn.index)) SignInDialog()
+    if (activeDialog.has(AppDialog.Avatar.index)) AvatarSelectDialog()
+    if (activeDialog.has(AppDialog.Loading.index)) LoadingDialog()
+}
+
+
+@Composable
+fun LoadingDialog() {
+    val viewModel = LocalViewModel.current as MainViewModel
+    Dialog(
+        onDismissRequest = { viewModel.dismissDialog() },
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(Color.White, RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+fun SignOutDialog() {
+    val viewModel = LocalViewModel.current as MainViewModel
+    AlertDialog(
+        onDismissRequest = { viewModel.dismissDialog() },
+        title = { Text(text = stringResource(R.string.logout)) },
+        text = { Text(text = "Are you sure you want to logout?") }, // TODO R.string
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    viewModel.dismissDialog()
+                    viewModel.logout()
+                }
+            ) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { viewModel.dismissDialog() }
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+fun SignInDialog() {
+    val viewModel = LocalViewModel.current as MainViewModel
+    val context = LocalContext.current
+    var email by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf(false) }
+    var verifyCode by remember { mutableStateOf("") }
+    val verifyEmail by viewModel.verifyEmail
+    AlertDialog(
+        onDismissRequest = { viewModel.dismissDialog() },
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Login,
+                    contentDescription = stringResource(R.string.sign)
+                )
+                if (verifyEmail.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .weight(1f)
+                            .basicMarquee(iterations = Int.MAX_VALUE),
+                        text = verifyEmail,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        softWrap = false // Ensure text doesn't wrap so it can scroll
+                    )
+                    IconButton(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .padding(0.dp),
+                        onClick = { viewModel.resetVerifyEmail() }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_edit_24),
+                            contentDescription = R.string.edit.toString(),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
-            )
-        }
-
-        is AppDialog.Login -> {
-            var email by remember { mutableStateOf("") }
-            var emailError by remember { mutableStateOf(false) }
-            var verifyCode by remember { mutableStateOf("") }
-            val verifyEmail by viewModel.verifyEmail
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissDialog() },
-                title = {
-                    Row(
+            }
+        },
+        text = {
+            Column {
+                if (verifyEmail.isEmpty()) {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .semantics { contentType = Username }
+                            .onFocusChanged { focusState ->
+                                emailError = !focusState.isFocused && email.isNotEmpty()
+                                        && !EMAIL_ADDRESS.matcher(email).matches()
+                            },
+                        value = email,
+                        onValueChange = { email = it; emailError = false },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (emailError) R.string.invalid_email_format
+                                    else R.string.email
+                                )
+                            )
+                        },
+                        isError = emailError,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Email, // or default
+                            autoCorrectEnabled = false // Recommended for usernames/emails
+                        ),
+                        singleLine = true
+                    )
+                } else {
+                    OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        value = verifyCode,
+                        onValueChange = {
+                            // Only allow up to 6 digits
+                            if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                                verifyCode = it
+                                if (verifyCode.length == 6)
+                                    viewModel.verifyEmail(verifyEmail, verifyCode)
+                            }
+                        },
+                        label = { Text("6-Digit Verification Code") },
+                        placeholder = { Text("000000") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.NumberPassword
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    IconButton(
+                        onClick = { viewModel.loginWithTwitter(context = context) },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Login,
-                            contentDescription = stringResource(R.string.sign)
+                            painter = painterResource(id = R.drawable.ic_x), // You need to add ic_google.xml to res/drawable
+                            contentDescription = "X" // Provide a content description for accessibility
                         )
-                        if (verifyEmail.isNotEmpty()) {
-                            Text(
-                                modifier = Modifier.padding(horizontal = 8.dp).weight(1f)
-                                    .basicMarquee(iterations = Int.MAX_VALUE),
-                                text = verifyEmail,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
-                                softWrap = false // Ensure text doesn't wrap so it can scroll
-                            )
-                            IconButton(
-                                modifier = Modifier.size(30.dp).padding(0.dp),
-                                onClick = { viewModel.resetVerifyEmail() }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.baseline_edit_24),
-                                    contentDescription = R.string.edit.toString(),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
                     }
-                },
-                text = {
-                    Column {
-                        if (verifyEmail.isEmpty()) {
-                            OutlinedTextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .semantics { contentType = Username }
-                                    .onFocusChanged { focusState ->
-                                        emailError = !focusState.isFocused && email.isNotEmpty()
-                                                && !EMAIL_ADDRESS.matcher(email).matches()
-                                    },
-                                value = email,
-                                onValueChange = { email = it; emailError = false },
-                                label = {
-                                    Text(
-                                        stringResource(
-                                            if (emailError) R.string.invalid_email_format
-                                            else R.string.email
-                                        )
-                                    )
-                                },
-                                isError = emailError,
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    keyboardType = KeyboardType.Email, // or default
-                                    autoCorrectEnabled = false // Recommended for usernames/emails
-                                ),
-                                singleLine = true
-                            )
-                        } else {
-                            OutlinedTextField(
-                                modifier = Modifier.fillMaxWidth(),
-                                value = verifyCode,
-                                onValueChange = {
-                                    // Only allow up to 6 digits
-                                    if (it.length <= 6 && it.all { char -> char.isDigit() }) {
-                                        verifyCode = it
-                                        if (verifyCode.length == 6)
-                                            viewModel.verifyEmail(verifyEmail, verifyCode)
-                                    }
-                                },
-                                label = { Text("6-Digit Verification Code") },
-                                placeholder = { Text("000000") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    keyboardType = KeyboardType.NumberPassword
-                                )
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp)
-                        ) {
-                            IconButton(
-                                onClick = { viewModel.loginWithTwitter(context = context) },
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                                    .background(Color.Black)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_x), // You need to add ic_google.xml to res/drawable
-                                    contentDescription = "X" // Provide a content description for accessibility
-                                )
-                            }
-                            IconButton(
-                                onClick = { viewModel.signWithGoogle(context = context) },
-                                modifier = Modifier.padding(start = 8.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.White)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_google), // You need to add ic_google.xml to res/drawable
-                                    contentDescription = "Google", // Provide a content description for accessibility
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    if (verifyEmail.isEmpty()) {
-                        TextButton(
-                            enabled = EMAIL_ADDRESS.matcher(email).matches(),
-                            onClick = { viewModel.sign(email) }
-                        ) {
-                            Text(stringResource(R.string.confirm))
-                        }
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { viewModel.dismissDialog() }
+                    IconButton(
+                        onClick = { viewModel.signWithGoogle(context = context) },
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White)
                     ) {
-                        Text(stringResource(R.string.cancel))
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_google), // You need to add ic_google.xml to res/drawable
+                            contentDescription = "Google", // Provide a content description for accessibility
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
-                }
-            )
-        }
-
-        AppDialog.Avatar -> {
-            // Launcher for picking local image
-            val launcher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri: android.net.Uri? ->
-                uri?.let {
-                    viewModel.updateAvatar(it.toString())
-                    viewModel.dismissDialog()
                 }
             }
-
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissDialog() },
-                title = { Text(text = "Select Avatar") },
-                text = {
-                    Column {
-                        // 1. Grid of Predefined Avatars
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(4),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(AVATARS.size) { index ->
-                                val url = AVATARS[index]
-                                Box(
-                                    modifier = Modifier
-                                        .aspectRatio(1f)
-                                        .clip(RoundedCornerShape(20))
-                                        .clickable {
-                                            viewModel.updateAvatar(url)
-                                            viewModel.dismissDialog()
-                                        }
-                                ) {
-                                    AsyncImage(
-                                        model = url,
-                                        contentDescription = "Avatar $index",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = Crop
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // 2. Button to pick from Gallery
-                        Button(
-                            onClick = { launcher.launch("image/*") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text(stringResource(R.string.pick_from_gallery))
-                        }
-                    }
-                },
-                confirmButton = {} // No confirm needed, clicking an image selects it immediately
-            )
-        }
-
-        is AppDialog.Loading -> {
-            Dialog(
-                onDismissRequest = { viewModel.dismissDialog() },
-                properties = DialogProperties(
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .background(Color.White, RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center
+        },
+        confirmButton = {
+            if (verifyEmail.isEmpty()) {
+                TextButton(
+                    enabled = EMAIL_ADDRESS.matcher(email).matches(),
+                    onClick = { viewModel.sign(email) }
                 ) {
-                    CircularProgressIndicator()
+                    Text(stringResource(R.string.confirm))
                 }
             }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { viewModel.dismissDialog() }
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
         }
+    )
+}
 
-        else -> {}
+@Composable
+fun AvatarSelectDialog() {
+    val viewModel = LocalViewModel.current as MainViewModel
+    // Launcher for picking local image
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            viewModel.updateAvatar(it.toString())
+            viewModel.dismissDialog()
+        }
     }
+
+    AlertDialog(
+        onDismissRequest = { viewModel.dismissDialog() },
+        title = { Text(text = "Select Avatar") },
+        text = {
+            Column {
+                // 1. Grid of Predefined Avatars
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(AVATARS.size) { index ->
+                        val url = AVATARS[index]
+                        Box(
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(20))
+                                .clickable {
+                                    viewModel.updateAvatar(url)
+                                    viewModel.dismissDialog()
+                                }
+                        ) {
+                            AsyncImage(
+                                model = url,
+                                contentDescription = "Avatar $index",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = Crop
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2. Button to pick from Gallery
+                Button(
+                    onClick = { launcher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(stringResource(R.string.pick_from_gallery))
+                }
+            }
+        },
+        confirmButton = {} // No confirm needed, clicking an image selects it immediately
+    )
 }

@@ -25,12 +25,16 @@ fun Int.argb(): Int {
     return 0xFF shl 24 or this
 }
 
-fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(application, message, duration).show()
-}
+fun Int.has(flag: Int): Boolean = this and flag != 0
+fun Int.set(flag: Int): Int = this or flag
+fun Int.clear(flag: Int): Int = this and flag.inv()
 
 fun Int.toHexColor(): String {
     return String.format("#%08X", this)
+}
+
+fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(application, message, duration).show()
 }
 
 @SuppressLint("RestrictedApi")

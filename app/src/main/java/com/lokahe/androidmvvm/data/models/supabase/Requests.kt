@@ -86,29 +86,9 @@ data class AuthResponse(
     @SerializedName("user")
     val user: User?
 )
-/*
-E  FATAL EXCEPTION: main (Explain with AI)
-Process: com.lokahe.androidmvvm, PID: 17156
-com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
-at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:226)
-at com.google.gson.Gson.fromJson(Gson.java:927)
-at com.google.gson.Gson.fromJson(Gson.java:892)
-at com.google.gson.Gson.fromJson(Gson.java:841)
-at com.google.gson.Gson.fromJson(Gson.java:813)
-at com.lokahe.androidmvvm.viewmodels.MainViewModel$verifyEmail$1.invokeSuspend(MainViewModel.kt:148)
-at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
-at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:101)
-at android.os.Handler.handleCallback(Handler.java:1070)
-at android.os.Handler.dispatchMessage(Handler.java:125)
-at android.os.Looper.dispatchMessage(Looper.java:333)
-at android.os.Looper.loopOnce(Looper.java:263)
-at android.os.Looper.loop(Looper.java:367)
-at android.app.ActivityThread.main(ActivityThread.java:9287)
-at java.lang.reflect.Method.invoke(Native Method)
-at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:566)
-at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
-Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [StandaloneCoroutine{Cancelling}@25c99e0, Dispatchers.Main.immediate]
-Caused by: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
-at com.google.gson.stream.JsonReader.beginObject(JsonReader.java:385)
-at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:215)
-... 16 more*/
+
+
+data class RefreshTokenRequest(
+    @SerializedName("refresh_token")
+    val refreshToken: String
+)

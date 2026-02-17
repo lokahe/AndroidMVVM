@@ -21,19 +21,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.data.models.network.LoginResponse
+import com.lokahe.androidmvvm.data.models.supabase.User
 
 @Composable
 fun ProfileScreen(
     isEditing: Boolean,
-    user: LoginResponse?,
+    user: User?,
     contentPadding: PaddingValues
 ) {
     // State for editable fields
     var phone = user?.phone ?: ""
-    var address = user?.address ?: ""
-    var birthDate = user?.birthDate ?: ""
-    var description = user?.description ?: ""
-    var gender = user?.gender ?: ""
+    var address = "" // user?.address ?: ""
+    var birthDate = "" // user?.birthDate ?: ""
+    var description = "" // user?.description ?: ""
+    var gender = "" // user?.gender ?: ""
     Column(
         modifier = Modifier
             .padding(contentPadding)

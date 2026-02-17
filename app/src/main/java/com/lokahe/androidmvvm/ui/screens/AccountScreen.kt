@@ -44,11 +44,11 @@ fun AccountScreen() {
                     onClick = {
                         if (isEditing) {
                             viewModel.updateUserProfile(
-                                phone = userEdited?.phone ?: "",
-                                address = userEdited?.address ?: "",
-                                birthDate = userEdited?.birthDate ?: "",
-                                description = userEdited?.description ?: "",
-                                gender = userEdited?.gender ?: ""
+                                phone = userEdited?.phone ?: "","","","","",
+//                                address = userEdited?.address ?: "",
+//                                birthDate = userEdited?.birthDate ?: "",
+//                                description = userEdited?.description ?: "",
+//                                gender = userEdited?.gender ?: ""
                             )
                             isEditing = false
                         } else {
@@ -67,7 +67,7 @@ fun AccountScreen() {
                 onTabSelected = { index -> viewModel.setHomeTabIndex(index) },
             ) { selectedTabIndex ->
                 when (selectedTabIndex) {
-                    0 -> PostsScreen(contentPadding.copy(top = 0.dp), user?.objectId ?: "")
+                    0 -> PostsScreen(contentPadding.copy(top = 0.dp), user?.id ?: "")
                     1 -> ProfileScreen(isEditing, user, contentPadding.copy(top = 0.dp))
                 }
             }

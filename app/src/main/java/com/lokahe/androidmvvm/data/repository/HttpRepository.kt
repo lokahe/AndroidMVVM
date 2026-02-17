@@ -3,7 +3,11 @@ package com.lokahe.androidmvvm.data.repository
 import android.util.Log
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
+import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
+import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
 import com.lokahe.androidmvvm.data.models.x.Oauth
 import com.lokahe.androidmvvm.data.remote.ApiService
@@ -104,35 +108,61 @@ class HttpRepository @Inject constructor(
         }
     }
 
-    suspend fun gAuth(body: GoogleAuth): Result<String> {
+    suspend fun gAuth(body: GoogleAuth): Result<GoogleAuthResponse> {
         return try {
             val response = apiService.googleAuth(body = body)
             if (response.isSuccessful && response.body() != null) {
                 Log.d("GoogleAuth", "gAuth: ${response.body()}")
-                Result.success(response.body()!!.toString())
+                Result.success(response.body()!!)
             } else {
-                Result.failure(
-                    Exception(
-                        response.toString()
-                    )
-                )
+                Result.failure(Exception(response.toString()))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun varifyToken(accessToken: String): Result<String> {
+    suspend fun varifyToken(accessToken: String): Result<User> {
         return try {
             val response = apiService.varifyToken(token = "Bearer $accessToken")
             if (response.isSuccessful && response.body() != null) {
                 Log.d("GoogleAuth", "varifyToken: ${response.body()}")
-                Result.success(response.body()!!.toString())
+                Result.success(response.body()!!)
             } else {
                 Result.failure(Exception(response.toString()))
             }
         } catch (e: Exception) {
             Log.d("GoogleAuth", "varifyToken: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun refreshToken(refreshToken: String): Result<Any> {
+        return try {
+            val response = apiService.refreshToken(body = RefreshTokenRequest(refreshToken))
+            if (response.isSuccessful) {
+                Log.d("GoogleAuth", "refreshToken: ${response.body()}")
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.toString()))
+            }
+        } catch (e: Exception) {
+            Log.d("GoogleAuth", "refreshToken: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun signOut(accessToken: String): Result<Any> {
+        return try {
+            val response = apiService.signOut(token = "Bearer $accessToken")
+            if (response.isSuccessful) {
+                Log.d("GoogleAuth", "signOut: ${response.body()}")
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.toString()))
+            }
+        } catch (e: Exception) {
+            Log.d("GoogleAuth", "signOut: ${e.message}")
             Result.failure(e)
         }
     }
@@ -155,18 +185,18 @@ class HttpRepository @Inject constructor(
         }
     }
 
-    suspend fun verifyEmail(email: String, token: String): Result<String> {
+    suspend fun verifyEmail(email: String, token: String): Result<AuthResponse> {
         return try {
             val response = apiService.verifyEmail(
                 body = VerifyRequest(
-                    type = "signup",
+                    type = "email",
                     email = email,
                     token = token
                 )
             )
             if (response.isSuccessful) {
                 Log.d("GoogleAuth", "verifyEmail: ${response.body()}")
-                Result.success(response.body()!!.toString())
+                Result.success(response.body()!!)
             } else {
                 Log.d("GoogleAuth", "verifyEmail: ${response.body()}")
                 Result.failure(Exception(response.toString()))

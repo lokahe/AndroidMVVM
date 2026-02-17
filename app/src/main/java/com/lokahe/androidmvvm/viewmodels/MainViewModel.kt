@@ -1,5 +1,6 @@
 package com.lokahe.androidmvvm.viewmodels
 
+//import com.google.gson.Gson
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -7,22 +8,20 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.PAGE_SIZE
 import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.clear
 import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
-import com.lokahe.androidmvvm.data.models.network.UpdateAvatarRequest
 import com.lokahe.androidmvvm.data.models.network.User
-import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.androidmvvm.set
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -50,21 +48,30 @@ class MainViewModel @Inject constructor(
         checkAutoLogin()
     }
 
+    private val _processing = mutableStateOf(false)
+    val processing: State<Boolean> = _processing
+    private fun onProcessing() {
+        _processing.value = true
+        showDialog(AppDialog.Loading)
+    }
+
+    private fun unProcessing() {
+        _processing.value = false
+        dismissDialog(AppDialog.Loading)
+    }
+
     private fun checkAutoLogin() {
         viewModelScope.launch {
             // Get the saved token
             // Note: We use .firstOrNull() to get the current value from the Flow once
             val token = userManager.userTokenFlow.firstOrNull()
             if (!token.isNullOrEmpty()) {
-                showDialog(AppDialog.Loading)
+                onProcessing()
                 // Verify with server
                 httpRepository.varifyToken(token).onSuccess {
-                    val user = Gson().fromJson(
-                        it, com.lokahe.androidmvvm.data.models.supabase.User::class.java
-                    )
-                    save(token, user)
+                    save(token, it)
                 }
-                dismissDialog()
+                unProcessing()
             }
         }
     }
@@ -74,15 +81,13 @@ class MainViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Check if logged in based on if user data exists
-    val isLoggedIn = currentUser.map { it != null }
+    val isSignedIn = currentUser.map { it != null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun logout() {
         viewModelScope.launch {
             val token = userManager.userTokenFlow.firstOrNull()
-//            if (!token.isNullOrEmpty()) {
-//                httpRepository.logout(token)
-//            }
+            token?.ifEmpty { null }?.let { httpRepository.signOut(it) }
             userManager.clearUser()
         }
     }
@@ -109,8 +114,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             googleAuther.gOauth(context) { idToken ->
                 httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null)).onSuccess {
-                    val googleAuthResponse = Gson().fromJson(it, GoogleAuthResponse::class.java)
-                    save(googleAuthResponse.accessToken)
+                    save(it.accessToken)
                 }.onFailure {
                     toast(it.message ?: R.string.unkown_error.toString())
                 }
@@ -145,8 +149,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val result = httpRepository.verifyEmail(email, token)
             result.onSuccess { it ->
-                val authResponse = Gson().fromJson(it, AuthResponse::class.java)
-                save(authResponse.accessToken)
+                save(it.accessToken)
             }.onFailure { error ->
                 toast(error.message ?: R.string.unkown_error.toString())
             }
@@ -179,9 +182,9 @@ class MainViewModel @Inject constructor(
         gender: String
     ) {
         viewModelScope.launch {
-            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
+            val userId = userManager.userFlow.firstOrNull()?.id ?: ""
             val token = userManager.userTokenFlow.firstOrNull()
-            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
+            if (userId.isEmpty() || token.isNullOrEmpty()) return@launch
 
             val updateMap = mapOf(
                 "phone" to phone,
@@ -221,14 +224,15 @@ class MainViewModel @Inject constructor(
     }
 
     // State for the currently visible dialog
-    private val _activeDialog = mutableStateOf<AppDialog>(AppDialog.None)
-    val activeDialog: State<AppDialog> = _activeDialog
+    private val _activeDialog = mutableIntStateOf(AppDialog.None.index)
+    val activeDialog: State<Int> = _activeDialog
     fun showDialog(dialog: AppDialog) {
-        _activeDialog.value = dialog
+        _activeDialog.intValue = _activeDialog.intValue.set(dialog.index)
     }
 
-    fun dismissDialog() {
-        _activeDialog.value = AppDialog.None
+    fun dismissDialog(dialog: AppDialog? = null) {
+        _activeDialog.intValue =
+            dialog?.let { _activeDialog.intValue.clear(dialog.index) } ?: AppDialog.None.index
     }
 
     // state for home tab index state
@@ -360,7 +364,9 @@ class MainViewModel @Inject constructor(
             }
             val accessToken = params["access_token"]
             val refreshToken = params["refresh_token"]
-            viewModelScope.launch { save(accessToken) }
+            accessToken?.ifEmpty { null }?.let {
+                viewModelScope.launch { save(it) }
+            } ?: params["error_description"]?.ifEmpty { null }?.let { toast(it) }
         }
     }
 }
