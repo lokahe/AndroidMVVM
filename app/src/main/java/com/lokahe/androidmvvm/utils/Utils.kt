@@ -32,6 +32,8 @@ import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 class Utils {
     companion object {
@@ -157,5 +159,80 @@ class Utils {
                     append(user.description)
                 }
             }
+
+
+        /**
+         * Step A: Percent-Encoding Utility
+         * Standard URLEncoder doesn't strictly follow RFC 3986 (it encodes spaces as + instead of %20). Use this helper:
+         */
+        fun percentEncode(value: String): String {
+            return java.net.URLEncoder.encode(value, "UTF-8")
+                .replace("+", "%20")
+                .replace("*", "%2A")
+                .replace("%7E", "~")
+        }
+
+//        /**
+//         * Step B: Build the Signature Base String (SBS)
+//         * Collect all parameters (oauth and query params).
+//         * Percent-encode every key and value.
+//         * Sort them alphabetically by key.
+//         * Join them with = and & to create a parameter string.
+//         */
+//        fun createSignatureBaseString(
+//            method: String,
+//            url: String,
+//            params: Map<String, String>
+//        ): String {
+//            val sortedParams = params.entries
+//                .sortedBy { it.key }
+//                .joinToString("&") { "${percentEncode(it.key)}=${percentEncode(it.value)}" }
+//
+//            return "${method.uppercase()}&${percentEncode(url)}&${percentEncode(sortedParams)}"
+//        }
+//
+//        /**
+//         * Step C: Sign the SBS with HMAC-SHA1
+//         * The signing key is your Consumer Secret and Token Secret (if any), joined by an &. For the initial "Request Token" step, the Token Secret is empty, so use CONSUMER_SECRET&.
+//         */
+//        fun generateSignature(
+//            baseString: String,
+//            consumerSecret: String,
+//            tokenSecret: String = ""
+//        ): String {
+//            val keyString = "${percentEncode(consumerSecret)}&${percentEncode(tokenSecret)}"
+//            val mac = Mac.getInstance("HmacSHA1")
+//            val secretKey = SecretKeySpec(keyString.toByteArray(), "HmacSHA1")
+//            mac.init(secretKey)
+//
+//            val hashBytes = mac.doFinal(baseString.toByteArray())
+//            return Base64.encodeToString(hashBytes, Base64.NO_WRAP)
+//        }
+
+        fun generateOAuthSignature(
+            method: String, url: String, params: Map<String, String>,
+            consumerSecret: String, tokenSecret: String = ""
+        ): String {
+            // 1. Sort & encode params
+            val paramStr = params.toSortedMap().entries.joinToString("&") {
+                "${percentEncode(it.key)}=${
+                    percentEncode(it.value)
+                }"
+            }
+
+            // 2. Signature base string
+            val baseUrl = url.split("?")[0].replace("https://", "https%3A%2F%2F")
+            val baseString = "$method&$baseUrl&${percentEncode(paramStr)}"
+
+            // 3. Signing key
+            val key = "${percentEncode(consumerSecret)}&${percentEncode(tokenSecret)}"
+
+            // 4. HMAC-SHA1
+            val mac = Mac.getInstance("HmacSHA1")
+            mac.init(SecretKeySpec(key.toByteArray(), "HmacSHA1"))
+            val sigBytes = mac.doFinal(baseString.toByteArray())
+
+            return java.util.Base64.getEncoder().encodeToString(sigBytes).trimEnd()
+        }
     }
 }

@@ -1,17 +1,25 @@
 package com.lokahe.androidmvvm.viewmodels
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.PAGE_SIZE
 import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
+import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
+import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.network.UpdateAvatarRequest
 import com.lokahe.androidmvvm.data.models.network.User
+import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -33,7 +41,8 @@ class MainViewModel @Inject constructor(
     private val prefRepository: PreferencesRepository,
     private val dbRepository: DataBaseRepository,
     private val httpRepository: HttpRepository,
-    private val userManager: UserManager
+    private val userManager: UserManager,
+    private val googleAuther: GoogleAuther
 ) : BaseViewModel(prefRepository, userManager) {
 
     init {
@@ -49,12 +58,11 @@ class MainViewModel @Inject constructor(
             if (!token.isNullOrEmpty()) {
                 showDialog(AppDialog.Loading)
                 // Verify with server
-                if (httpRepository.verifyToken(token)) {
-                    // Token is good, user stays logged in (state is likely already observing userManager)
-
-                } else {
-                    // Token expired or invalid -> Logout locally
-                    userManager.clearUser()
+                httpRepository.varifyToken(token).onSuccess {
+                    val user = Gson().fromJson(
+                        it, com.lokahe.androidmvvm.data.models.supabase.User::class.java
+                    )
+                    save(token, user)
                 }
                 dismissDialog()
             }
@@ -72,31 +80,73 @@ class MainViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             val token = userManager.userTokenFlow.firstOrNull()
-            if (!token.isNullOrEmpty()) {
-                httpRepository.logout(token)
-            }
+//            if (!token.isNullOrEmpty()) {
+//                httpRepository.logout(token)
+//            }
             userManager.clearUser()
         }
     }
 
-    fun login(email: String, password: String) {
+    fun loginWithTwitter(
+        context: Context,
+    ) {
         viewModelScope.launch {
-            val result = httpRepository.login(email, password)
+            val result = httpRepository.xOauth()
+            result.onSuccess { oauth ->
+                Log.d("loginWithTwitter", "oauth: $oauth")
+            }.onFailure { error ->
+                toast(error.message ?: R.string.unkown_error.toString())
+            }
+        }
+
+//        val customTabsIntent = CustomTabsIntent.Builder().build()
+//        customTabsIntent.launchUrl(context, Uri.parse(Api.TWITTER_AUTH_URL))
+
+//        httpRepository.loginWithTwitter()
+    }
+
+    fun signWithGoogle(context: Context) {
+        viewModelScope.launch {
+            googleAuther.gOauth(context) { idToken ->
+                httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null)).onSuccess {
+                    val googleAuthResponse = Gson().fromJson(it, GoogleAuthResponse::class.java)
+                    save(googleAuthResponse.accessToken)
+                }.onFailure {
+                    toast(it.message ?: R.string.unkown_error.toString())
+                }
+            }
+        }
+    }
+
+    private fun save(
+        token: String?,
+        user: com.lokahe.androidmvvm.data.models.supabase.User? = null
+    ) =
+        viewModelScope.launch {
+            userManager.saveToken(token)
+            user ?: token?.let { tk ->
+                httpRepository.varifyToken(tk).onSuccess { userManager.saveUser(it) }
+            }
+        }
+
+    fun sign(email: String) {
+        viewModelScope.launch {
+            val result = httpRepository.sign(email)
             result.onSuccess { message ->
                 toast(message)
-                dismissDialog()
+                _verifyEmail.value = email
             }.onFailure { error ->
                 toast(error.message ?: R.string.unkown_error.toString())
             }
         }
     }
 
-    fun signUp(email: String, password: String, name: String) {
+    fun verifyEmail(email: String, token: String) {
         viewModelScope.launch {
-            val result = httpRepository.register(email, password, name)
-            result.onSuccess { message ->
-                toast(message)
-                dismissDialog()
+            val result = httpRepository.verifyEmail(email, token)
+            result.onSuccess { it ->
+                val authResponse = Gson().fromJson(it, AuthResponse::class.java)
+                save(authResponse.accessToken)
             }.onFailure { error ->
                 toast(error.message ?: R.string.unkown_error.toString())
             }
@@ -105,19 +155,19 @@ class MainViewModel @Inject constructor(
 
     fun updateAvatar(url: String) {
         viewModelScope.launch {
-            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
-            val token = userManager.userTokenFlow.firstOrNull()
-            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
-            val result = httpRepository.updateProperty(
-                objectId = objectId,
-                token = token,
-                request = UpdateAvatarRequest(url)
-            )
-            result.onSuccess { message ->
-                toast(message)
-            }.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
-            }
+//            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
+//            val token = userManager.userTokenFlow.firstOrNull()
+//            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
+//            val result = httpRepository.updateProperty(
+//                objectId = objectId,
+//                token = token,
+//                request = UpdateAvatarRequest(url)
+//            )
+//            result.onSuccess { message ->
+//                toast(message)
+//            }.onFailure { error ->
+//                toast(error.message ?: R.string.unkown_error.toString())
+//            }
         }
     }
 
@@ -141,39 +191,33 @@ class MainViewModel @Inject constructor(
                 "gender" to gender
             )
 
-            val result = httpRepository.updateProperty(
-                objectId = objectId,
-                token = token,
-                request = updateMap
-            )
-            result.onSuccess { message ->
-                toast(message)
-                userManager.saveUser(
-                    currentUser.value!!.copy(
-                        phone = phone,
-                        address = address,
-                        birthDate = birthDate,
-                        description = description,
-                        gender = gender
-                    )
-                )
-            }.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
-            }
+//            val result = httpRepository.updateProperty(
+//                objectId = objectId,
+//                token = token,
+//                request = updateMap
+//            )
+//            result.onSuccess { message ->
+//                toast(message)
+//                userManager.saveUser(
+//                    currentUser.value!!.copy(
+//                        phone = phone,
+//                        address = address,
+//                        birthDate = birthDate,
+//                        description = description,
+//                        gender = gender
+//                    )
+//                )
+//            }.onFailure { error ->
+//                toast(error.message ?: R.string.unkown_error.toString())
+//            }
         }
     }
 
     // State for the check is signed up
-    private val _isNewAccount = mutableStateOf(false)
-    val isNewAccount: State<Boolean> = _isNewAccount
-    fun isNewAccount(email: String) {
-        viewModelScope.launch {
-            _isNewAccount.value = !httpRepository.isUserRegistered(email)
-        }
-    }
-
-    fun resetNewAccountCheck() {
-        _isNewAccount.value = false
+    private val _verifyEmail = mutableStateOf("")
+    val verifyEmail: State<String> = _verifyEmail
+    fun resetVerifyEmail() {
+        _verifyEmail.value = ""
     }
 
     // State for the currently visible dialog
@@ -204,16 +248,16 @@ class MainViewModel @Inject constructor(
 
     fun fetchUsers(pageSize: Int, offset: Int) {
         viewModelScope.launch {
-            val result = httpRepository.getUsers(pageSize, offset)
-            result.onSuccess { users ->
-                _users.update { currentList ->
-                    if (offset == 0) users
-                    else currentList + users
-                }
-            }
-            result.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
-            }
+//            val result = httpRepository.getUsers(pageSize, offset)
+//            result.onSuccess { users ->
+//                _users.update { currentList ->
+//                    if (offset == 0) users
+//                    else currentList + users
+//                }
+//            }
+//            result.onFailure { error ->
+//                toast(error.message ?: R.string.unkown_error.toString())
+//            }
         }
     }
 
@@ -229,55 +273,55 @@ class MainViewModel @Inject constructor(
 
     fun fetchPosts(pageSize: Int, offset: Int, ownerId: String = "") {
         viewModelScope.launch {
-            val whereClause = if (ownerId.isNotEmpty()) "ownerId='$ownerId'" else ""
-            val result = httpRepository.getPosts(pageSize, offset, whereClause)
-            result.onSuccess { posts ->
-                if (ownerId.isNotEmpty())
-                    _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
-                else
-                    _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
-                for (post in posts)
-                    dbRepository.insertPost(post)
-            }
-            result.onFailure { error ->
-                dbRepository.getAllPosts(pageSize, offset, if (ownerId.isEmpty()) null else ownerId)
-                    .let { posts ->
-                        if (ownerId.isNotEmpty())
-                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
-                        else
-                            _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
-                    }
-            }
+//            val whereClause = if (ownerId.isNotEmpty()) "ownerId='$ownerId'" else ""
+//            val result = httpRepository.getPosts(pageSize, offset, whereClause)
+//            result.onSuccess { posts ->
+//                if (ownerId.isNotEmpty())
+//                    _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
+//                else
+//                    _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
+//                for (post in posts)
+//                    dbRepository.insertPost(post)
+//            }
+//            result.onFailure { error ->
+//                dbRepository.getAllPosts(pageSize, offset, if (ownerId.isEmpty()) null else ownerId)
+//                    .let { posts ->
+//                        if (ownerId.isNotEmpty())
+//                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
+//                        else
+//                            _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
+//                    }
+//            }
         }
     }
 
     fun sendPost(content: String, images: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            val token = userManager.userTokenFlow.firstOrNull()
-            val user = userManager.userFlow.firstOrNull()
-            val date = System.currentTimeMillis()
-            if (!token.isNullOrEmpty() && user != null) {
-                val post = Post(
-                    objectId = "",
-                    content = content,
-                    images = images,
-                    parentId = "",
-                    ownerId = user.objectId,
-                    author = user.name,
-                    avatar = user.avatar ?: "",
-                    created = date,
-                    updated = date,
-                    message = null,
-                    code = null
-                )
-                val result = httpRepository.sendPost(token, post)
-                result.onSuccess { message ->
-                    toast(message)
-                    onSuccess()
-                }.onFailure { error ->
-                    toast(error.message ?: R.string.unkown_error.toString())
-                }
-            }
+//            val token = userManager.userTokenFlow.firstOrNull()
+//            val user = userManager.userFlow.firstOrNull()
+//            val date = System.currentTimeMillis()
+//            if (!token.isNullOrEmpty() && user != null) {
+//                val post = Post(
+//                    objectId = "",
+//                    content = content,
+//                    images = images,
+//                    parentId = "",
+//                    ownerId = user.objectId,
+//                    author = user.name,
+//                    avatar = user.avatar ?: "",
+//                    created = date,
+//                    updated = date,
+//                    message = null,
+//                    code = null
+//                )
+//                val result = httpRepository.sendPost(token, post)
+//                result.onSuccess { message ->
+//                    toast(message)
+//                    onSuccess()
+//                }.onFailure { error ->
+//                    toast(error.message ?: R.string.unkown_error.toString())
+//                }
+//            }
         }
     }
 
@@ -304,5 +348,19 @@ class MainViewModel @Inject constructor(
 
     fun addRandomPerson() {
         addPerson(Utils.randomPerson())
+    }
+
+    fun handleMagicLink(uri: Uri) {
+        // 1. Get the part after the '#'
+        uri.fragment?.let { fragment ->
+            // 2. Convert "key=value&key2=value2" into a Map
+            val params = fragment.split("&").associate {
+                val (key, value) = it.split("=")
+                key to value
+            }
+            val accessToken = params["access_token"]
+            val refreshToken = params["refresh_token"]
+            viewModelScope.launch { save(accessToken) }
+        }
     }
 }

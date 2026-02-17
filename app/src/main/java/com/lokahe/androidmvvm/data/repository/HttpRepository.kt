@@ -2,165 +2,96 @@ package com.lokahe.androidmvvm.data.repository
 
 import android.util.Log
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.models.Post
-import com.lokahe.androidmvvm.data.models.network.LoginRequest
-import com.lokahe.androidmvvm.data.models.network.RegisterRequest
-import com.lokahe.androidmvvm.data.models.network.User
+import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
+import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
+import com.lokahe.androidmvvm.data.models.x.Oauth
 import com.lokahe.androidmvvm.data.remote.ApiService
 import com.lokahe.androidmvvm.s
-import com.lokahe.androidmvvm.utils.Utils.Companion.md5
 import jakarta.inject.Inject
 
 class HttpRepository @Inject constructor(
-    private val apiService: ApiService,
-    private val userManager: UserManager
+    private val apiService: ApiService
 ) {
-    suspend fun register(email: String, password: String, name: String): Result<String> {
+
+//    suspend fun login(email: String, password: String): Result<String> {
+//        return try {
+//            val request = LoginRequest(email, md5(password))
+//            val response = apiService.login(request)
+//            if (response.isSuccessful && response.body()?.userToken?.isNotEmpty() == true) {
+//                userManager.saveUser(response.body()!!)
+//                Result.success(response.body()?.message ?: s(R.string.registration_successful))
+//            } else {
+//                Result.failure(
+//                    Exception(
+//                        response.body()?.message ?: s(R.string.registration_failed)
+//                    )
+//                )
+//            }
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
+//
+//    fun loginWithTwitter(
+//        stayLoggedIn: Boolean = true
+//    ) {
+//
+//        val providerCode = "twitter" // from Backendless Console → Users → Login Providers
+//        Log.d("loginWithTwitter", "loginWithTwitter")
+//        Backendless.UserService.loginWithOAuth1(
+//            providerCode,
+//            Api.TWITTER_ACCESS_TOKEN,        // OAuth 1.0a access token from Twitter
+//            Api.TWITTER_ACCESS_SECRET,    // OAuth 1.0a token secret from Twitter
+//            /* fieldsMappings = */ null, // or map provider fields to Users columns
+//            object : AsyncCallback<BackendlessUser> {
+//                override fun handleResponse(user: BackendlessUser) {
+//                    Log.d("loginWithTwitter", "user: ${user.toString()}")
+//                    // ✅ Logged in – user contains Backendless session (user-token header used automatically)
+//                    CoroutineScope(Dispatchers.IO).launch {
+//                        userManager.saveUser(
+//                            LoginResponse(
+//                                userToken = user.getProperty("user-token")?.toString(),
+//                                lastLogin = user.getProperty("lastLogin")?.toLong(),
+//                                userStatus = user.getProperty("userStatus")?.toString(),
+//                                created = user.getProperty("created")?.toLong(),
+//                                accountType = user.getProperty("accountType")?.toString(),
+//                                socialAccount = user.getProperty("socialAccount")?.toString(),
+//                                ownerId = user.getProperty("ownerId")?.toString(),
+//                                oAuthIdentities = user.getProperty("oAuthIdentities") as? List<String>,
+//                                name = user.getProperty("name").toString(),
+//                                className = user.getProperty("___class")?.toString(),
+//                                blUserLocale = user.getProperty("blUserLocale")?.toString(),
+//                                updated = user.getProperty("updated")?.toLong(),
+//                                email = user.getProperty("email").toString(),
+//                                objectId = user.getProperty("objectId").toString(),
+//                                avatar = user.getProperty("avatar")?.toString(),
+//                                phone = user.getProperty("phone")?.toString(),
+//                                address = user.getProperty("address")?.toString(),
+//                                birthDate = user.getProperty("birthDate")?.toString(),
+//                                description = user.getProperty("description")?.toString(),
+//                                gender = user.getProperty("gender")?.toString(),
+//                                message = user.getProperty("message")?.toString(),
+//                                code = user.getProperty("code")?.toString()
+//                            )
+//                        )
+//                    }
+//                }
+//
+//                override fun handleFault(fault: BackendlessFault) {
+//                    Log.d("loginWithTwitter", "fault: ${fault.message}")
+//                    // ❌ Handle error
+//                }
+//            },
+//            stayLoggedIn
+//        )
+//    }
+
+    suspend fun xOauth(): Result<Oauth> {
         return try {
-            val request = RegisterRequest(email, md5(password), name)
-            val response = apiService.register(request)
+            val response = apiService.xOauth()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()?.message ?: s(R.string.registration_successful))
-            } else {
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: R.string.registration_failed.toString()
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun isUserRegistered(email: String): Boolean {
-        // 1. Format the clause: email='john@doe.com'
-        val whereClause = "email='$email'"
-        // 2. Make the call
-        val response = apiService.isRegistered(whereClause)
-        if (response.isSuccessful) {
-            val usersList = response.body()
-            // 3. If list is not null and not empty, the user exists
-            return !usersList.isNullOrEmpty()
-        }
-        return false // Network error or API failure
-    }
-
-    suspend fun login(email: String, password: String): Result<String> {
-        return try {
-            val request = LoginRequest(email, md5(password))
-            val response = apiService.login(request)
-            if (response.isSuccessful && response.body()?.userToken?.isNotEmpty() == true) {
-                userManager.saveUser(response.body()!!)
-                Result.success(response.body()?.message ?: s(R.string.registration_successful))
-            } else {
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: s(R.string.registration_failed)
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun verifyToken(token: String): Boolean {
-        val response = apiService.verifyToken(token)
-        if (response.isSuccessful) {
-            return response.body() ?: false
-        }
-        return false // Network error or API failure
-    }
-
-    suspend fun logout(token: String): Result<String> {
-        return try {
-            val response = apiService.logout(token)
-            if (!response.isSuccessful) {
-                Log.e("Logout", "Error: ${response.body()?.message}")
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: ""
-                    )
-                )
-            } else {
-                Result.success(response.body()?.message ?: "")
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun updateProperty(
-        objectId: String,
-        token: String,
-        request: Any
-    ): Result<String> {
-        return try {
-            val response = apiService.updateProperty(
-                objectId = objectId,
-                token = token,
-                request = request
-            )
-            if (response.isSuccessful && response.body() != null) {
-                userManager.saveUser(response.body()!!)
-                Result.success(response.body()?.message ?: "")
-            } else {
-                Log.e("updateProperty", "Error: ${response.body()?.message}")
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: ""
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getUsers(pageSize: Int, offset: Int): Result<List<User>> {
-        return try {
-            val users = apiService.getUsers(pageSize, offset)
-            if (users.isSuccessful && users.body() != null && users.body()!!.isNotEmpty()) {
-                Result.success(users.body()!!)
-            } else {
-                Result.failure(
-                    Exception("")
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getPosts(pageSize: Int, offset: Int, whereClause: String = ""): Result<List<Post>> {
-        return try {
-            val posts =
-                if (whereClause.isNotEmpty())
-                    apiService.getPosts(
-                        whereClause = whereClause,
-                        pageSize = pageSize,
-                        offset = offset
-                    )
-                else apiService.getPosts(pageSize = pageSize, offset = offset)
-            if (posts.isSuccessful && posts.body() != null && posts.body()!!.isNotEmpty()) {
-                Result.success(posts.body()!!)
-            } else {
-                Result.failure(
-                    Exception("")
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun sendPost(token: String, request: Any): Result<String> {
-        return try {
-            val response = apiService.post(token = token, request = request)
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()?.message ?: s(R.string.send_successed))
+                Result.success(response.body()!!)
             } else {
                 Result.failure(
                     Exception(
@@ -169,6 +100,79 @@ class HttpRepository @Inject constructor(
                 )
             }
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun gAuth(body: GoogleAuth): Result<String> {
+        return try {
+            val response = apiService.googleAuth(body = body)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d("GoogleAuth", "gAuth: ${response.body()}")
+                Result.success(response.body()!!.toString())
+            } else {
+                Result.failure(
+                    Exception(
+                        response.toString()
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun varifyToken(accessToken: String): Result<String> {
+        return try {
+            val response = apiService.varifyToken(token = "Bearer $accessToken")
+            if (response.isSuccessful && response.body() != null) {
+                Log.d("GoogleAuth", "varifyToken: ${response.body()}")
+                Result.success(response.body()!!.toString())
+            } else {
+                Result.failure(Exception(response.toString()))
+            }
+        } catch (e: Exception) {
+            Log.d("GoogleAuth", "varifyToken: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sign(email: String): Result<String> {
+        return try {
+            val response = apiService.sign(
+                body = OtpRequest(email)
+            )
+            if (response.isSuccessful) {
+                Log.d("GoogleAuth", "sign: ${response.body()}")
+                Result.success("Verify email sent, please confirm your email.") // TODO: R.string
+            } else {
+                Log.d("GoogleAuth", "sign: ${response.body()}")
+                Result.failure(Exception(response.toString()))
+            }
+        } catch (e: Exception) {
+            Log.d("GoogleAuth", "sign: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun verifyEmail(email: String, token: String): Result<String> {
+        return try {
+            val response = apiService.verifyEmail(
+                body = VerifyRequest(
+                    type = "signup",
+                    email = email,
+                    token = token
+                )
+            )
+            if (response.isSuccessful) {
+                Log.d("GoogleAuth", "verifyEmail: ${response.body()}")
+                Result.success(response.body()!!.toString())
+            } else {
+                Log.d("GoogleAuth", "verifyEmail: ${response.body()}")
+                Result.failure(Exception(response.toString()))
+            }
+        } catch (e: Exception) {
+            Log.d("GoogleAuth", "verifyEmail: ${e.message}")
             Result.failure(e)
         }
     }

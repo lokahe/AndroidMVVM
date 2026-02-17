@@ -44,11 +44,19 @@ class UserManager @Inject constructor(
             prefs[USER_DATA_KEY] = gson.toJson(response)
             // 3. calculate and save color seed
             response.avatar?.let {
-                Utils.Companion.calculateMainColor(it)?.let { seed ->
+                Utils.calculateMainColor(it)?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
             }
         }
+    }
+
+    suspend fun saveToken(accessToken: String?) {
+        context.userStore.edit { prefs -> accessToken?.let { prefs[USER_TOKEN_KEY] = it } }
+    }
+
+    suspend fun saveUser(userJson: String) {
+        context.userStore.edit { prefs -> prefs[USER_DATA_KEY] = userJson }
     }
 
     /**

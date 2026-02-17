@@ -8,9 +8,7 @@ plugins {
 
 android {
     namespace = "com.lokahe.androidmvvm"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.lokahe.androidmvvm"
@@ -22,6 +20,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("debugSigningConfig") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"          // Added '=' for consistency
+            keyAlias = "androiddebugkey"       // Added '=' for consistency
+            keyPassword = "android"              // Added '=' for consistency
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -29,6 +36,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            // 定義した署名設定を適用
+            signingConfig = signingConfigs.getByName("debugSigningConfig")
         }
     }
     compileOptions {
@@ -64,6 +75,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.palette.ktx)
     implementation(libs.androidx.material.icons.extended)
+//    implementation(libs.androidx.browser)
 
     // Room database
     implementation(libs.androidx.room.ktx)
@@ -92,4 +104,19 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Backendless
+//    implementation(libs.backendless)
+
+    // google play auth
+    implementation(libs.play.services.auth)
+
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+    //Firebase
+//    implementation(platform("com.google.firebase:firebase-bom:33.8.0")) // Note: 33.8.0 is the current latest stable, 34.8.0 doesn't exist yet
+//    implementation("com.google.firebase:firebase-auth")
+
 }

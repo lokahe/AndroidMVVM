@@ -30,6 +30,7 @@
     <string name="female">Female</string>
     <string name="guest">guest</string>
     <string name="signInUp">Sign In/Up</string>
+    <string name="sign">Sign</string>
     <string name="logout">Logout</string>
     <string name="login">Login</string>
     <string name="confirm">Confirm</string>

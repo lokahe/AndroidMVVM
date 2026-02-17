@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm.ui.activites
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -86,6 +87,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        Log.d("MainActivity", "onCreate: ${intent.data}")
+        intent.data?.let { viewModel.handleMagicLink(it) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+//        val uri = intent.data
+//        if (uri != null && uri.toString().startsWith(BACKENDLESS_TWITTER_CALL_BACK)) {
+//            val authCode = uri.getQueryParameter("code")
+//            Log.d("loginWithTwitter", "authCode: $authCode")
+//            // Step 3: Exchange this code for an access token via your backend or X API
+//        }
     }
 }
 
