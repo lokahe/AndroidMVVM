@@ -29,7 +29,7 @@ import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
-import com.lokahe.androidmvvm.data.models.network.User
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
 import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
@@ -146,7 +146,7 @@ fun UserItem(
                     modifier = Modifier
                         .padding(end = 16.dp)
                         .size(50.dp),
-                    url = user.avatar ?: ""
+                    url = user.userMetadata.avatarUrl ?: ""
                 )
                 Text(
                     modifier = Modifier

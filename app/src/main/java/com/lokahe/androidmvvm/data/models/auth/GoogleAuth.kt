@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm.data.models.auth
 
 import com.google.gson.annotations.SerializedName
+import com.lokahe.androidmvvm.data.models.supabase.User
 
 data class GoogleAuth(
     @SerializedName("id_token")
@@ -14,11 +15,8 @@ data class GoogleAuth(
 data class GoogleAuthResponse(
     @SerializedName("access_token")
     val accessToken: String,
+    @SerializedName("refresh_token")
+    val refresh_token: String,
     @SerializedName("user")
-    val user: GoogleAuthResponseUser
-)
-
-data class GoogleAuthResponseUser(
-    @SerializedName("id")
-    val id: String
+    val user: User
 )

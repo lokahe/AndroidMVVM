@@ -23,6 +23,7 @@ class UserManager @Inject constructor(
     companion object {
         private val USER_DATA_KEY = stringPreferencesKey("user_data")
         private val USER_TOKEN_KEY = stringPreferencesKey("user_token")
+        private val USER_REFRESH_TOKEN_KEY = stringPreferencesKey("user_refresh_token")
         private val USER_COLOR_SEED_KEY = stringPreferencesKey("user_color_seed")
     }
 
@@ -34,29 +35,25 @@ class UserManager @Inject constructor(
     }
 
     /**
-     * Saves the full LoginResponse object and the token separately for easy access
+     * save tokens
      */
-//    suspend fun saveUser(response: LoginResponse) {
-//        context.userStore.edit { prefs ->
-//            // 1. Save the token specifically (often needed for Interceptors)
-//            response.userToken?.let { prefs[USER_TOKEN_KEY] = it }
-//            // 2. Save the entire object as a JSON string
-//            prefs[USER_DATA_KEY] = gson.toJson(response)
-//            // 3. calculate and save color seed
-//            response.avatar?.let {
-//                Utils.calculateMainColor(it)?.let { seed ->
-//                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
-//                }
-//            }
-//        }
-//    }
-
-    suspend fun saveToken(accessToken: String?) {
-        context.userStore.edit { prefs -> accessToken?.let { prefs[USER_TOKEN_KEY] = it } }
+    suspend fun saveToken(accessToken: String?, refreshToken: String?) {
+        context.userStore.edit { prefs ->
+            accessToken?.let { prefs[USER_TOKEN_KEY] = it }
+            refreshToken?.let { prefs[USER_REFRESH_TOKEN_KEY] = it }
+        }
     }
 
+    /**
+     * save user
+     */
     suspend fun saveUser(user: User) {
-        context.userStore.edit { prefs -> prefs[USER_DATA_KEY] = gson.toJson(user) }
+        context.userStore.edit { prefs ->
+            prefs[USER_DATA_KEY] = gson.toJson(user)
+            Utils.calculateMainColor(user.userMetadata.avatarUrl)?.let { seed ->
+                prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
+            }
+        }
     }
 
     /**

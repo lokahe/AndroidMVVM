@@ -1,6 +1,5 @@
 package com.lokahe.androidmvvm.viewmodels
 
-//import com.google.gson.Gson
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -17,7 +16,7 @@ import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.network.User
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -69,7 +68,7 @@ class MainViewModel @Inject constructor(
                 onProcessing()
                 // Verify with server
                 httpRepository.varifyToken(token).onSuccess {
-                    save(token, it)
+                    save(token, null, it)
                 }
                 unProcessing()
             }
@@ -114,7 +113,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             googleAuther.gOauth(context) { idToken ->
                 httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null)).onSuccess {
-                    save(it.accessToken)
+                    save(it.accessToken, refreshToken = it.refresh_token, user = it.user)
                 }.onFailure {
                     toast(it.message ?: R.string.unkown_error.toString())
                 }
@@ -124,14 +123,14 @@ class MainViewModel @Inject constructor(
 
     private fun save(
         token: String?,
-        user: com.lokahe.androidmvvm.data.models.supabase.User? = null
-    ) =
-        viewModelScope.launch {
-            userManager.saveToken(token)
-            user ?: token?.let { tk ->
-                httpRepository.varifyToken(tk).onSuccess { userManager.saveUser(it) }
-            }
+        refreshToken: String?,
+        user: User? = null
+    ) = viewModelScope.launch {
+        userManager.saveToken(token, refreshToken)
+        user?.let { userManager.saveUser(it) } ?: token?.let { tk ->
+            httpRepository.varifyToken(tk).onSuccess { userManager.saveUser(it) }
         }
+    }
 
     fun sign(email: String) {
         viewModelScope.launch {
@@ -149,7 +148,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val result = httpRepository.verifyEmail(email, token)
             result.onSuccess { it ->
-                save(it.accessToken)
+                save(it.accessToken, it.refreshToken, it.user)
             }.onFailure { error ->
                 toast(error.message ?: R.string.unkown_error.toString())
             }
@@ -365,7 +364,7 @@ class MainViewModel @Inject constructor(
             val accessToken = params["access_token"]
             val refreshToken = params["refresh_token"]
             accessToken?.ifEmpty { null }?.let {
-                viewModelScope.launch { save(it) }
+                viewModelScope.launch { save(it, refreshToken) }
             } ?: params["error_description"]?.ifEmpty { null }?.let { toast(it) }
         }
     }

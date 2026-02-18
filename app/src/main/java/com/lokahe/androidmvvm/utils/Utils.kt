@@ -25,7 +25,7 @@ import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.argb
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
-import com.lokahe.androidmvvm.data.models.network.User
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
@@ -149,14 +149,14 @@ class Utils {
         @Composable
         fun userTitle(user: User): AnnotatedString =
             buildAnnotatedString {
-                append(user.name + "\n")
+                append(user.userMetadata.fullName + "\n")
                 withStyle(
                     style = SpanStyle(
                         color = MaterialTheme.colorScheme.secondary,
                         fontSize = MaterialTheme.typography.bodySmall.fontSize
                     )
                 ) {
-                    append(user.description)
+//                    append(user.userMetadata.)
                 }
             }
 
