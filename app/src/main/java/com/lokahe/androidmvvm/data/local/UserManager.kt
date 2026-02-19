@@ -34,6 +34,11 @@ class UserManager @Inject constructor(
         prefs[USER_TOKEN_KEY]
     }
 
+    val userRefreshTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
+        prefs[USER_REFRESH_TOKEN_KEY]
+    }
+
+
     /**
      * save tokens
      */

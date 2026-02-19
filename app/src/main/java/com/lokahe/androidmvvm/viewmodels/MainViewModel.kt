@@ -21,6 +21,7 @@ import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import com.lokahe.androidmvvm.set
+import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,8 +45,16 @@ class MainViewModel @Inject constructor(
 
     init {
         // 2. Trigger the check immediately when ViewModel is created (App Start)
-        checkAutoLogin()
+        autoSignIn()
     }
+
+    // Expose the user as State for Compose
+    val currentUser = userManager.userFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    // Check if logged in based on if user data exists
+    val isSignedIn = currentUser.map { it != null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _processing = mutableStateOf(false)
     val processing: State<Boolean> = _processing
@@ -59,7 +68,20 @@ class MainViewModel @Inject constructor(
         dismissDialog(AppDialog.Loading)
     }
 
-    private fun checkAutoLogin() {
+    private fun save(
+        token: String?,
+        refreshToken: String?,
+        user: User? = null
+    ) = viewModelScope.launch {
+        userManager.saveToken(token, refreshToken)
+        user?.let { userManager.saveUser(it) } ?: token?.let { tk ->
+            httpRepository.varifyToken(tk).onSuccess { userManager.saveUser(it) }
+                .onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+        }
+    }
+
+    private fun autoSignIn() {
         viewModelScope.launch {
             // Get the saved token
             // Note: We use .firstOrNull() to get the current value from the Flow once
@@ -67,23 +89,42 @@ class MainViewModel @Inject constructor(
             if (!token.isNullOrEmpty()) {
                 onProcessing()
                 // Verify with server
-                httpRepository.varifyToken(token).onSuccess {
-                    save(token, null, it)
-                }
+                httpRepository.varifyToken(token)
+                    .onSuccess { save(token, null, it) }
+                    .onFailure {
+                        if (it.code == 403) {
+                            refreshToken()
+                        } else {
+                            toast(it.message)
+                            userManager.clearUser()
+                        }
+                    }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
                 unProcessing()
             }
         }
     }
 
-    // Expose the user as State for Compose
-    val currentUser = userManager.userFlow
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    private fun refreshToken() {
+        viewModelScope.launch {
+            val refreshToken = userManager.userRefreshTokenFlow.firstOrNull()
+            if (!refreshToken.isNullOrEmpty()) {
+                onProcessing()
+                httpRepository.refreshToken(refreshToken)
+                    .onSuccess { save(it.accessToken, it.refreshToken, it.user) }
+                    .onFailure {
+                        toast(it.message)
+                        userManager.clearUser()
+                    }
+                    .onException {
+                        toast(it.message ?: R.string.unkown_error.str())
+                    }
+                unProcessing()
+            }
+        }
+    }
 
-    // Check if logged in based on if user data exists
-    val isSignedIn = currentUser.map { it != null }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    fun logout() {
+    fun signOut() {
         viewModelScope.launch {
             val token = userManager.userTokenFlow.firstOrNull()
             token?.ifEmpty { null }?.let { httpRepository.signOut(it) }
@@ -111,47 +152,40 @@ class MainViewModel @Inject constructor(
 
     fun signWithGoogle(context: Context) {
         viewModelScope.launch {
+            onProcessing()
             googleAuther.gOauth(context) { idToken ->
-                httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null)).onSuccess {
-                    save(it.accessToken, refreshToken = it.refresh_token, user = it.user)
-                }.onFailure {
-                    toast(it.message ?: R.string.unkown_error.toString())
-                }
+                httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null))
+                    .onSuccess {
+                        save(it.accessToken, refreshToken = it.refresh_token, user = it.user)
+                    }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
+            unProcessing()
         }
     }
 
-    private fun save(
-        token: String?,
-        refreshToken: String?,
-        user: User? = null
-    ) = viewModelScope.launch {
-        userManager.saveToken(token, refreshToken)
-        user?.let { userManager.saveUser(it) } ?: token?.let { tk ->
-            httpRepository.varifyToken(tk).onSuccess { userManager.saveUser(it) }
-        }
-    }
 
     fun sign(email: String) {
         viewModelScope.launch {
-            val result = httpRepository.sign(email)
-            result.onSuccess { message ->
-                toast(message)
+            onProcessing()
+            httpRepository.sign(email).onSuccess {
+                toast("Verify email sent, please confirm your email.") // TODO: R.string
                 _verifyEmail.value = email
-            }.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
-            }
+            }.onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            unProcessing()
         }
     }
 
     fun verifyEmail(email: String, token: String) {
         viewModelScope.launch {
-            val result = httpRepository.verifyEmail(email, token)
-            result.onSuccess { it ->
+            onProcessing()
+            httpRepository.verifyEmail(email, token).onSuccess { it ->
                 save(it.accessToken, it.refreshToken, it.user)
-            }.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
-            }
+                dismissDialog(AppDialog.SignIn)
+            }.onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            unProcessing()
         }
     }
 
@@ -229,9 +263,9 @@ class MainViewModel @Inject constructor(
         _activeDialog.intValue = _activeDialog.intValue.set(dialog.index)
     }
 
-    fun dismissDialog(dialog: AppDialog? = null) {
-        _activeDialog.intValue =
-            dialog?.let { _activeDialog.intValue.clear(dialog.index) } ?: AppDialog.None.index
+    fun dismissDialog(vararg dialogs: AppDialog = emptyArray()) {
+        _activeDialog.intValue = if (dialogs.isEmpty()) AppDialog.None.index else
+            _activeDialog.intValue.clear(0.set(*dialogs.map { it.index }.toIntArray()))
     }
 
     // state for home tab index state

@@ -26,6 +26,7 @@ import com.lokahe.androidmvvm.argb
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.supabase.User
+import com.lokahe.androidmvvm.isNotNullOrBlank
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
@@ -69,8 +70,8 @@ class Utils {
             return bytes.joinToString("") { "%02x".format(it) }
         }
 
-        suspend fun calculateMainColor(url: String): ColorSeed? {
-            if (url.isNotEmpty()) {
+        suspend fun calculateMainColor(url: String?): ColorSeed? {
+            if (url.isNotNullOrBlank()) {
                 val context = application
                 val loader = ImageLoader(context)
                 val request = ImageRequest.Builder(context)

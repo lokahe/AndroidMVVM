@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm
 
 import android.annotation.SuppressLint
+import android.content.res.Resources
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,11 +28,26 @@ fun Int.argb(): Int {
 
 fun Int.has(flag: Int): Boolean = this and flag != 0
 fun Int.set(flag: Int): Int = this or flag
+fun Int.set(vararg flags: Int): Int = flags.fold(this) { acc, flag -> acc or flag }
 fun Int.clear(flag: Int): Int = this and flag.inv()
 
 fun Int.toHexColor(): String {
     return String.format("#%08X", this)
 }
+
+fun Int.isStringRes(): Boolean {
+    return try {
+        // Returns "string", "drawable", "layout", etc.
+        application.resources.getResourceTypeName(this) == "string"
+    } catch (e: Resources.NotFoundException) {
+        false // The ID doesn't exist at all
+    }
+}
+
+fun Int.str(): String = if (isStringRes()) application.getString(this) else this.toString()
+
+fun CharSequence?.isNotNullOrEmpty(): Boolean = !this.isNullOrEmpty()
+fun CharSequence?.isNotNullOrBlank(): Boolean = !this.isNullOrBlank()
 
 fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(application, message, duration).show()

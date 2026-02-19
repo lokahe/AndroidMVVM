@@ -61,14 +61,13 @@ interface ApiService {
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Content-Type") contentType: String = "application/json",
         @Body body: RefreshTokenRequest
-    ): Response<Any>
+    ): Response<AuthResponse>
 
     @POST("auth/v1/logout")
     suspend fun signOut(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String
     ): Response<Any>
-
 
     @POST("auth/v1/otp")
     suspend fun sign( //opt

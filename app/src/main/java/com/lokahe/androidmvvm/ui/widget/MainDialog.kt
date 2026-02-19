@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -99,13 +100,27 @@ fun SignOutDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
-        title = { Text(text = stringResource(R.string.logout)) },
-        text = { Text(text = "Are you sure you want to logout?") }, // TODO R.string
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = stringResource(R.string.sign_out)
+                )
+                Text(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    text = stringResource(R.string.sign_out_confirm),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        },
         confirmButton = {
             TextButton(
                 onClick = {
                     viewModel.dismissDialog()
-                    viewModel.logout()
+                    viewModel.signOut()
                 }
             ) {
                 Text(stringResource(R.string.confirm))
