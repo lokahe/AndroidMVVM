@@ -2,7 +2,6 @@ package com.lokahe.androidmvvm.data.repository
 
 import android.util.Log
 import com.google.gson.Gson
-import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.ApiError
@@ -12,9 +11,7 @@ import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
-import com.lokahe.androidmvvm.data.models.x.Oauth
 import com.lokahe.androidmvvm.data.remote.ApiService
-import com.lokahe.androidmvvm.s
 import jakarta.inject.Inject
 import retrofit2.Response
 
@@ -36,23 +33,6 @@ class HttpRepository @Inject constructor(
             }
         } catch (e: Exception) {
             ApiResult.Exception(e)
-        }
-    }
-
-    suspend fun xOauth(): Result<Oauth> {
-        return try {
-            val response = apiService.xOauth()
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: s(R.string.send_failed)
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 

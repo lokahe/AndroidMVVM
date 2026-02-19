@@ -178,14 +178,15 @@ fun SignInDialog() {
                 else OtpInputField { viewModel.verifyEmail(verifyEmail, it) }
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
                     IconButton(
-                        onClick = { viewModel.loginWithTwitter(context = context) },
+                        onClick = { viewModel.signWithTwitter() },
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color.Black)
+                            .background(MaterialTheme.colorScheme.background)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_x), // You need to add ic_google.xml to res/drawable
-                            contentDescription = "X" // Provide a content description for accessibility
+                            contentDescription = "X", // Provide a content description for accessibility
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     IconButton(

@@ -1,13 +1,14 @@
 package com.lokahe.androidmvvm.viewmodels
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.AppDialog
+import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.PAGE_SIZE
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.clear
@@ -17,6 +18,7 @@ import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.supabase.User
+import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -79,6 +81,7 @@ class MainViewModel @Inject constructor(
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
+        dismissDialog(AppDialog.SignIn)
     }
 
     private fun autoSignIn() {
@@ -132,22 +135,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun loginWithTwitter(
-        context: Context,
-    ) {
-        viewModelScope.launch {
-            val result = httpRepository.xOauth()
-            result.onSuccess { oauth ->
-                Log.d("loginWithTwitter", "oauth: $oauth")
-            }.onFailure { error ->
-                toast(error.message ?: R.string.unkown_error.toString())
-            }
-        }
-
-//        val customTabsIntent = CustomTabsIntent.Builder().build()
-//        customTabsIntent.launchUrl(context, Uri.parse(Api.TWITTER_AUTH_URL))
-
-//        httpRepository.loginWithTwitter()
+    fun signWithTwitter() {
+        val fullUrl = "${Api.SPB_AUTH_URL}?provider=x&redirect_to=${Api.REDIRECT}"
+        // This tells Android: "Open the real browser with this URL"
+        MyApplication.application.startActivity(
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(fullUrl)
+            ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
     }
 
     fun signWithGoogle(context: Context) {

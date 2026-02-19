@@ -7,40 +7,17 @@ import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.SetPasswordRequest
 import com.lokahe.androidmvvm.data.models.supabase.SignRequest
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
-import com.lokahe.androidmvvm.data.models.x.Oauth
-import com.lokahe.androidmvvm.utils.Utils
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 interface ApiService {
-
-    // X (Twitter)
-    @POST(Api.X_OAUTH)
-    suspend fun xOauth(
-        @Header("Authorization") authorization: String = "OAuth " +
-                /*        @HeaderMap params: Map<String, String> =*/
-                mapOf(
-                    "oauth_consumer_key" to Api.TWITTER_CONSUMER_KEY,
-                    "oauth_nonce" to java.util.UUID.randomUUID().toString().replace("-", ""),
-                    "oauth_signature_method" to "HMAC-SHA1",
-                    "oauth_timestamp" to (System.currentTimeMillis() / 1000).toString(),
-                    "oauth_version" to "1.0",
-                    "oauth_callback" to Utils.percentEncode("Api.BACKENDLESS_TWITTER_CALL_BACK"),   //
-                ).let {
-                    it.plus(
-                        "oauth_signature" to Utils.generateOAuthSignature(
-                            "POST",
-                            "https://api.x.com/oauth/request_token",
-                            it, Api.TWITTER_CONSUMER_KEY_SECRET
-                        )
-                    )
-                }.entries.sortedBy { it.key }.joinToString(",") { "${it.key}=${it.value}" },
-    ): Response<Oauth>
 
     // Supabase
     @POST("auth/v1/token?grant_type=id_token")
@@ -50,11 +27,18 @@ interface ApiService {
         @Body body: GoogleAuth
     ): Response<GoogleAuthResponse>
 
+    @GET("auth/v1/authorize")
+    suspend fun xAuth(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Query("provider") provider: String = "x",
+        @Query("redirect_to") redirectTo: String = Api.REDIRECT
+    ): Response<Any>
+
     @GET("auth/v1/user")
     suspend fun varifyToken(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String
-    ): Response<com.lokahe.androidmvvm.data.models.supabase.User>
+    ): Response<User>
 
     @POST("auth/v1/token?grant_type=refresh_token")
     suspend fun refreshToken(
