@@ -48,7 +48,7 @@ import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.PersonsScreen
 import com.lokahe.androidmvvm.ui.screens.SendPostScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
-import com.lokahe.androidmvvm.ui.widget.MainDialog
+import com.lokahe.androidmvvm.ui.MainDialog
 import com.lokahe.androidmvvm.ui.widget.UserHeader
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint

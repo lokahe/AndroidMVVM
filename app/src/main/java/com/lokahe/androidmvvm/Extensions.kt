@@ -46,6 +46,8 @@ fun Int.isStringRes(): Boolean {
 
 fun Int.str(): String = if (isStringRes()) application.getString(this) else this.toString()
 
+fun String.emailCover() = this.replace("(?<=.).(?=.*@.)".toRegex(), "*")
+
 fun CharSequence?.isNotNullOrEmpty(): Boolean = !this.isNullOrEmpty()
 fun CharSequence?.isNotNullOrBlank(): Boolean = !this.isNullOrBlank()
 

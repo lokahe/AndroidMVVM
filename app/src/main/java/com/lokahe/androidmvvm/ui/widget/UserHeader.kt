@@ -26,6 +26,7 @@ import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.Screen
 import com.lokahe.androidmvvm.UserHeaderOption
+import com.lokahe.androidmvvm.emailCover
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
@@ -71,7 +72,7 @@ fun UserHeader(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = user?.email ?: stringResource(R.string.signInUp),
+                    text = user?.email?.emailCover() ?: stringResource(R.string.signInUp),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

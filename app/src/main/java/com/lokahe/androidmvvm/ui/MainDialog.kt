@@ -1,5 +1,6 @@
-package com.lokahe.androidmvvm.ui.widget
+package com.lokahe.androidmvvm.ui
 
+import android.net.Uri
 import android.util.Patterns.EMAIL_ADDRESS
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -31,7 +31,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,17 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.ContentType.Companion.Username
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentType
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -61,6 +55,8 @@ import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.has
+import com.lokahe.androidmvvm.ui.widget.EmailField
+import com.lokahe.androidmvvm.ui.widget.OtpInputField
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
@@ -141,8 +137,6 @@ fun SignInDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf(false) }
-    var verifyCode by remember { mutableStateOf("") }
     val verifyEmail by viewModel.verifyEmail
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
@@ -167,9 +161,7 @@ fun SignInDialog() {
                         softWrap = false // Ensure text doesn't wrap so it can scroll
                     )
                     IconButton(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .padding(0.dp),
+                        modifier = Modifier.size(30.dp).padding(0.dp),
                         onClick = { viewModel.resetVerifyEmail() }) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_edit_24),
@@ -182,57 +174,9 @@ fun SignInDialog() {
         },
         text = {
             Column {
-                if (verifyEmail.isEmpty()) {
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics { contentType = Username }
-                            .onFocusChanged { focusState ->
-                                emailError = !focusState.isFocused && email.isNotEmpty()
-                                        && !EMAIL_ADDRESS.matcher(email).matches()
-                            },
-                        value = email,
-                        onValueChange = { email = it; emailError = false },
-                        label = {
-                            Text(
-                                stringResource(
-                                    if (emailError) R.string.invalid_email_format
-                                    else R.string.email
-                                )
-                            )
-                        },
-                        isError = emailError,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Email, // or default
-                            autoCorrectEnabled = false // Recommended for usernames/emails
-                        ),
-                        singleLine = true
-                    )
-                } else {
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = verifyCode,
-                        onValueChange = {
-                            // Only allow up to 6 digits
-                            if (it.length <= 6 && it.all { char -> char.isDigit() }) {
-                                verifyCode = it
-                                if (verifyCode.length == 6)
-                                    viewModel.verifyEmail(verifyEmail, verifyCode)
-                            }
-                        },
-                        label = { Text("6-Digit Verification Code") },
-                        placeholder = { Text("000000") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.NumberPassword
-                        )
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
+                if (verifyEmail.isEmpty()) EmailField(email, { email = it })
+                else OtpInputField { viewModel.verifyEmail(verifyEmail, it) }
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
                     IconButton(
                         onClick = { viewModel.loginWithTwitter(context = context) },
                         modifier = Modifier
@@ -249,7 +193,7 @@ fun SignInDialog() {
                         modifier = Modifier
                             .padding(start = 8.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White)
+                            .background(MaterialTheme.colorScheme.background)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_google), // You need to add ic_google.xml to res/drawable
@@ -286,7 +230,7 @@ fun AvatarSelectDialog() {
     // Launcher for picking local image
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: android.net.Uri? ->
+    ) { uri: Uri? ->
         uri?.let {
             viewModel.updateAvatar(it.toString())
             viewModel.dismissDialog()
