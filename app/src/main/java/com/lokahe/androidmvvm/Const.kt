@@ -47,6 +47,7 @@ sealed class AppDialog(val index: Int) {
     data object SignIn : AppDialog(2)
     data object SignOut : AppDialog(4)
     data object Avatar : AppDialog(8)
+    data object Delete : AppDialog(16)
     // Add more later easily: data object DeleteAccount : AppDialog()
 }
 

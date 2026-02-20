@@ -57,7 +57,8 @@ fun AvatarIcon(
 @Composable
 fun PostItem(
     index: Int,
-    post: Post
+    post: Post,
+    userId: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -67,9 +68,7 @@ fun PostItem(
         Column(modifier = Modifier.padding(8.dp)) {
             Row(verticalAlignment = CenterVertically) {
                 AvatarIcon(
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .size(48.dp),
+                    modifier = Modifier.padding(end = 16.dp).size(48.dp),
                     url = post.profiles.avatar
                 )
                 Text(
@@ -79,7 +78,7 @@ fun PostItem(
                 )
                 Icon(
                     imageVector = Icons.Filled.Share,
-                    contentDescription = "Share",
+                    contentDescription = stringResource(R.string.share),
                     modifier = Modifier
                         .padding(
                             end = 30.dp
@@ -88,22 +87,35 @@ fun PostItem(
                 )
                 Icon(
                     imageVector = Icons.Filled.ThumbUp,
-                    contentDescription = "Thumb up",
+                    contentDescription = stringResource(R.string.like),
                     modifier = Modifier
                         .padding(
                             end = 30.dp
                         )
                         .size(20.dp),
                 )
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = "Star",
-                    modifier = Modifier
-                        .padding(
-                            end = 8.dp
+                if (post.authorId == userId) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = stringResource(R.string.delete),
+                        modifier = Modifier
+                            .padding(
+                                end = 8.dp
+                            )
+                            .size(20.dp),
+                        tint = MaterialTheme.colorScheme.error
                         )
-                        .size(20.dp),
-                )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = stringResource(R.string.favor),
+                        modifier = Modifier
+                            .padding(
+                                end = 8.dp
+                            )
+                            .size(20.dp),
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -111,7 +123,7 @@ fun PostItem(
                 style = MaterialTheme.typography.bodyMedium
             )
             if (post.imageUrls.isNotEmpty()) {
-                Row() {
+                Row {
                     post.imageUrls.split(",").forEach {
                         AsyncImage(
                             model = it,

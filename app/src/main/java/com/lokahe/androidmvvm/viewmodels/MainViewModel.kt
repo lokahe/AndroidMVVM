@@ -345,6 +345,17 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun deletePost(id: String) {
+        viewModelScope.launch {
+            userManager.accessTokenFlow.firstOrNull()?.let { token ->
+                httpRepository.deletePost(token, id).onSuccess {
+                    _myPosts.update { currentList -> currentList.filter { it.id != id } }
+                }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
+        }
+    }
+
     fun sendPost(
         content: String,
         imageUrls: String = "",
@@ -358,7 +369,7 @@ class MainViewModel @Inject constructor(
             )?.let { (user, token) ->
                 httpRepository.insertPost(
                     token, PostRequest(user.id, content, imageUrls, videoUrls, "", Api.EMPTY_UUID)
-                ).onSuccess { onSuccess()} // TODO: dbRepository.insertPost(it.first())
+                ).onSuccess { onSuccess() } // TODO: dbRepository.insertPost(it.first())
                     .onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }

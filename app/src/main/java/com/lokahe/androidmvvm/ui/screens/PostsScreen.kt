@@ -31,14 +31,11 @@ import com.lokahe.androidmvvm.viewmodels.MainViewModel
 @Composable
 fun PostsScreen(
     paddingValues: PaddingValues,
-    ownerId: String = ""
+    userId: String? = null
 ) {
     val viewModel = LocalViewModel.current as MainViewModel
-    val posts by if (ownerId.isEmpty()) viewModel.posts.collectAsState()
-    else viewModel.myPosts.collectAsState()
-    if (ownerId.isNotEmpty() && posts.isEmpty()) {
-        viewModel.fetchPosts(PAGE_SIZE, 0, ownerId)
-    }
+    val posts by if (userId.isNullOrEmpty()) viewModel.posts.collectAsState() else viewModel.myPosts.collectAsState()
+    if (userId.isNullOrEmpty() && posts.isEmpty()) { viewModel.fetchPosts(PAGE_SIZE, 0, userId) }
     val listState = rememberLazyListState()
     // Refresh state
     var isRefreshing by remember { mutableStateOf(false) }
@@ -91,7 +88,7 @@ fun PostsScreen(
                 contentPadding = paddingValues
             ) {
                 itemsIndexed(posts) { index, user ->
-                    PostItem(index, user)
+                    PostItem(index, user, userId)
                 }
 
                 if (isLoadingMore) {

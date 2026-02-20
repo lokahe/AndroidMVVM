@@ -86,4 +86,7 @@ class HttpRepository @Inject constructor(
                 offset = offset
             )
         }
+
+    suspend fun deletePost(token: String, id: String): ApiResult<Any> =
+        safeApiCall { apiService.deletePost(token = "Bearer $token", id = "eq.$id") }
 }

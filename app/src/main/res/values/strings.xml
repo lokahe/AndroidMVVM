@@ -69,4 +69,7 @@
     <string name="send_failed">Send failed</string>
     <string name="sign_out">sign out</string>
     <string name="sign_out_confirm">Confirm to sign out</string>
+    <string name="share">share</string>
+    <string name="like">like</string>
+    <string name="favor">favor</string>
 </resources>

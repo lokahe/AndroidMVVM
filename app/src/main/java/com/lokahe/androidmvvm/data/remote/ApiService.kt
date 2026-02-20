@@ -15,6 +15,7 @@ import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
@@ -123,17 +124,6 @@ interface ApiService {
         @Body body: PostRequest
     ): Response<List<Post>>
 
-//    @GET("rest/v1/posts")
-//    suspend fun fetchPosts(
-//        @Header("apikey") apiKey: String = Api.ANON_KEY,
-//        @Header("Authorization") token: String,
-//        @Query("reply_post_id") replyId: String, // e.g., "eq.00..000"
-//        @Query("limit") limit: Int,               // Page Size
-//        @Query("offset") offset: Int,             // Starting point
-//        @Query("order") order: String = "created_at.desc", // Best practice for pagination
-//        @Query("select") columns: String = "*, profiles(name, avatar), likes(count)"
-//    ): Response<List<Post>>
-
     @GET("rest/v1/posts")
     suspend fun fetchPosts(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
@@ -146,5 +136,12 @@ interface ApiService {
         @Query("order") order: String = "created_at.desc", // Best practice for pagination
         @Query("select") columns: String = "*, profiles!Post_authorId_fkey(name, avatar), likes(count)"
     ): Response<List<Post>>
+
+    @DELETE("rest/v1/posts")
+    suspend fun deletePost(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("id") id: String
+    ): Response<Any>
 
 }

@@ -63,12 +63,12 @@ import com.lokahe.androidmvvm.viewmodels.MainViewModel
 fun MainDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
     val activeDialog by viewModel.activeDialog
+    if (activeDialog.has(AppDialog.Delete.index)) DeleteDialog()
     if (activeDialog.has(AppDialog.SignOut.index)) SignOutDialog()
     if (activeDialog.has(AppDialog.SignIn.index)) SignInDialog()
     if (activeDialog.has(AppDialog.Avatar.index)) AvatarSelectDialog()
     if (activeDialog.has(AppDialog.Loading.index)) LoadingDialog()
 }
-
 
 @Composable
 fun LoadingDialog() {
@@ -89,6 +89,47 @@ fun LoadingDialog() {
             CircularProgressIndicator()
         }
     }
+}
+
+@Composable
+fun DeleteDialog() {
+    val viewModel = LocalViewModel.current as MainViewModel
+    AlertDialog(
+        onDismissRequest = { viewModel.dismissDialog() },
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = stringResource(R.string.sign_out)
+                )
+                Text(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    text = stringResource(R.string.sign_out_confirm),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    viewModel.dismissDialog()
+                    viewModel.signOut()
+                }
+            ) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { viewModel.dismissDialog() }
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
