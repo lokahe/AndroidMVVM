@@ -23,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.LocalViewModel
-import com.lokahe.androidmvvm.PAGE_SIZE
+import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
 import com.lokahe.androidmvvm.ui.widget.PostItem
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 

@@ -9,5 +9,6 @@ object Api {
 
     const val REDIRECT = "lokahe://androidmvvm"
     const val SPB_AUTH_URL = "${SPB_URL}auth/v1/authorize"
-
+    const val EMPTY_UUID = "00000000-0000-0000-0000-000000000000"
+    const val PAGE_SIZE = 10
 }

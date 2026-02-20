@@ -7,29 +7,20 @@ import com.google.gson.annotations.SerializedName
 @Entity(tableName = "posts")
 data class Post(
     @PrimaryKey(autoGenerate = false)
-    @SerializedName("objectId")
-    val objectId: String,
-    @SerializedName("ownerId")
-    val ownerId: String,
-    @SerializedName("author")
-    val author: String,
-    @SerializedName("avatar")
-    val avatar: String,
-    @SerializedName("created")
-    val created: Long,
-    @SerializedName("updated")
-    val updated: Long,
+    @SerializedName("id")
+    val id: String,
+    @SerializedName("author_id")
+    val authorId: String,
+    @SerializedName("created_at")
+    val createdAt: String,
     @SerializedName("content")
     val content: String,
-    @SerializedName("images")
-    val images: String,
-    @SerializedName("parentId")
-    val parentId: String,
-
-    // base
-    @SerializedName("message")
-    val message: String?,
-
-    @SerializedName("code")
-    val code: String?
+    @SerializedName("image_urls")
+    val imageUrls: String,
+    @SerializedName("video_urls")
+    val videoUrls: String,
+    @SerializedName("hashtag")
+    val hashtag: String,
+    @SerializedName("reply_post_id")
+    val replyPostId: String
 )

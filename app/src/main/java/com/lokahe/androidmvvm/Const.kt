@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.Settings
 val HOME_TABS = listOf("Posts", "Gallery", "Users")
 val ACCOUNT_TABS = listOf("Posts", "Profile")
 
-const val PAGE_SIZE = 10
 val SIDE_MENU_ITEMS = listOf(
     Triple(Screen.Home, Icons.Filled.Home, s(R.string.home)),
     Triple(Screen.Account, Icons.Filled.Person, s(R.string.account)),

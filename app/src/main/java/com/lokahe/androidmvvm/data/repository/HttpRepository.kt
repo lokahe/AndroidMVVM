@@ -2,6 +2,8 @@ package com.lokahe.androidmvvm.data.repository
 
 import android.util.Log
 import com.google.gson.Gson
+import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.ApiError
@@ -9,10 +11,13 @@ import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.Profile
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
+import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.ApiService
+import com.lokahe.androidmvvm.emptyNull
 import jakarta.inject.Inject
 import retrofit2.Response
 
@@ -33,6 +38,7 @@ class HttpRepository @Inject constructor(
                 ApiResult.Failure(apiError)
             }
         } catch (e: Exception) {
+            Log.d("safeApiCall", "e: ${e.message}")
             ApiResult.Exception(e)
         }
     }
@@ -57,4 +63,27 @@ class HttpRepository @Inject constructor(
 
     suspend fun verifyEmail(email: String, token: String): ApiResult<AuthResponse> =
         safeApiCall { apiService.verifyEmail(body = VerifyRequest("email", email, token)) }
+
+    suspend fun fetchProfileById(token: String, id: String): ApiResult<Profile> =
+        safeApiCall { apiService.fetchProfileById(token = "Bearer $token", id = "eq.$id") }
+
+    suspend fun insertPost(token: String, post: PostRequest): ApiResult<List<Post>> =
+        safeApiCall { apiService.insertPost(token = "Bearer $token", body = post) }
+
+    suspend fun fetchPosts(
+        token: String,
+        authorId: String? = null,
+        replyId: String = Api.EMPTY_UUID,
+        limit: Int = Api.PAGE_SIZE,
+        offset: Int = 0
+    ): ApiResult<List<Post>> =
+        safeApiCall {
+            apiService.fetchPosts(
+                token = "Bearer $token",
+                authorId = authorId?.emptyNull()?.let { "eq.$authorId" },
+                replyId = "eq.$replyId",
+                limit = limit,
+                offset = offset
+            )
+        }
 }

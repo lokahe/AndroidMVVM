@@ -25,11 +25,12 @@ import com.lokahe.androidmvvm.MyApplication.Companion.application
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.argb
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.Post
+import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.isNotNullOrBlank
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
+import com.lokahe.androidmvvm.toMillis
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -133,7 +134,7 @@ class Utils {
         @Composable
         fun postTitle(post: Post): AnnotatedString =
             buildAnnotatedString {
-                append(post.author + "\n")
+                append(post.profiles.name + "\n")
                 withStyle(
                     style = SpanStyle(
                         color = MaterialTheme.colorScheme.secondary,
@@ -143,7 +144,7 @@ class Utils {
                     append(
                         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                             .withZone(ZoneId.systemDefault())
-                            .format(Instant.ofEpochMilli(post.created))
+                            .format(Instant.ofEpochMilli(post.createdAt.toMillis()))
                     )
                 }
             }
@@ -179,14 +180,20 @@ class Utils {
             val bytes = ByteArray(32) // 256 bits
             secureRandom.nextBytes(bytes)
             // Use URL_SAFE, NO_WRAP, and NO_PADDING for PKCE compliance
-            return Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            return Base64.encodeToString(
+                bytes,
+                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+            )
         }
 
         fun generateCodeChallenge(verifier: String): String {
             val bytes = verifier.toByteArray(Charsets.US_ASCII)
             val messageDigest = MessageDigest.getInstance("SHA-256")
             val digest = messageDigest.digest(bytes)
-            return Base64.encodeToString(digest, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            return Base64.encodeToString(
+                digest,
+                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+            )
         }
     }
 }

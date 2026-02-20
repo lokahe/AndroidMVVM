@@ -30,6 +30,9 @@ data class User(
     val phone: String,
     @SerializedName("user_metadata")
     val userMetadata: UserMetadata,
+    // local additional
+    @SerializedName("public_profile")
+    var profile: Profile
 )
 
 data class UserMetadata(

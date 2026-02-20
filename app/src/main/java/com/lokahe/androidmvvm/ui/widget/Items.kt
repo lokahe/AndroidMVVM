@@ -28,8 +28,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.Post
+import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.User
+import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
 import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
@@ -37,22 +38,20 @@ import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
 @Composable
 fun AvatarIcon(
     modifier: Modifier = Modifier,
-    url: String
+    url: String?
 ) {
-    if (url.isNotEmpty()) {
+    url?.emptyNull()?.let {
         AsyncImage(
             model = url,
             contentDescription = stringResource(R.string.avatar),
             modifier = modifier.clip(RoundedCornerShape(20)),
             contentScale = Crop
         )
-    } else {
-        Icon(
-            modifier = modifier,
-            imageVector = Icons.Filled.Person,
-            contentDescription = ""
-        )
-    }
+    } ?: Icon(
+        modifier = modifier,
+        imageVector = Icons.Filled.Person,
+        contentDescription = ""
+    )
 }
 
 @Composable
@@ -71,12 +70,10 @@ fun PostItem(
                     modifier = Modifier
                         .padding(end = 16.dp)
                         .size(48.dp),
-                    url = post.avatar
+                    url = post.profiles.avatar
                 )
                 Text(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
                     text = postTitle(post),
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -113,9 +110,9 @@ fun PostItem(
                 text = post.content,
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (post.images.isNotEmpty()) {
+            if (post.imageUrls.isNotEmpty()) {
                 Row() {
-                    post.images.split(",").forEach {
+                    post.imageUrls.split(",").forEach {
                         AsyncImage(
                             model = it,
                             contentDescription = stringResource(R.string.image),

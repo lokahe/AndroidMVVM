@@ -31,11 +31,11 @@ class UserManager @Inject constructor(
     /**
      * Helper to get just the token
      */
-    val userTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
+    val accessTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
         prefs[USER_TOKEN_KEY]
     }
 
-    val userRefreshTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
+    val refreshTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
         prefs[USER_REFRESH_TOKEN_KEY]
     }
 

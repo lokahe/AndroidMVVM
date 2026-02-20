@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.core.graphics.ColorUtils
 import com.google.android.material.color.utilities.DynamicScheme
 import com.lokahe.androidmvvm.MyApplication.Companion.application
+import java.time.OffsetDateTime
 
 fun s(@StringRes id: Int): String = application.getString(id)
 fun Int.max(max: Int): Int = this.coerceAtMost(max)
@@ -47,13 +48,23 @@ fun Int.isStringRes(): Boolean {
 fun Int.str(): String = if (isStringRes()) application.getString(this) else this.toString()
 
 fun String.emailCover() = this.replace("(?<=.).(?=.*@.)".toRegex(), "*")
+fun String.emptyNull(): String? = this.ifEmpty { null }
+fun String.toMillis(): Long {
+    // Supabase returns ISO_OFFSET_DATE_TIME
+    val odt = OffsetDateTime.parse(this)
+    return odt.toInstant().toEpochMilli()
+}
 
 fun CharSequence?.isNotNullOrEmpty(): Boolean = !this.isNullOrEmpty()
 fun CharSequence?.isNotNullOrBlank(): Boolean = !this.isNullOrBlank()
 
-fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(application, message, duration).show()
+fun toast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
+    message?.let { Toast.makeText(application, it, duration).show() }
 }
+
+fun curMillis() = System.currentTimeMillis()
+
+fun <A, B> unNullPair(a: A?, b: B?): Pair<A, B>? = if (a != null && b != null) Pair(a, b) else null
 
 @SuppressLint("RestrictedApi")
 fun DynamicScheme.toColorScheme(): ColorScheme {

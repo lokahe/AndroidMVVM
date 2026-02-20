@@ -9,22 +9,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.MyApplication
-import com.lokahe.androidmvvm.PAGE_SIZE
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.clear
 import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.Post
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
+import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.remote.Api
+import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.set
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
+import com.lokahe.androidmvvm.unNullPair
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -34,6 +37,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -51,12 +55,15 @@ class MainViewModel @Inject constructor(
     }
 
     // Expose the user as State for Compose
-    val currentUser = userManager.userFlow
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val currentUser by lazy {
+        userManager.userFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    }
 
     // Check if logged in based on if user data exists
-    val isSignedIn = currentUser.map { it != null }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    val isSignedIn by lazy {
+        currentUser.map { it != null }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    }
 
     private val _processing = mutableStateOf(false)
     val processing: State<Boolean> = _processing
@@ -76,41 +83,46 @@ class MainViewModel @Inject constructor(
         user: User? = null
     ) = viewModelScope.launch {
         userManager.saveToken(token, refreshToken)
-        user?.let { userManager.saveUser(it) } ?: token?.let { tk ->
-            httpRepository.varifyToken(tk).onSuccess { userManager.saveUser(it) }
+        user?.let { userManager.saveUser(it.fetchProfile(token)) } ?: token?.let { tk ->
+            httpRepository.varifyToken(tk)
+                .onSuccess { userManager.saveUser(it.fetchProfile(token)) }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
         dismissDialog(AppDialog.SignIn)
     }
 
+    private suspend fun User.fetchProfile(token: String?): User {
+        token?.let { tk -> httpRepository.fetchProfileById(tk, id).onSuccess { profile = it } }
+        return this
+    }
+
     private fun autoSignIn() {
         viewModelScope.launch {
             // Get the saved token
             // Note: We use .firstOrNull() to get the current value from the Flow once
-            val token = userManager.userTokenFlow.firstOrNull()
-            if (!token.isNullOrEmpty()) {
-                onProcessing()
-                // Verify with server
-                httpRepository.varifyToken(token)
-                    .onSuccess { save(token, null, it) }
-                    .onFailure {
-                        if (it.code == 403) {
-                            refreshToken()
-                        } else {
-                            toast(it.message)
-                            userManager.clearUser()
-                        }
+            val token = userManager.accessTokenFlow.firstOrNull()
+            if (token.isNullOrEmpty()) return@launch
+            onProcessing()
+            // Verify with server
+            httpRepository.varifyToken(token)
+                .onSuccess { save(token, null, it) }
+                .onFailure {
+                    if (it.code == 403) {
+                        refreshToken()
+                    } else {
+                        toast(it.message)
+                        userManager.clearUser()
                     }
-                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
-                unProcessing()
-            }
+                }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            unProcessing()
         }
     }
 
     private fun refreshToken() {
         viewModelScope.launch {
-            val refreshToken = userManager.userRefreshTokenFlow.firstOrNull()
+            val refreshToken = userManager.refreshTokenFlow.firstOrNull()
             if (!refreshToken.isNullOrEmpty()) {
                 onProcessing()
                 httpRepository.refreshToken(refreshToken)
@@ -129,8 +141,8 @@ class MainViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            val token = userManager.userTokenFlow.firstOrNull()
-            token?.ifEmpty { null }?.let { httpRepository.signOut(it) }
+            userManager.accessTokenFlow.firstOrNull()?.ifEmpty { null }
+                ?.let { httpRepository.signOut(it) }
             userManager.clearUser()
         }
     }
@@ -226,7 +238,7 @@ class MainViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             val userId = userManager.userFlow.firstOrNull()?.id ?: ""
-            val token = userManager.userTokenFlow.firstOrNull()
+            val token = userManager.accessTokenFlow.firstOrNull()
             if (userId.isEmpty() || token.isNullOrEmpty()) return@launch
 
             val updateMap = mapOf(
@@ -318,57 +330,38 @@ class MainViewModel @Inject constructor(
         fetchPosts(PAGE_SIZE, 0)
     }
 
-    fun fetchPosts(pageSize: Int, offset: Int, ownerId: String = "") {
+    fun fetchPosts(pageSize: Int, offset: Int, authorId: String? = null) {
         viewModelScope.launch {
-//            val whereClause = if (ownerId.isNotEmpty()) "ownerId='$ownerId'" else ""
-//            val result = httpRepository.getPosts(pageSize, offset, whereClause)
-//            result.onSuccess { posts ->
-//                if (ownerId.isNotEmpty())
-//                    _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
-//                else
-//                    _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
-//                for (post in posts)
-//                    dbRepository.insertPost(post)
-//            }
-//            result.onFailure { error ->
-//                dbRepository.getAllPosts(pageSize, offset, if (ownerId.isEmpty()) null else ownerId)
-//                    .let { posts ->
-//                        if (ownerId.isNotEmpty())
-//                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
-//                        else
-//                            _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
-//                    }
-//            }
+            userManager.accessTokenFlow.firstOrNull()?.let { token ->
+                httpRepository.fetchPosts(token, authorId, Api.EMPTY_UUID, pageSize, offset)
+                    .onSuccess { posts ->
+                        if (authorId.isNullOrEmpty())
+                            _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                        else
+                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                    }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
         }
     }
 
-    fun sendPost(content: String, images: String, onSuccess: () -> Unit = {}) {
+    fun sendPost(
+        content: String,
+        imageUrls: String = "",
+        videoUrls: String = "",
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch {
-//            val token = userManager.userTokenFlow.firstOrNull()
-//            val user = userManager.userFlow.firstOrNull()
-//            val date = System.currentTimeMillis()
-//            if (!token.isNullOrEmpty() && user != null) {
-//                val post = Post(
-//                    objectId = "",
-//                    content = content,
-//                    images = images,
-//                    parentId = "",
-//                    ownerId = user.objectId,
-//                    author = user.name,
-//                    avatar = user.avatar ?: "",
-//                    created = date,
-//                    updated = date,
-//                    message = null,
-//                    code = null
-//                )
-//                val result = httpRepository.sendPost(token, post)
-//                result.onSuccess { message ->
-//                    toast(message)
-//                    onSuccess()
-//                }.onFailure { error ->
-//                    toast(error.message ?: R.string.unkown_error.toString())
-//                }
-//            }
+            unNullPair(
+                userManager.userFlow.firstOrNull(),
+                userManager.accessTokenFlow.firstOrNull()
+            )?.let { (user, token) ->
+                httpRepository.insertPost(
+                    token, PostRequest(user.id, content, imageUrls, videoUrls, "", Api.EMPTY_UUID)
+                ).onSuccess { onSuccess()} // TODO: dbRepository.insertPost(it.first())
+                    .onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
         }
     }
 
@@ -407,13 +400,13 @@ class MainViewModel @Inject constructor(
             }
             val accessToken = params["access_token"]
             val refreshToken = params["refresh_token"]
-            accessToken?.ifEmpty { null }?.let {
+            accessToken?.emptyNull()?.let {
                 viewModelScope.launch { save(it, refreshToken) }
-            } ?: params["error_description"]?.ifEmpty { null }?.let { toast(it) }
+            } ?: params["error_description"]?.emptyNull()?.let { toast(it) }
         }
-        uri.getQueryParameter("code")?.ifEmpty { null }?.let { code ->
+        uri.getQueryParameter("code")?.emptyNull()?.let { code ->
             viewModelScope.launch {
-                userManager.codeVerifierFlow.firstOrNull()?.ifEmpty { null }
+                userManager.codeVerifierFlow.firstOrNull()?.emptyNull()
                     ?.let { codeVerifier ->
                         android.util.Log.d("handleMagicLink", "codeVerifier: $codeVerifier")
                         httpRepository.codeExchange(code, codeVerifier).onSuccess {
