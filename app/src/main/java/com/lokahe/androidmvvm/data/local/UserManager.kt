@@ -25,6 +25,7 @@ class UserManager @Inject constructor(
         private val USER_TOKEN_KEY = stringPreferencesKey("user_token")
         private val USER_REFRESH_TOKEN_KEY = stringPreferencesKey("user_refresh_token")
         private val USER_COLOR_SEED_KEY = stringPreferencesKey("user_color_seed")
+        private val CODE_VERIFIER = stringPreferencesKey("code_verifier")
     }
 
     /**
@@ -38,27 +39,8 @@ class UserManager @Inject constructor(
         prefs[USER_REFRESH_TOKEN_KEY]
     }
 
-
-    /**
-     * save tokens
-     */
-    suspend fun saveToken(accessToken: String?, refreshToken: String?) {
-        context.userStore.edit { prefs ->
-            accessToken?.let { prefs[USER_TOKEN_KEY] = it }
-            refreshToken?.let { prefs[USER_REFRESH_TOKEN_KEY] = it }
-        }
-    }
-
-    /**
-     * save user
-     */
-    suspend fun saveUser(user: User) {
-        context.userStore.edit { prefs ->
-            prefs[USER_DATA_KEY] = gson.toJson(user)
-            Utils.calculateMainColor(user.userMetadata.avatarUrl)?.let { seed ->
-                prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
-            }
-        }
+    val codeVerifierFlow: Flow<String?> = context.userStore.data.map { prefs ->
+        prefs[CODE_VERIFIER]
     }
 
     /**
@@ -85,6 +67,32 @@ class UserManager @Inject constructor(
             } catch (e: Exception) {
                 Log.e("UserManager", "Error deserializing ColorSeed: ${e.message}")
                 null
+            }
+        }
+    }
+
+    /**
+     * save tokens
+     */
+    suspend fun saveToken(accessToken: String?, refreshToken: String?) {
+        context.userStore.edit { prefs ->
+            accessToken?.let { prefs[USER_TOKEN_KEY] = it }
+            refreshToken?.let { prefs[USER_REFRESH_TOKEN_KEY] = it }
+        }
+    }
+
+    suspend fun saveCodeVerifier(codeVerifier: String) {
+        context.userStore.edit { prefs -> prefs[CODE_VERIFIER] = codeVerifier }
+    }
+
+    /**
+     * save user
+     */
+    suspend fun saveUser(user: User) {
+        context.userStore.edit { prefs ->
+            prefs[USER_DATA_KEY] = gson.toJson(user)
+            Utils.calculateMainColor(user.userMetadata.avatarUrl)?.let { seed ->
+                prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
             }
         }
     }

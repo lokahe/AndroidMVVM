@@ -27,6 +27,7 @@ data class SetPasswordRequest(
     @SerializedName("password")
     val password: String
 )
+
 data class VerifyRequest(
     @SerializedName("type")
     val type: String,
@@ -39,4 +40,11 @@ data class VerifyRequest(
 data class RefreshTokenRequest(
     @SerializedName("refresh_token")
     val refreshToken: String
+)
+
+data class CodeExchangeRequest(
+    @SerializedName("auth_code")
+    val authCode: String,
+    @SerializedName("code_verifier")
+    val codeVerifier: String
 )

@@ -16,7 +16,7 @@ data class GoogleAuthResponse(
     @SerializedName("access_token")
     val accessToken: String,
     @SerializedName("refresh_token")
-    val refresh_token: String,
+    val refreshToken: String,
     @SerializedName("user")
     val user: User
 )

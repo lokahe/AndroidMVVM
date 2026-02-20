@@ -136,13 +136,28 @@ class MainViewModel @Inject constructor(
     }
 
     fun signWithTwitter() {
-        val fullUrl = "${Api.SPB_AUTH_URL}?provider=x&redirect_to=${Api.REDIRECT}"
         // This tells Android: "Open the real browser with this URL"
         MyApplication.application.startActivity(
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse(fullUrl)
+                Uri.parse("${Api.SPB_AUTH_URL}?provider=x&redirect_to=${Api.REDIRECT}")
             ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
+    }
+
+    fun signWithGithub() {
+        viewModelScope.launch {
+            val codeVerifier =
+                Utils.generateCodeVerifier().apply { userManager.saveCodeVerifier(this) }
+            android.util.Log.d("signWithGithub", "codeVerifier: $codeVerifier")
+            MyApplication.application.startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(
+                        "${Api.SPB_AUTH_URL}?provider=github&redirect_to=${Api.REDIRECT}&code_" +
+                                "challenge=${Utils.generateCodeChallenge(codeVerifier)}&code_challenge_method=S256"
+                    )
+                ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
+        }
     }
 
     fun signWithGoogle(context: Context) {
@@ -151,7 +166,7 @@ class MainViewModel @Inject constructor(
             googleAuther.gOauth(context) { idToken ->
                 httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null))
                     .onSuccess {
-                        save(it.accessToken, refreshToken = it.refresh_token, user = it.user)
+                        save(it.accessToken, refreshToken = it.refreshToken, user = it.user)
                     }.onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
@@ -395,6 +410,19 @@ class MainViewModel @Inject constructor(
             accessToken?.ifEmpty { null }?.let {
                 viewModelScope.launch { save(it, refreshToken) }
             } ?: params["error_description"]?.ifEmpty { null }?.let { toast(it) }
+        }
+        uri.getQueryParameter("code")?.ifEmpty { null }?.let { code ->
+            viewModelScope.launch {
+                userManager.codeVerifierFlow.firstOrNull()?.ifEmpty { null }
+                    ?.let { codeVerifier ->
+                        android.util.Log.d("handleMagicLink", "codeVerifier: $codeVerifier")
+                        httpRepository.codeExchange(code, codeVerifier).onSuccess {
+                            save(it.accessToken, it.refreshToken, it.user)
+                        }.onFailure { toast(it.message) }.onException {
+                            toast(it.message ?: R.string.unkown_error.str())
+                        }
+                    }
+            }
         }
     }
 }

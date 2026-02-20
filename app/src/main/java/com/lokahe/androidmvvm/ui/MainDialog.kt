@@ -176,7 +176,7 @@ fun SignInDialog() {
             Column {
                 if (verifyEmail.isEmpty()) EmailField(email, { email = it })
                 else OtpInputField { viewModel.verifyEmail(verifyEmail, it) }
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
                     IconButton(
                         onClick = { viewModel.signWithTwitter() },
                         modifier = Modifier
@@ -198,6 +198,19 @@ fun SignInDialog() {
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_google), // You need to add ic_google.xml to res/drawable
+                            contentDescription = "Google", // Provide a content description for accessibility
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.signWithGithub() },
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_github), // You need to add ic_google.xml to res/drawable
                             contentDescription = "Google", // Provide a content description for accessibility
                             tint = MaterialTheme.colorScheme.primary
                         )

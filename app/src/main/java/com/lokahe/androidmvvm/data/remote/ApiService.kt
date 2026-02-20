@@ -3,6 +3,7 @@ package com.lokahe.androidmvvm.data.remote
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
+import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.SetPasswordRequest
@@ -26,6 +27,13 @@ interface ApiService {
         @Header("Content-Type") contentType: String = "application/json",
         @Body body: GoogleAuth
     ): Response<GoogleAuthResponse>
+
+    @POST("auth/v1/token?grant_type=pkce")
+    suspend fun codeExchange(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body body: CodeExchangeRequest
+    ): Response<AuthResponse>
 
     @GET("auth/v1/authorize")
     suspend fun xAuth(

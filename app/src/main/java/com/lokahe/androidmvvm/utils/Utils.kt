@@ -2,6 +2,7 @@ package com.lokahe.androidmvvm.utils
 
 import android.annotation.SuppressLint
 import android.graphics.drawable.BitmapDrawable
+import android.util.Base64
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -30,11 +31,11 @@ import com.lokahe.androidmvvm.isNotNullOrBlank
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
+import java.security.MessageDigest
+import java.security.SecureRandom
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 class Utils {
     companion object {
@@ -173,67 +174,19 @@ class Utils {
                 .replace("%7E", "~")
         }
 
-//        /**
-//         * Step B: Build the Signature Base String (SBS)
-//         * Collect all parameters (oauth and query params).
-//         * Percent-encode every key and value.
-//         * Sort them alphabetically by key.
-//         * Join them with = and & to create a parameter string.
-//         */
-//        fun createSignatureBaseString(
-//            method: String,
-//            url: String,
-//            params: Map<String, String>
-//        ): String {
-//            val sortedParams = params.entries
-//                .sortedBy { it.key }
-//                .joinToString("&") { "${percentEncode(it.key)}=${percentEncode(it.value)}" }
-//
-//            return "${method.uppercase()}&${percentEncode(url)}&${percentEncode(sortedParams)}"
-//        }
-//
-//        /**
-//         * Step C: Sign the SBS with HMAC-SHA1
-//         * The signing key is your Consumer Secret and Token Secret (if any), joined by an &. For the initial "Request Token" step, the Token Secret is empty, so use CONSUMER_SECRET&.
-//         */
-//        fun generateSignature(
-//            baseString: String,
-//            consumerSecret: String,
-//            tokenSecret: String = ""
-//        ): String {
-//            val keyString = "${percentEncode(consumerSecret)}&${percentEncode(tokenSecret)}"
-//            val mac = Mac.getInstance("HmacSHA1")
-//            val secretKey = SecretKeySpec(keyString.toByteArray(), "HmacSHA1")
-//            mac.init(secretKey)
-//
-//            val hashBytes = mac.doFinal(baseString.toByteArray())
-//            return Base64.encodeToString(hashBytes, Base64.NO_WRAP)
-//        }
+        fun generateCodeVerifier(): String {
+            val secureRandom = SecureRandom()
+            val bytes = ByteArray(32) // 256 bits
+            secureRandom.nextBytes(bytes)
+            // Use URL_SAFE, NO_WRAP, and NO_PADDING for PKCE compliance
+            return Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        }
 
-        fun generateOAuthSignature(
-            method: String, url: String, params: Map<String, String>,
-            consumerSecret: String, tokenSecret: String = ""
-        ): String {
-            // 1. Sort & encode params
-            val paramStr = params.toSortedMap().entries.joinToString("&") {
-                "${percentEncode(it.key)}=${
-                    percentEncode(it.value)
-                }"
-            }
-
-            // 2. Signature base string
-            val baseUrl = url.split("?")[0].replace("https://", "https%3A%2F%2F")
-            val baseString = "$method&$baseUrl&${percentEncode(paramStr)}"
-
-            // 3. Signing key
-            val key = "${percentEncode(consumerSecret)}&${percentEncode(tokenSecret)}"
-
-            // 4. HMAC-SHA1
-            val mac = Mac.getInstance("HmacSHA1")
-            mac.init(SecretKeySpec(key.toByteArray(), "HmacSHA1"))
-            val sigBytes = mac.doFinal(baseString.toByteArray())
-
-            return java.util.Base64.getEncoder().encodeToString(sigBytes).trimEnd()
+        fun generateCodeChallenge(verifier: String): String {
+            val bytes = verifier.toByteArray(Charsets.US_ASCII)
+            val messageDigest = MessageDigest.getInstance("SHA-256")
+            val digest = messageDigest.digest(bytes)
+            return Base64.encodeToString(digest, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
         }
     }
 }

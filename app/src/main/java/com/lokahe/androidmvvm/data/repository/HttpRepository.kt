@@ -7,6 +7,7 @@ import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.ApiError
 import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
+import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
@@ -38,6 +39,9 @@ class HttpRepository @Inject constructor(
 
     suspend fun gAuth(body: GoogleAuth): ApiResult<GoogleAuthResponse> =
         safeApiCall { apiService.googleAuth(body = body) }
+
+    suspend fun codeExchange(code: String, codeVerifier: String): ApiResult<AuthResponse> =
+        safeApiCall { apiService.codeExchange(body = CodeExchangeRequest(code, codeVerifier)) }
 
     suspend fun varifyToken(accessToken: String): ApiResult<User> =
         safeApiCall { apiService.varifyToken(token = "Bearer $accessToken") }
