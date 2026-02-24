@@ -16,6 +16,8 @@ val LocalTheme =
 
 val LocalViewModel = compositionLocalOf<ViewModel> { noLocalProvidedFor("LocalViewModel") }
 
+val LocalPostViewModel = compositionLocalOf<ViewModel> { noLocalProvidedFor("postViewModel") }
+
 val LocalDrawerState =
     compositionLocalOf<DrawerState> { noLocalProvidedFor("LocalDrawerState") }
 
@@ -29,6 +31,25 @@ val LocalNavController =
 //) {
 //    CompositionLocalProvider(LocalPreferenceTheme provides theme, content = content)
 //}
+
+@Composable
+fun ProvideLocals(
+    navController: NavController,
+    viewModel: ViewModel,
+    postViewModel: ViewModel,
+    theme: PreferenceTheme = preferenceTheme(),
+    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalNavController provides navController,
+        LocalTheme provides theme,
+        LocalPostViewModel provides postViewModel,
+        LocalViewModel provides viewModel,
+        LocalDrawerState provides drawerState,
+        content = content,
+    )
+}
 
 @Composable
 fun ProvideLocals(

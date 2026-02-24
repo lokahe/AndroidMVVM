@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -54,7 +55,6 @@ import com.lokahe.androidmvvm.AVATARS
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.has
 import com.lokahe.androidmvvm.ui.widget.EmailField
 import com.lokahe.androidmvvm.ui.widget.OtpInputField
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
@@ -62,12 +62,15 @@ import com.lokahe.androidmvvm.viewmodels.MainViewModel
 @Composable
 fun MainDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
-    val activeDialog by viewModel.activeDialog
-    if (activeDialog.has(AppDialog.Delete.index)) DeleteDialog()
-    if (activeDialog.has(AppDialog.SignOut.index)) SignOutDialog()
-    if (activeDialog.has(AppDialog.SignIn.index)) SignInDialog()
-    if (activeDialog.has(AppDialog.Avatar.index)) AvatarSelectDialog()
-    if (activeDialog.has(AppDialog.Loading.index)) LoadingDialog()
+    viewModel.activeDialogs.forEach {
+        when (it) {
+            AppDialog.Loading -> LoadingDialog()
+            AppDialog.SignIn -> SignInDialog()
+            AppDialog.SignOut -> SignOutDialog()
+            AppDialog.Avatar -> AvatarSelectDialog()
+            is AppDialog.Delete -> DeleteDialog(it.onConfirm)
+        }
+    }
 }
 
 @Composable
@@ -92,7 +95,7 @@ fun LoadingDialog() {
 }
 
 @Composable
-fun DeleteDialog() {
+fun DeleteDialog(onConfirm: () -> Unit) {
     val viewModel = LocalViewModel.current as MainViewModel
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
@@ -102,12 +105,12 @@ fun DeleteDialog() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = stringResource(R.string.sign_out)
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = stringResource(R.string.confirm)
                 )
                 Text(
                     modifier = Modifier.padding(horizontal = 8.dp),
-                    text = stringResource(R.string.sign_out_confirm),
+                    text = stringResource(R.string.delete_confirm),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -116,7 +119,7 @@ fun DeleteDialog() {
             TextButton(
                 onClick = {
                     viewModel.dismissDialog()
-                    viewModel.signOut()
+                    onConfirm()
                 }
             ) {
                 Text(stringResource(R.string.confirm))

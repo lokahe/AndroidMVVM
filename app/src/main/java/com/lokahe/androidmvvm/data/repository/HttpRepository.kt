@@ -2,15 +2,14 @@ package com.lokahe.androidmvvm.data.repository
 
 import android.util.Log
 import com.google.gson.Gson
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.ApiError
 import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.supabase.Profile
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
@@ -43,7 +42,7 @@ class HttpRepository @Inject constructor(
         }
     }
 
-    suspend fun gAuth(body: GoogleAuth): ApiResult<GoogleAuthResponse> =
+    suspend fun gAuth(body: GoogleAuth): ApiResult<AuthResponse> =
         safeApiCall { apiService.googleAuth(body = body) }
 
     suspend fun codeExchange(code: String, codeVerifier: String): ApiResult<AuthResponse> =
@@ -87,6 +86,11 @@ class HttpRepository @Inject constructor(
             )
         }
 
-    suspend fun deletePost(token: String, id: String): ApiResult<Any> =
-        safeApiCall { apiService.deletePost(token = "Bearer $token", id = "eq.$id") }
+    suspend fun deletePosts(token: String, ids: List<String>): ApiResult<Any> =
+        safeApiCall {
+            apiService.deletePosts(
+                token = "Bearer $token",
+                inCondition = "in.(${ids.joinToString(",")})"
+            )
+        }
 }

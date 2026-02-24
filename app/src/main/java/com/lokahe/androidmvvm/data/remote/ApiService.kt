@@ -1,12 +1,11 @@
 package com.lokahe.androidmvvm.data.remote
 
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.auth.GoogleAuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.supabase.Profile
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.SetPasswordRequest
@@ -31,7 +30,7 @@ interface ApiService {
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Content-Type") contentType: String = "application/json",
         @Body body: GoogleAuth
-    ): Response<GoogleAuthResponse>
+    ): Response<AuthResponse>
 
     @POST("auth/v1/token?grant_type=pkce")
     suspend fun codeExchange(
@@ -138,10 +137,10 @@ interface ApiService {
     ): Response<List<Post>>
 
     @DELETE("rest/v1/posts")
-    suspend fun deletePost(
+    suspend fun deletePosts(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String,
-        @Query("id") id: String
+        @Query("id") inCondition: String
     ): Response<Any>
 
 }

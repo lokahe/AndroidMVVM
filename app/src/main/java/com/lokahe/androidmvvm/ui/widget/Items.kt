@@ -58,12 +58,17 @@ fun AvatarIcon(
 fun PostItem(
     index: Int,
     post: Post,
-    userId: String? = null
+    editMode: Boolean,
+    selected: Boolean = false,
+    onLongClick: () -> Unit = {},
+    onClick: (Int) -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
+    SuperCard(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        onClick = { onClick(index) },
+        onLongClick = onLongClick,
+        editMode = editMode,
+        selected = selected
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             Row(verticalAlignment = CenterVertically) {
@@ -94,28 +99,15 @@ fun PostItem(
                         )
                         .size(20.dp),
                 )
-                if (post.authorId == userId) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = stringResource(R.string.delete),
-                        modifier = Modifier
-                            .padding(
-                                end = 8.dp
-                            )
-                            .size(20.dp),
-                        tint = MaterialTheme.colorScheme.error
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = stringResource(R.string.favor),
+                    modifier = Modifier
+                        .padding(
+                            end = 8.dp
                         )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = stringResource(R.string.favor),
-                        modifier = Modifier
-                            .padding(
-                                end = 8.dp
-                            )
-                            .size(20.dp),
-                    )
-                }
+                        .size(20.dp),
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(

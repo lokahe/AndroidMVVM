@@ -72,4 +72,6 @@
     <string name="share">share</string>
     <string name="like">like</string>
     <string name="favor">favor</string>
+    <string name="delete_success">delete success</string>
+    <string name="delete_confirm">confirm to delete</string>
 </resources>

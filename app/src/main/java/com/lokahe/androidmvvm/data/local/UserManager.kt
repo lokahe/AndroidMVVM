@@ -3,6 +3,7 @@ package com.lokahe.androidmvvm.data.local
 import android.content.Context
 import android.util.Log
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
 import com.lokahe.androidmvvm.data.models.supabase.User
@@ -23,6 +24,7 @@ class UserManager @Inject constructor(
     companion object {
         private val USER_DATA_KEY = stringPreferencesKey("user_data")
         private val USER_TOKEN_KEY = stringPreferencesKey("user_token")
+        private val USER_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("user_token_expires_at")
         private val USER_REFRESH_TOKEN_KEY = stringPreferencesKey("user_refresh_token")
         private val USER_COLOR_SEED_KEY = stringPreferencesKey("user_color_seed")
         private val CODE_VERIFIER = stringPreferencesKey("code_verifier")
@@ -33,6 +35,10 @@ class UserManager @Inject constructor(
      */
     val accessTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
         prefs[USER_TOKEN_KEY]
+    }
+
+    val accessTokenExpiresAtFlow: Flow<Long?> = context.userStore.data.map { prefs ->
+        prefs[USER_TOKEN_EXPIRES_AT_KEY]
     }
 
     val refreshTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
@@ -74,9 +80,10 @@ class UserManager @Inject constructor(
     /**
      * save tokens
      */
-    suspend fun saveToken(accessToken: String?, refreshToken: String?) {
+    suspend fun saveToken(accessToken: String?, expiresAt: Long?, refreshToken: String?) {
         context.userStore.edit { prefs ->
             accessToken?.let { prefs[USER_TOKEN_KEY] = it }
+            expiresAt?.let { prefs[USER_TOKEN_EXPIRES_AT_KEY] = it }
             refreshToken?.let { prefs[USER_REFRESH_TOKEN_KEY] = it }
         }
     }
@@ -88,11 +95,13 @@ class UserManager @Inject constructor(
     /**
      * save user
      */
-    suspend fun saveUser(user: User) {
-        context.userStore.edit { prefs ->
-            prefs[USER_DATA_KEY] = gson.toJson(user)
-            Utils.calculateMainColor(user.userMetadata.avatarUrl)?.let { seed ->
-                prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
+    suspend fun saveUser(user: User?) {
+        user?.let {
+            context.userStore.edit { prefs ->
+                prefs[USER_DATA_KEY] = gson.toJson(it)
+                Utils.calculateMainColor(it.userMetadata.avatarUrl)?.let { seed ->
+                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
+                }
             }
         }
     }

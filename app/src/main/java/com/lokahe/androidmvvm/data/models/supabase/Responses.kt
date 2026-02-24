@@ -81,6 +81,8 @@ data class AuthResponse(
     val accessToken: String?,
     @SerializedName("refresh_token")
     val refreshToken: String?,
+    @SerializedName("expires_at")
+    val expiresAt: Long?,
     @SerializedName("user")
     val user: User?
 )

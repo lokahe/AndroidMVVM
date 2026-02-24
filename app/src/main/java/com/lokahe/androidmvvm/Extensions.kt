@@ -63,6 +63,7 @@ fun toast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
 }
 
 fun curMillis() = System.currentTimeMillis()
+fun curSecond() = System.currentTimeMillis() / 1000
 
 fun <A, B> unNullPair(a: A?, b: B?): Pair<A, B>? = if (a != null && b != null) Pair(a, b) else null
 

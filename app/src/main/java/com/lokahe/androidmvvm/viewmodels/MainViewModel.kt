@@ -6,17 +6,17 @@ import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.clear
+import com.lokahe.androidmvvm.curSecond
 import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.PostRequest
+import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
@@ -24,10 +24,8 @@ import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import com.lokahe.androidmvvm.emptyNull
-import com.lokahe.androidmvvm.set
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
-import com.lokahe.androidmvvm.unNullPair
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -37,7 +35,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -77,12 +74,17 @@ class MainViewModel @Inject constructor(
         dismissDialog(AppDialog.Loading)
     }
 
+    private fun save(auth: AuthResponse) {
+        save(auth.accessToken, auth.expiresAt, auth.refreshToken, auth.user)
+    }
+
     private fun save(
         token: String?,
+        expiresAt: Long?,
         refreshToken: String?,
         user: User? = null
     ) = viewModelScope.launch {
-        userManager.saveToken(token, refreshToken)
+        userManager.saveToken(token, expiresAt, refreshToken)
         user?.let { userManager.saveUser(it.fetchProfile(token)) } ?: token?.let { tk ->
             httpRepository.varifyToken(tk)
                 .onSuccess { userManager.saveUser(it.fetchProfile(token)) }
@@ -97,6 +99,16 @@ class MainViewModel @Inject constructor(
         return this
     }
 
+    private fun checkTokenExpires() {
+        viewModelScope.launch {
+            userManager.accessTokenExpiresAtFlow.firstOrNull()?.let {
+                if (it < curSecond()) {
+                    refreshToken()
+                }
+            }
+        }
+    }
+
     private fun autoSignIn() {
         viewModelScope.launch {
             // Get the saved token
@@ -104,9 +116,9 @@ class MainViewModel @Inject constructor(
             val token = userManager.accessTokenFlow.firstOrNull()
             if (token.isNullOrEmpty()) return@launch
             onProcessing()
+            checkTokenExpires()
             // Verify with server
             httpRepository.varifyToken(token)
-                .onSuccess { save(token, null, it) }
                 .onFailure {
                     if (it.code == 403) {
                         refreshToken()
@@ -126,7 +138,7 @@ class MainViewModel @Inject constructor(
             if (!refreshToken.isNullOrEmpty()) {
                 onProcessing()
                 httpRepository.refreshToken(refreshToken)
-                    .onSuccess { save(it.accessToken, it.refreshToken, it.user) }
+                    .onSuccess { save(it) }
                     .onFailure {
                         toast(it.message)
                         userManager.clearUser()
@@ -152,7 +164,7 @@ class MainViewModel @Inject constructor(
         MyApplication.application.startActivity(
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("${Api.SPB_AUTH_URL}?provider=x&redirect_to=${Api.REDIRECT}")
+                "${Api.SPB_AUTH_URL}?provider=x&redirect_to=${Api.REDIRECT}".toUri()
             ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
     }
 
@@ -164,10 +176,8 @@ class MainViewModel @Inject constructor(
             MyApplication.application.startActivity(
                 Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse(
-                        "${Api.SPB_AUTH_URL}?provider=github&redirect_to=${Api.REDIRECT}&code_" +
-                                "challenge=${Utils.generateCodeChallenge(codeVerifier)}&code_challenge_method=S256"
-                    )
+                    ("${Api.SPB_AUTH_URL}?provider=github&redirect_to=${Api.REDIRECT}&code_" +
+                            "challenge=${Utils.generateCodeChallenge(codeVerifier)}&code_challenge_method=S256").toUri()
                 ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
         }
     }
@@ -177,9 +187,8 @@ class MainViewModel @Inject constructor(
             onProcessing()
             googleAuther.gOauth(context) { idToken ->
                 httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null))
-                    .onSuccess {
-                        save(it.accessToken, refreshToken = it.refreshToken, user = it.user)
-                    }.onFailure { toast(it.message) }
+                    .onSuccess { save(it) }
+                    .onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
             unProcessing()
@@ -202,10 +211,8 @@ class MainViewModel @Inject constructor(
     fun verifyEmail(email: String, token: String) {
         viewModelScope.launch {
             onProcessing()
-            httpRepository.verifyEmail(email, token).onSuccess { it ->
-                save(it.accessToken, it.refreshToken, it.user)
-                dismissDialog(AppDialog.SignIn)
-            }.onFailure { toast(it.message) }
+            httpRepository.verifyEmail(email, token).onSuccess { it -> save(it) }
+                .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
             unProcessing()
         }
@@ -278,18 +285,6 @@ class MainViewModel @Inject constructor(
         _verifyEmail.value = ""
     }
 
-    // State for the currently visible dialog
-    private val _activeDialog = mutableIntStateOf(AppDialog.None.index)
-    val activeDialog: State<Int> = _activeDialog
-    fun showDialog(dialog: AppDialog) {
-        _activeDialog.intValue = _activeDialog.intValue.set(dialog.index)
-    }
-
-    fun dismissDialog(vararg dialogs: AppDialog = emptyArray()) {
-        _activeDialog.intValue = if (dialogs.isEmpty()) AppDialog.None.index else
-            _activeDialog.intValue.clear(0.set(*dialogs.map { it.index }.toIntArray()))
-    }
-
     // state for home tab index state
     private var _homeTabIndex = mutableIntStateOf(0)
     val homeTabIndex: State<Int> = _homeTabIndex
@@ -317,62 +312,6 @@ class MainViewModel @Inject constructor(
 //            result.onFailure { error ->
 //                toast(error.message ?: R.string.unkown_error.toString())
 //            }
-        }
-    }
-
-    // State for the list of posts
-    private val _posts = MutableStateFlow<List<Post>>(emptyList())
-    private val _myPosts = MutableStateFlow<List<Post>>(emptyList())
-    val posts = _posts.asStateFlow()
-    val myPosts = _myPosts.asStateFlow()
-
-    init {
-        fetchPosts(PAGE_SIZE, 0)
-    }
-
-    fun fetchPosts(pageSize: Int, offset: Int, authorId: String? = null) {
-        viewModelScope.launch {
-            userManager.accessTokenFlow.firstOrNull()?.let { token ->
-                httpRepository.fetchPosts(token, authorId, Api.EMPTY_UUID, pageSize, offset)
-                    .onSuccess { posts ->
-                        if (authorId.isNullOrEmpty())
-                            _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
-                        else
-                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
-                    }.onFailure { toast(it.message) }
-                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
-            }
-        }
-    }
-
-    fun deletePost(id: String) {
-        viewModelScope.launch {
-            userManager.accessTokenFlow.firstOrNull()?.let { token ->
-                httpRepository.deletePost(token, id).onSuccess {
-                    _myPosts.update { currentList -> currentList.filter { it.id != id } }
-                }.onFailure { toast(it.message) }
-                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
-            }
-        }
-    }
-
-    fun sendPost(
-        content: String,
-        imageUrls: String = "",
-        videoUrls: String = "",
-        onSuccess: () -> Unit = {}
-    ) {
-        viewModelScope.launch {
-            unNullPair(
-                userManager.userFlow.firstOrNull(),
-                userManager.accessTokenFlow.firstOrNull()
-            )?.let { (user, token) ->
-                httpRepository.insertPost(
-                    token, PostRequest(user.id, content, imageUrls, videoUrls, "", Api.EMPTY_UUID)
-                ).onSuccess { onSuccess() } // TODO: dbRepository.insertPost(it.first())
-                    .onFailure { toast(it.message) }
-                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
-            }
         }
     }
 
@@ -409,11 +348,15 @@ class MainViewModel @Inject constructor(
                 val (key, value) = it.split("=")
                 key to value
             }
-            val accessToken = params["access_token"]
-            val refreshToken = params["refresh_token"]
-            accessToken?.emptyNull()?.let {
-                viewModelScope.launch { save(it, refreshToken) }
-            } ?: params["error_description"]?.emptyNull()?.let { toast(it) }
+            val type = params["type"]
+            if (type == "magiclink") {
+                val accessToken = params["access_token"]
+                val expiresAt = params["expires_at"]?.toLong()
+                val refreshToken = params["refresh_token"]
+                accessToken?.emptyNull()?.let {
+                    viewModelScope.launch { save(it, expiresAt, refreshToken) }
+                } ?: params["error_description"]?.emptyNull()?.let { toast(it) }
+            }
         }
         uri.getQueryParameter("code")?.emptyNull()?.let { code ->
             viewModelScope.launch {
@@ -421,7 +364,7 @@ class MainViewModel @Inject constructor(
                     ?.let { codeVerifier ->
                         android.util.Log.d("handleMagicLink", "codeVerifier: $codeVerifier")
                         httpRepository.codeExchange(code, codeVerifier).onSuccess {
-                            save(it.accessToken, it.refreshToken, it.user)
+                            save(it)
                         }.onFailure { toast(it.message) }.onException {
                             toast(it.message ?: R.string.unkown_error.str())
                         }

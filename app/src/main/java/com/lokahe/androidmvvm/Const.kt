@@ -41,13 +41,12 @@ sealed class Screen(val route: String) {
     object SendPost : Screen("send_post")
 }
 
-sealed class AppDialog(val index: Int) {
-    data object None : AppDialog(0)
-    data object Loading : AppDialog(1)
-    data object SignIn : AppDialog(2)
-    data object SignOut : AppDialog(4)
-    data object Avatar : AppDialog(8)
-    data object Delete : AppDialog(16)
+sealed interface AppDialog {
+    data object Loading : AppDialog
+    data object SignIn : AppDialog
+    data object SignOut : AppDialog
+    data object Avatar : AppDialog
+    data class Delete(val onConfirm: () -> Unit) : AppDialog
     // Add more later easily: data object DeleteAccount : AppDialog()
 }
 
