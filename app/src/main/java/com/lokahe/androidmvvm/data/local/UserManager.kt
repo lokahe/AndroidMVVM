@@ -113,7 +113,10 @@ class UserManager @Inject constructor(
         context.userStore.edit { prefs ->
             prefs.remove(USER_DATA_KEY)
             prefs.remove(USER_TOKEN_KEY)
+            prefs.remove(USER_REFRESH_TOKEN_KEY)
+            prefs.remove(USER_TOKEN_EXPIRES_AT_KEY)
             prefs.remove(USER_COLOR_SEED_KEY)
+            prefs.remove(CODE_VERIFIER)
         }
     }
 }

@@ -64,7 +64,7 @@ fun PostItem(
     onClick: (Int) -> Unit = {}
 ) {
     SuperCard(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         onClick = { onClick(index) },
         onLongClick = onLongClick,
         editMode = editMode,

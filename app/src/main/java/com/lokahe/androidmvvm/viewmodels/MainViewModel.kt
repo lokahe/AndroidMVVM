@@ -8,15 +8,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.curSecond
 import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
@@ -44,7 +41,7 @@ class MainViewModel @Inject constructor(
     private val httpRepository: HttpRepository,
     private val userManager: UserManager,
     private val googleAuther: GoogleAuther
-) : BaseViewModel(prefRepository, userManager) {
+) : BaseViewModel(prefRepository, httpRepository, userManager) {
 
     init {
         // 2. Trigger the check immediately when ViewModel is created (App Start)
@@ -62,90 +59,23 @@ class MainViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     }
 
-    private val _processing = mutableStateOf(false)
-    val processing: State<Boolean> = _processing
-    private fun onProcessing() {
-        _processing.value = true
-        showDialog(AppDialog.Loading)
-    }
-
-    private fun unProcessing() {
-        _processing.value = false
-        dismissDialog(AppDialog.Loading)
-    }
-
-    private fun save(auth: AuthResponse) {
-        save(auth.accessToken, auth.expiresAt, auth.refreshToken, auth.user)
-    }
-
-    private fun save(
-        token: String?,
-        expiresAt: Long?,
-        refreshToken: String?,
-        user: User? = null
-    ) = viewModelScope.launch {
-        userManager.saveToken(token, expiresAt, refreshToken)
-        user?.let { userManager.saveUser(it.fetchProfile(token)) } ?: token?.let { tk ->
-            httpRepository.varifyToken(tk)
-                .onSuccess { userManager.saveUser(it.fetchProfile(token)) }
-                .onFailure { toast(it.message) }
-                .onException { toast(it.message ?: R.string.unkown_error.str()) }
-        }
-        dismissDialog(AppDialog.SignIn)
-    }
-
-    private suspend fun User.fetchProfile(token: String?): User {
-        token?.let { tk -> httpRepository.fetchProfileById(tk, id).onSuccess { profile = it } }
-        return this
-    }
-
-    private fun checkTokenExpires() {
-        viewModelScope.launch {
-            userManager.accessTokenExpiresAtFlow.firstOrNull()?.let {
-                if (it < curSecond()) {
-                    refreshToken()
-                }
-            }
-        }
-    }
-
     private fun autoSignIn() {
         viewModelScope.launch {
             // Get the saved token
             // Note: We use .firstOrNull() to get the current value from the Flow once
-            val token = userManager.accessTokenFlow.firstOrNull()
-            if (token.isNullOrEmpty()) return@launch
-            onProcessing()
-            checkTokenExpires()
-            // Verify with server
-            httpRepository.varifyToken(token)
-                .onFailure {
-                    if (it.code == 403) {
-                        refreshToken()
-                    } else {
-                        toast(it.message)
-                        userManager.clearUser()
-                    }
-                }
-                .onException { toast(it.message ?: R.string.unkown_error.str()) }
-            unProcessing()
-        }
-    }
-
-    private fun refreshToken() {
-        viewModelScope.launch {
-            val refreshToken = userManager.refreshTokenFlow.firstOrNull()
-            if (!refreshToken.isNullOrEmpty()) {
+            getAccessToken()?.emptyNull()?.let { token ->
                 onProcessing()
-                httpRepository.refreshToken(refreshToken)
-                    .onSuccess { save(it) }
+                // Verify with server
+                httpRepository.varifyToken(token)
                     .onFailure {
-                        toast(it.message)
-                        userManager.clearUser()
+                        if (it.code == 403) {
+                            refreshToken()
+                        } else {
+                            toast(it.message)
+                            userManager.clearUser()
+                        }
                     }
-                    .onException {
-                        toast(it.message ?: R.string.unkown_error.str())
-                    }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
                 unProcessing()
             }
         }
@@ -153,8 +83,7 @@ class MainViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            userManager.accessTokenFlow.firstOrNull()?.ifEmpty { null }
-                ?.let { httpRepository.signOut(it) }
+            getAccessToken()?.emptyNull()?.let { httpRepository.signOut(it) }
             userManager.clearUser()
         }
     }
@@ -244,8 +173,8 @@ class MainViewModel @Inject constructor(
         gender: String
     ) {
         viewModelScope.launch {
-            val userId = userManager.userFlow.firstOrNull()?.id ?: ""
-            val token = userManager.accessTokenFlow.firstOrNull()
+            val userId = getUser()?.id ?: ""
+            val token = getAccessToken()
             if (userId.isEmpty() || token.isNullOrEmpty()) return@launch
 
             val updateMap = mapOf(

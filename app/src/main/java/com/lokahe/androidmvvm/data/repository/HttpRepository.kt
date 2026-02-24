@@ -26,10 +26,13 @@ class HttpRepository @Inject constructor(
     suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): ApiResult<T> {
         return try {
             val response = apiCall()
-            Log.d("safeApiCall", "response: $response")
             if (response.isSuccessful) {
-                ApiResult.Success(response.body()!!)
+                Log.d("safeApiCall", "response[isSuccessful]: $response")
+                @Suppress("UNCHECKED_CAST")
+                if (response.body() == null) ApiResult.Success(Unit as T)
+                else ApiResult.Success(response.body()!!)
             } else {
+                Log.d("safeApiCall", "response: $response")
                 // Parse errorBody to your data class
                 val errorBody = response.errorBody()?.string()
                 val apiError = Gson().fromJson(errorBody, ApiError::class.java)

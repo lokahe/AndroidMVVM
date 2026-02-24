@@ -98,13 +98,13 @@ fun PostsScreen(
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize().padding(top = 8.dp),
+                    modifier = Modifier.fillMaxSize().padding(top = 4.dp),
                     contentPadding = paddingValues
                 ) {
                     itemsIndexed(posts) { index, post ->
                         PostItem(
                             index, post, editMode, selectedIndexes.contains(index),
-                            { editMode = !editMode }) {
+                            { if (!userId.isNullOrEmpty()) editMode = !editMode }) {
                             if (editMode) {
                                 if (selectedIndexes.contains(index)) selectedIndexes.remove(index)
                                 else selectedIndexes.add(index)
@@ -132,8 +132,8 @@ fun PostsScreen(
             ) {
                 Button(
                     modifier = Modifier.padding(8.dp).weight(1f),
+                    enabled = !selectedIndexes.isEmpty(),
                     onClick = {
-//                        viewModel.showDialog(AppDialog.Loading)
                         viewModel.showDialog(AppDialog.Delete {
                             viewModel.deletePost(posts.filterIndexed { index, _ ->
                                 selectedIndexes.contains(index)
