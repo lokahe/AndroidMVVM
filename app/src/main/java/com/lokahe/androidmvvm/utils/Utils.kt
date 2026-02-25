@@ -152,7 +152,7 @@ class Utils {
         @Composable
         fun userTitle(user: User): AnnotatedString =
             buildAnnotatedString {
-                append(user.userMetadata.fullName + "\n")
+                append(user.userMetadata?.fullName + "\n")
                 withStyle(
                     style = SpanStyle(
                         color = MaterialTheme.colorScheme.secondary,

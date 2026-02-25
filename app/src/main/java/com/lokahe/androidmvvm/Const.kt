@@ -5,13 +5,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import com.lokahe.androidmvvm.ui.Screen
 
 val HOME_TABS = listOf("Posts", "Gallery", "Users")
 val ACCOUNT_TABS = listOf("Posts", "Profile")
 
 val SIDE_MENU_ITEMS = listOf(
     Triple(Screen.Home, Icons.Filled.Home, s(R.string.home)),
-    Triple(Screen.Account, Icons.Filled.Person, s(R.string.account)),
+    Triple(Screen.Account(), Icons.Filled.Person, s(R.string.account)),
     Triple(Screen.Persons, Icons.Filled.People, s(R.string.persons)),
     Triple(Screen.Settings, Icons.Filled.Settings, s(R.string.settings))
 )
@@ -32,14 +33,6 @@ val AVATAR_IDS = (10..49).toList()
 val AVATARS = AVATAR_IDS.map { "https://picsum.photos/id/$it/200" }
 val GALLERY_IDS = (50..89).toList()
 val GALLERIES = GALLERY_IDS.map { "https://picsum.photos/id/$it/400" }
-
-sealed class Screen(val route: String) {
-    object Home : Screen("home")
-    object Account : Screen("account")
-    object Persons : Screen("persons")
-    object Settings : Screen("settings")
-    object SendPost : Screen("send_post")
-}
 
 sealed interface AppDialog {
     data object Loading : AppDialog

@@ -48,3 +48,10 @@ data class CodeExchangeRequest(
     @SerializedName("code_verifier")
     val codeVerifier: String
 )
+
+data class FollowRequest(
+    @SerializedName("follower_id")
+    val followerId: String,
+    @SerializedName("target_id")
+    val targetId: String
+)

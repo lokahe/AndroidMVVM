@@ -3,6 +3,7 @@ package com.lokahe.androidmvvm.data.remote
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
+import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
@@ -101,7 +102,8 @@ interface ApiService {
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String,
         @Query("id") id: String,
-        @Query("select") select: String = "*",
+        @Query("select") select: String = "*,followers:follows!target_id(count)," +
+                "following_list:follows!follower_id(target_id)",
         @Header("Accept") accept: String = "application/vnd.pgrst.object+json"
     ): Response<Profile>
 
@@ -127,7 +129,7 @@ interface ApiService {
     suspend fun fetchPosts(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String,
-        @Query("id") id: String = "neq.${Api.EMPTY_UUID}",
+        @Query("id") id: String = Api.EMPTY_UUID.neq,
         @Query("author_id") authorId: String? = null,
         @Query("reply_post_id") replyId: String, // e.g., "eq.00..000"
         @Query("limit") limit: Int,               // Page Size
@@ -143,4 +145,19 @@ interface ApiService {
         @Query("id") inCondition: String
     ): Response<Any>
 
+    @POST("rest/v1/follows")
+    suspend fun follow(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body body: FollowRequest
+    ): Response<Unit>
+
+    @DELETE("rest/v1/follows")
+    suspend fun unFollow(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("follower_id") followerId: String,
+        @Query("target_id") targetId: String
+    ): Response<Unit>
 }

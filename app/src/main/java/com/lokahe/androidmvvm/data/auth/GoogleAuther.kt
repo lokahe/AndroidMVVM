@@ -47,16 +47,9 @@ class GoogleAuther @Inject constructor() {
                         // Use the helper to parse the credential from the bundle
                         val googleIdTokenCredential =
                             GoogleIdTokenCredential.createFrom(credential.data)
-
                         val idToken = googleIdTokenCredential.idToken
-                        val userEmail = googleIdTokenCredential.id
-                        val displayName = googleIdTokenCredential.displayName
 
                         // SUCCESS: Send idToken to your server for validation
-                        Log.d(
-                            TAG,
-                            "Got ID Token: $idToken for user: $userEmail with name: $displayName"
-                        )
                         return idToken
                     } catch (e: GoogleIdTokenParsingException) {
                         Log.e(TAG, "Received invalid google id token response", e)

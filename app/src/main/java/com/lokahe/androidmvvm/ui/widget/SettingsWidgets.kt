@@ -187,7 +187,7 @@ fun SettingScaffold(
                 title = stringResource(titleRes),
                 collapsingTopBar = collapsingTopBar,
                 onBackClick = {
-                    if (!(navController?.popBackStack() ?: false))
+                    if (navController?.removeLast() == null)
                         activity?.onBackPressedDispatcher?.onBackPressed()
                 },
                 actions = actions,

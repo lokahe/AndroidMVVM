@@ -12,3 +12,7 @@ object Api {
     const val EMPTY_UUID = "00000000-0000-0000-0000-000000000000"
     const val PAGE_SIZE = 10
 }
+
+val String.b: String get() = "Bearer $this"
+val String.eq: String get() = "eq.$this"
+val String.neq: String get() = "neq.$this"

@@ -57,6 +57,7 @@ fun String.toMillis(): Long {
 
 fun CharSequence?.isNotNullOrEmpty(): Boolean = !this.isNullOrEmpty()
 fun CharSequence?.isNotNullOrBlank(): Boolean = !this.isNullOrBlank()
+fun CharSequence?.nuEmpty(): String = (if (this.isNullOrEmpty()) "" else this) as String
 
 fun toast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
     message?.let { Toast.makeText(application, it, duration).show() }

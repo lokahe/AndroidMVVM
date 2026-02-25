@@ -96,7 +96,7 @@ fun SendPostScreen() {
                     modifier = Modifier.padding(start = 16.dp),
                     onClick = {
                         viewModel.sendPost(content, images) {
-                            navController.popBackStack()
+                            navController.removeLast()
                         }
                     }) {
                     Icon(

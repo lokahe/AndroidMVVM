@@ -13,9 +13,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -23,7 +25,7 @@ import com.lokahe.androidmvvm.HOME_TABS
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.Screen
+import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
@@ -32,16 +34,17 @@ fun MainScreen() {
     val viewModel = LocalViewModel.current as MainViewModel
     val isLoggedIn by viewModel.isSignedIn.collectAsState()
     val navController = LocalNavController.current
+    var curTab by remember { mutableIntStateOf(0) }
     MainScaffold(
         title = stringResource(R.string.app_name),
         bottomBar = bottomTabNavigation(
-            selectedTabIndexState = viewModel.homeTabIndex,
-            onTabSelected = { index -> viewModel.setHomeTabIndex(index) }
+            curTabIndex = curTab,
+            onTabSelected = { curTab = it }
         ),
         floatingActionButton = {
             if (isLoggedIn) {
                 FloatingActionButton(
-                    onClick = { navController.navigate(Screen.SendPost.route) },
+                    onClick = { navController.add(Screen.SendPost) },
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Icon(
@@ -53,8 +56,8 @@ fun MainScreen() {
         }
     ) { contentPadding ->
         TabScreen(
-            selectedTabIndexState = viewModel.homeTabIndex,
-            onTabSelected = { index -> viewModel.setHomeTabIndex(index) },
+            curTabIndex = curTab,
+            onTabSelected = { curTab = it },
             HOME_TABS,
             showTab = false
         ) { selectedTabIndex ->
@@ -68,7 +71,7 @@ fun MainScreen() {
 }
 
 fun bottomTabNavigation(
-    selectedTabIndexState: State<Int>,
+    curTabIndex: Int,
     onTabSelected: (Int) -> Unit = {},
 ): @Composable () -> Unit = {
     NavigationBar(
@@ -77,7 +80,6 @@ fun bottomTabNavigation(
             .height(80.dp),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
     ) {
-        val selectedTabIndex by selectedTabIndexState
         HOME_TABS.forEachIndexed { index, title ->
             NavigationBarItem(
                 modifier = Modifier.height(65.dp),
@@ -92,7 +94,7 @@ fun bottomTabNavigation(
                         contentDescription = title
                     )
                 },
-                selected = selectedTabIndex == index,
+                selected = curTabIndex == index,
                 onClick = { onTabSelected(index) }
             )
         }

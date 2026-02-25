@@ -74,4 +74,9 @@
     <string name="favor">favor</string>
     <string name="delete_success">delete success</string>
     <string name="delete_confirm">confirm to delete</string>
+    <string name="following_count">following: %d</string>
+    <string name="followers_count">followers: %d</string>
+    <string name="follow">follow</string>
+    <string name="followed">followed</string>
+    <string name="refresh">refresh</string>
 </resources>

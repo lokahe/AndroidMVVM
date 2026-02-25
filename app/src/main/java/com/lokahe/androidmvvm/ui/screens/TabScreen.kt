@@ -22,8 +22,6 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -36,22 +34,21 @@ import com.lokahe.androidmvvm.GALLERIES
 
 @Composable
 fun TabScreen(
-    selectedTabIndexState: State<Int>,
+    curTabIndex: Int,
     onTabSelected: (Int) -> Unit = {},
     tabs: List<String>,
     showTab: Boolean = true,
     content: @Composable (Int) -> Unit
 ) {
-    val selectedTabIndex by selectedTabIndexState
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         // Tab Row
         if (showTab) {
-            PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
+            PrimaryTabRow(selectedTabIndex = curTabIndex) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
-                        selected = selectedTabIndex == index,
+                        selected = curTabIndex == index,
                         onClick = { onTabSelected(index) },
                         text = { Text(title) }
                     )
@@ -59,7 +56,7 @@ fun TabScreen(
             }
         }
         // Tab Content
-        content(selectedTabIndex)
+        content(curTabIndex)
     }
 }
 

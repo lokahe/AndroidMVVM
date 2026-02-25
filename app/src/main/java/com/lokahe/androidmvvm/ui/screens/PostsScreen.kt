@@ -35,8 +35,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lokahe.androidmvvm.AppDialog
+import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
+import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.widget.PostItem
 import com.lokahe.androidmvvm.viewmodels.PostViewModel
 
@@ -47,11 +49,12 @@ fun PostsScreen(
     userId: String? = null
 ) {
     val viewModel: PostViewModel = hiltViewModel()
-    val posts by remember(userId) { if (userId.isNullOrEmpty()) viewModel.posts else viewModel.myPosts }.collectAsState()
+    val navController = LocalNavController.current
+    val me by viewModel.currentUser.collectAsState()
+    val isMe = userId.isNullOrEmpty() || userId == me?.id
+    val posts by remember(userId) { if (userId.isNullOrEmpty()) viewModel.posts else viewModel.userPosts }.collectAsState()
     val selectedIndexes = remember { mutableStateSetOf<Int>() }
-    LaunchedEffect(userId) {
-        viewModel.fetchPosts(PAGE_SIZE, 0, userId)
-    }
+    LaunchedEffect(userId) { viewModel.fetchPosts(PAGE_SIZE, 0, userId) }
     var editMode by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     // Refresh state
@@ -104,7 +107,11 @@ fun PostsScreen(
                     itemsIndexed(posts) { index, post ->
                         PostItem(
                             index, post, editMode, selectedIndexes.contains(index),
-                            { if (!userId.isNullOrEmpty()) editMode = !editMode }) {
+                            { if (isMe) editMode = !editMode },
+                            { authorId ->
+                                if (me != null && me!!.id == authorId) navController.add(Screen.Account())
+                                else navController.add(Screen.Account(post.authorId))
+                            }) {
                             if (editMode) {
                                 if (selectedIndexes.contains(index)) selectedIndexes.remove(index)
                                 else selectedIndexes.add(index)

@@ -30,9 +30,9 @@ class PostViewModel @Inject constructor(
 
     // State for the list of posts
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
-    private val _myPosts = MutableStateFlow<List<Post>>(emptyList())
+    private val _userPosts = MutableStateFlow<List<Post>>(emptyList())
     val posts = _posts.asStateFlow()
-    val myPosts = _myPosts.asStateFlow()
+    val userPosts = _userPosts.asStateFlow()
 
     fun fetchPosts(pageSize: Int, offset: Int, authorId: String? = null) {
         viewModelScope.launch {
@@ -42,7 +42,7 @@ class PostViewModel @Inject constructor(
                         if (authorId.isNullOrEmpty())
                             _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
                         else
-                            _myPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
+                            _userPosts.update { currentList -> if (offset == 0) posts else currentList + posts }
                     }.onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
@@ -53,7 +53,7 @@ class PostViewModel @Inject constructor(
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
                 httpRepository.deletePosts(token, ids).cole().onSuccess {
-                    _myPosts.update { currentList -> currentList.filter { !ids.contains(it.id) } }
+                    _userPosts.update { currentList -> currentList.filter { !ids.contains(it.id) } }
                     toast(R.string.delete_success.str())
                 }.onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }

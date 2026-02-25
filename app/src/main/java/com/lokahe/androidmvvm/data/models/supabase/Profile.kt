@@ -24,9 +24,24 @@ data class Profile(
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")
-    val updatedAt: Long,
+    val updatedAt: String,
     @SerializedName("last_sign_in_at")
-    val lastSignInAt: Long,
+    val lastSignInAt: String,
     @SerializedName("email_confirmed_at")
-    val emailConfirmedAt: Long
+    val emailConfirmedAt: String,
+    // join
+    @SerializedName("followers")
+    var followers: List<Followers>,
+    @SerializedName("following_list")
+    var followingList: List<Follower>
+)
+
+data class Followers(
+    @SerializedName("count")
+    val count: Int
+)
+
+data class Follower(
+    @SerializedName("target_id")
+    val targetId: String
 )

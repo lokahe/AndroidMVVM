@@ -29,15 +29,20 @@ data class User(
     @SerializedName("phone")
     val phone: String,
     @SerializedName("user_metadata")
-    val userMetadata: UserMetadata,
-    // local additional
+    val userMetadata: UserMetadata?,
+    // join
     @SerializedName("public_profile")
-    var profile: Profile
+    var profile: Profile?
 )
 
 data class UserMetadata(
+    @SerializedName("name")
+    val name: String,
     @SerializedName("full_name")
     val fullName: String,
     @SerializedName("avatar_url")
     val avatarUrl: String
 )
+
+fun User.name() = profile?.name ?: userMetadata?.name
+fun User.avatar() = profile?.avatar ?: userMetadata?.avatarUrl

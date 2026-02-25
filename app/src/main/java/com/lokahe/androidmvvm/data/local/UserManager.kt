@@ -99,7 +99,7 @@ class UserManager @Inject constructor(
         user?.let {
             context.userStore.edit { prefs ->
                 prefs[USER_DATA_KEY] = gson.toJson(it)
-                Utils.calculateMainColor(it.userMetadata.avatarUrl)?.let { seed ->
+                Utils.calculateMainColor(it.userMetadata?.avatarUrl)?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
             }

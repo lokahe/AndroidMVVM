@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.dagger.hilt.android")
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialzation)
 }
 
 android {
@@ -75,6 +76,10 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.palette.ktx)
     implementation(libs.androidx.material.icons.extended)
+    //navigation3
+    implementation("androidx.navigation3:navigation3-runtime:1.1.0-alpha04")
+    implementation("androidx.navigation3:navigation3-ui:1.1.0-alpha04")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 //    implementation(libs.androidx.browser)
 
     // Room database

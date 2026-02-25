@@ -7,6 +7,7 @@ import com.lokahe.androidmvvm.data.models.supabase.ApiError
 import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
+import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
@@ -16,6 +17,8 @@ import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
 import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.ApiService
+import com.lokahe.androidmvvm.data.remote.b
+import com.lokahe.androidmvvm.data.remote.eq
 import com.lokahe.androidmvvm.emptyNull
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -56,14 +59,14 @@ class HttpRepository @Inject constructor(
     fun codeExchange(code: String, codeVerifier: String): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.codeExchange(body = CodeExchangeRequest(code, codeVerifier)) }
 
-    fun varifyToken(accessToken: String): Flow<ApiResult<User>> =
-        safeApiCall { apiService.varifyToken(token = "Bearer $accessToken") }
+    fun varifyToken(token: String): Flow<ApiResult<User>> =
+        safeApiCall { apiService.varifyToken(token = token.b) }
 
     fun refreshToken(refreshToken: String): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.refreshToken(body = RefreshTokenRequest(refreshToken)) }
 
-    fun signOut(accessToken: String): Flow<ApiResult<Any>> =
-        safeApiCall { apiService.signOut(token = "Bearer $accessToken") }
+    fun signOut(token: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.signOut(token = token.b) }
 
     fun sign(email: String): Flow<ApiResult<Any>> =
         safeApiCall { apiService.sign(body = OtpRequest(email)) }
@@ -72,10 +75,10 @@ class HttpRepository @Inject constructor(
         safeApiCall { apiService.verifyEmail(body = VerifyRequest("email", email, token)) }
 
     fun fetchProfileById(token: String, id: String): Flow<ApiResult<Profile>> =
-        safeApiCall { apiService.fetchProfileById(token = "Bearer $token", id = "eq.$id") }
+        safeApiCall { apiService.fetchProfileById(token = token.b, id = id.eq) }
 
     fun insertPost(token: String, post: PostRequest): Flow<ApiResult<List<Post>>> =
-        safeApiCall { apiService.insertPost(token = "Bearer $token", body = post) }
+        safeApiCall { apiService.insertPost(token = token.b, body = post) }
 
     fun fetchPosts(
         token: String,
@@ -86,9 +89,9 @@ class HttpRepository @Inject constructor(
     ): Flow<ApiResult<List<Post>>> =
         safeApiCall {
             apiService.fetchPosts(
-                token = "Bearer $token",
-                authorId = authorId?.emptyNull()?.let { "eq.$authorId" },
-                replyId = "eq.$replyId",
+                token = token.b,
+                authorId = authorId?.emptyNull()?.let { authorId.eq },
+                replyId = replyId.eq,
                 limit = limit,
                 offset = offset
             )
@@ -96,9 +99,16 @@ class HttpRepository @Inject constructor(
 
     fun deletePosts(token: String, ids: List<String>): Flow<ApiResult<Any>> =
         safeApiCall {
-            apiService.deletePosts(
-                token = "Bearer $token",
-                inCondition = "in.(${ids.joinToString(",")})"
-            )
+            apiService.deletePosts(token = token.b, inCondition = "in.(${ids.joinToString(",")})")
+        }
+
+    fun follow(token: String, followerId: String, targetId: String): Flow<ApiResult<Any>> =
+        safeApiCall {
+            apiService.follow(token = token.b, body = FollowRequest(followerId, targetId))
+        }
+
+    fun unFollow(token: String, followerId: String, targetId: String): Flow<ApiResult<Any>> =
+        safeApiCall {
+            apiService.unFollow(token = token.b, followerId = followerId.eq, targetId = targetId.eq)
         }
 }

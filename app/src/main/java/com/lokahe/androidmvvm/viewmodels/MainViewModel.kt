@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
@@ -27,11 +26,8 @@ import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -46,17 +42,6 @@ class MainViewModel @Inject constructor(
     init {
         // 2. Trigger the check immediately when ViewModel is created (App Start)
         autoSignIn()
-    }
-
-    // Expose the user as State for Compose
-    val currentUser by lazy {
-        userManager.userFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-    }
-
-    // Check if logged in based on if user data exists
-    val isSignedIn by lazy {
-        currentUser.map { it != null }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     }
 
     private fun autoSignIn() {
@@ -204,13 +189,6 @@ class MainViewModel @Inject constructor(
     val verifyEmail: State<String> = _verifyEmail
     fun resetVerifyEmail() {
         _verifyEmail.value = ""
-    }
-
-    // state for home tab index state
-    private var _homeTabIndex = mutableIntStateOf(0)
-    val homeTabIndex: State<Int> = _homeTabIndex
-    fun setHomeTabIndex(index: Int) {
-        _homeTabIndex.intValue = index
     }
 
     // State for the list of users
