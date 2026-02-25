@@ -37,7 +37,7 @@ class PostViewModel @Inject constructor(
     fun fetchPosts(pageSize: Int, offset: Int, authorId: String? = null) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.fetchPosts(token, authorId, Api.EMPTY_UUID, pageSize, offset)
+                httpRepository.fetchPosts(token, authorId, Api.EMPTY_UUID, pageSize, offset).cole()
                     .onSuccess { posts ->
                         if (authorId.isNullOrEmpty())
                             _posts.update { currentList -> if (offset == 0) posts else currentList + posts }
@@ -52,7 +52,7 @@ class PostViewModel @Inject constructor(
     fun deletePost(ids: List<String>) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.deletePosts(token, ids).onSuccess {
+                httpRepository.deletePosts(token, ids).cole().onSuccess {
                     _myPosts.update { currentList -> currentList.filter { !ids.contains(it.id) } }
                     toast(R.string.delete_success.str())
                 }.onFailure { toast(it.message) }
@@ -71,7 +71,7 @@ class PostViewModel @Inject constructor(
             unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
                 httpRepository.insertPost(
                     token, PostRequest(user.id, content, imageUrls, videoUrls, "", Api.EMPTY_UUID)
-                ).onSuccess { onSuccess() } // TODO: dbRepository.insertPost(it.first())
+                ).cole().onSuccess { onSuccess() } // TODO: dbRepository.insertPost(it.first())
                     .onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }

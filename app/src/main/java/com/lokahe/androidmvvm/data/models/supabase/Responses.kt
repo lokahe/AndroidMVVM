@@ -3,6 +3,7 @@ package com.lokahe.androidmvvm.data.models.supabase
 import com.google.gson.annotations.SerializedName
 
 sealed class ApiResult<out T> {
+    object Loading : ApiResult<Nothing>()
     data class Success<out T>(val data: T) : ApiResult<T>()
     data class Failure(val error: ApiError) : ApiResult<Nothing>()
     data class Exception(val exception: Throwable) : ApiResult<Nothing>()

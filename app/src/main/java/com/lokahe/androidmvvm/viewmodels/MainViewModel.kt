@@ -64,9 +64,8 @@ class MainViewModel @Inject constructor(
             // Get the saved token
             // Note: We use .firstOrNull() to get the current value from the Flow once
             getAccessToken()?.emptyNull()?.let { token ->
-                onProcessing()
                 // Verify with server
-                httpRepository.varifyToken(token)
+                httpRepository.varifyToken(token).cole()
                     .onFailure {
                         if (it.code == 403) {
                             refreshToken()
@@ -76,14 +75,13 @@ class MainViewModel @Inject constructor(
                         }
                     }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
-                unProcessing()
             }
         }
     }
 
     fun signOut() {
         viewModelScope.launch {
-            getAccessToken()?.emptyNull()?.let { httpRepository.signOut(it) }
+            getAccessToken()?.emptyNull()?.let { httpRepository.signOut(it).cole() }
             userManager.clearUser()
         }
     }
@@ -113,37 +111,31 @@ class MainViewModel @Inject constructor(
 
     fun signWithGoogle(context: Context) {
         viewModelScope.launch {
-            onProcessing()
             googleAuther.gOauth(context) { idToken ->
-                httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null))
+                httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null)).cole()
                     .onSuccess { save(it) }
                     .onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
-            unProcessing()
         }
     }
 
 
     fun sign(email: String) {
         viewModelScope.launch {
-            onProcessing()
-            httpRepository.sign(email).onSuccess {
+            httpRepository.sign(email).cole().onSuccess {
                 toast("Verify email sent, please confirm your email.") // TODO: R.string
                 _verifyEmail.value = email
             }.onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
-            unProcessing()
         }
     }
 
     fun verifyEmail(email: String, token: String) {
         viewModelScope.launch {
-            onProcessing()
-            httpRepository.verifyEmail(email, token).onSuccess { it -> save(it) }
+            httpRepository.verifyEmail(email, token).cole().onSuccess { it -> save(it) }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
-            unProcessing()
         }
     }
 
@@ -277,26 +269,25 @@ class MainViewModel @Inject constructor(
                 val (key, value) = it.split("=")
                 key to value
             }
-            val type = params["type"]
-            if (type == "magiclink") {
-                val accessToken = params["access_token"]
-                val expiresAt = params["expires_at"]?.toLong()
-                val refreshToken = params["refresh_token"]
-                accessToken?.emptyNull()?.let {
-                    viewModelScope.launch { save(it, expiresAt, refreshToken) }
-                } ?: params["error_description"]?.emptyNull()?.let { toast(it) }
-            }
+//            val type = params["type"]
+//            if (type == "magiclink") {
+            val accessToken = params["access_token"]
+            val expiresAt = params["expires_at"]?.toLong()
+            val refreshToken = params["refresh_token"]
+            accessToken?.emptyNull()?.let {
+                viewModelScope.launch { save(it, expiresAt, refreshToken) }
+            } ?: params["error_description"]?.emptyNull()?.let { toast(it) }
+//            }
         }
         uri.getQueryParameter("code")?.emptyNull()?.let { code ->
             viewModelScope.launch {
                 userManager.codeVerifierFlow.firstOrNull()?.emptyNull()
                     ?.let { codeVerifier ->
                         android.util.Log.d("handleMagicLink", "codeVerifier: $codeVerifier")
-                        httpRepository.codeExchange(code, codeVerifier).onSuccess {
-                            save(it)
-                        }.onFailure { toast(it.message) }.onException {
-                            toast(it.message ?: R.string.unkown_error.str())
-                        }
+                        httpRepository.codeExchange(code, codeVerifier).cole()
+                            .onSuccess { save(it) }
+                            .onFailure { toast(it.message) }
+                            .onException { toast(it.message ?: R.string.unkown_error.str()) }
                     }
             }
         }

@@ -18,67 +18,72 @@ import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.ApiService
 import com.lokahe.androidmvvm.emptyNull
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 
 class HttpRepository @Inject constructor(
     private val apiService: ApiService
 ) {
-    suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): ApiResult<T> {
-        return try {
-            val response = apiCall()
-            if (response.isSuccessful) {
-                Log.d("safeApiCall", "response[isSuccessful]: $response")
-                @Suppress("UNCHECKED_CAST")
-                if (response.body() == null) ApiResult.Success(Unit as T)
-                else ApiResult.Success(response.body()!!)
-            } else {
-                Log.d("safeApiCall", "response: $response")
-                // Parse errorBody to your data class
-                val errorBody = response.errorBody()?.string()
-                val apiError = Gson().fromJson(errorBody, ApiError::class.java)
-                    ?: ApiError(response.code(), "unknown", "Unknown error")
-                ApiResult.Failure(apiError)
+    fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Flow<ApiResult<T>> {
+        return flow {
+            try {
+                emit(ApiResult.Loading)
+                val response = apiCall()
+                if (response.isSuccessful) {
+                    Log.d("safeApiCall", "response[isSuccessful]: $response")
+                    @Suppress("UNCHECKED_CAST")
+                    if (response.body() == null) emit(ApiResult.Success(Unit as T))
+                    else emit(ApiResult.Success(response.body()!!))
+                } else {
+                    Log.d("safeApiCall", "response: $response")
+                    // Parse errorBody to your data class
+                    val errorBody = response.errorBody()?.string()
+                    val apiError = Gson().fromJson(errorBody, ApiError::class.java)
+                        ?: ApiError(response.code(), "unknown", "Unknown error")
+                    emit(ApiResult.Failure(apiError))
+                }
+            } catch (e: Exception) {
+                Log.d("safeApiCall", "e: ${e.message}")
+                emit(ApiResult.Exception(e))
             }
-        } catch (e: Exception) {
-            Log.d("safeApiCall", "e: ${e.message}")
-            ApiResult.Exception(e)
         }
     }
 
-    suspend fun gAuth(body: GoogleAuth): ApiResult<AuthResponse> =
+    fun gAuth(body: GoogleAuth): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.googleAuth(body = body) }
 
-    suspend fun codeExchange(code: String, codeVerifier: String): ApiResult<AuthResponse> =
+    fun codeExchange(code: String, codeVerifier: String): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.codeExchange(body = CodeExchangeRequest(code, codeVerifier)) }
 
-    suspend fun varifyToken(accessToken: String): ApiResult<User> =
+    fun varifyToken(accessToken: String): Flow<ApiResult<User>> =
         safeApiCall { apiService.varifyToken(token = "Bearer $accessToken") }
 
-    suspend fun refreshToken(refreshToken: String): ApiResult<AuthResponse> =
+    fun refreshToken(refreshToken: String): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.refreshToken(body = RefreshTokenRequest(refreshToken)) }
 
-    suspend fun signOut(accessToken: String): ApiResult<Any> =
+    fun signOut(accessToken: String): Flow<ApiResult<Any>> =
         safeApiCall { apiService.signOut(token = "Bearer $accessToken") }
 
-    suspend fun sign(email: String): ApiResult<Any> =
+    fun sign(email: String): Flow<ApiResult<Any>> =
         safeApiCall { apiService.sign(body = OtpRequest(email)) }
 
-    suspend fun verifyEmail(email: String, token: String): ApiResult<AuthResponse> =
+    fun verifyEmail(email: String, token: String): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.verifyEmail(body = VerifyRequest("email", email, token)) }
 
-    suspend fun fetchProfileById(token: String, id: String): ApiResult<Profile> =
+    fun fetchProfileById(token: String, id: String): Flow<ApiResult<Profile>> =
         safeApiCall { apiService.fetchProfileById(token = "Bearer $token", id = "eq.$id") }
 
-    suspend fun insertPost(token: String, post: PostRequest): ApiResult<List<Post>> =
+    fun insertPost(token: String, post: PostRequest): Flow<ApiResult<List<Post>>> =
         safeApiCall { apiService.insertPost(token = "Bearer $token", body = post) }
 
-    suspend fun fetchPosts(
+    fun fetchPosts(
         token: String,
         authorId: String? = null,
         replyId: String = Api.EMPTY_UUID,
         limit: Int = Api.PAGE_SIZE,
         offset: Int = 0
-    ): ApiResult<List<Post>> =
+    ): Flow<ApiResult<List<Post>>> =
         safeApiCall {
             apiService.fetchPosts(
                 token = "Bearer $token",
@@ -89,7 +94,7 @@ class HttpRepository @Inject constructor(
             )
         }
 
-    suspend fun deletePosts(token: String, ids: List<String>): ApiResult<Any> =
+    fun deletePosts(token: String, ids: List<String>): Flow<ApiResult<Any>> =
         safeApiCall {
             apiService.deletePosts(
                 token = "Bearer $token",

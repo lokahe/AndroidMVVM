@@ -8,16 +8,21 @@ import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.curSecond
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.UserPreferences
+import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 
@@ -43,6 +48,30 @@ open class BaseViewModel(
 
     val activeDialogs: List<AppDialog> get() = _activeDialogs
 
+    // api
+    private val _apiCallState = MutableStateFlow<ApiResult<Any>?>(null)
+    val loadingState =
+        _apiCallState.map { it is ApiResult.Loading }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+            .onEach {
+                if (it) {
+                    onProcessing(); android.util.Log.d("cole", "_apiCallState $_apiCallState")
+                } else unProcessing()
+            }
+
+    suspend fun <T> Flow<ApiResult<T>>.cole(showLoading: Boolean = true): ApiResult<T> {
+        lateinit var finalResult: ApiResult<T>
+        this.collect { result ->
+            @Suppress("UNCHECKED_CAST")
+            if (showLoading) {
+                _apiCallState.value = result as ApiResult<Any>?
+                android.util.Log.d("cole", "result: $result")
+            }
+            if (result !is ApiResult.Loading) finalResult = result
+        }
+        return finalResult
+    }
+
     // token
     protected suspend fun getUser(): User? {
         checkTokenExpires()
@@ -65,7 +94,7 @@ open class BaseViewModel(
     protected suspend fun refreshToken() {
         val refreshToken = userManager.refreshTokenFlow.firstOrNull()
         if (!refreshToken.isNullOrEmpty()) {
-            httpRepository.refreshToken(refreshToken)
+            httpRepository.refreshToken(refreshToken).cole()
                 .onSuccess { save(it) }
                 .onFailure { toast(it.message); userManager.clearUser() }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
@@ -84,7 +113,7 @@ open class BaseViewModel(
     ) {
         userManager.saveToken(token, expiresAt, refreshToken)
         user?.let { userManager.saveUser(it.fetchProfile(token)) } ?: token?.let { tk ->
-            httpRepository.varifyToken(tk)
+            httpRepository.varifyToken(tk).cole()
                 .onSuccess { userManager.saveUser(it.fetchProfile(token)) }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
@@ -92,10 +121,12 @@ open class BaseViewModel(
         dismissDialog(AppDialog.SignIn)
     }
 
-    private suspend fun User.fetchProfile(token: String?): User {
-        token?.let { tk -> httpRepository.fetchProfileById(tk, id).onSuccess { profile = it } }
-        return this
-    }
+    private suspend fun User.fetchProfile(token: String?): User =
+        this.apply {
+            token?.let { tk ->
+                httpRepository.fetchProfileById(tk, id).cole().onSuccess { profile = it }
+            }
+        }
 
     // State for the currently visible dialog
     fun showDialog(dialog: AppDialog) {
@@ -107,11 +138,11 @@ open class BaseViewModel(
         else _activeDialogs.removeAll(dialogs.toSet())
     }
 
-    protected fun onProcessing() {
+    private fun onProcessing() {
         showDialog(AppDialog.Loading)
     }
 
-    protected fun unProcessing() {
+    private fun unProcessing() {
         dismissDialog(AppDialog.Loading)
     }
 }
