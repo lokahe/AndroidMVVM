@@ -5,7 +5,7 @@
 <img src="./screenshots/Screenshot_20260106_033402.png" width="160" /><img src="./screenshots/Screenshot_20260106_033429.png" width="160" /><img src="./screenshots/Screenshot_20260106_033748.png" width="160" /><img src="./screenshots/Screenshot_20260106_033833.png" width="160" /><img src="./screenshots/Screenshot_20260106_033912.png" width="160" />
 
 ## Architecture: MVVM (Model-View-ViewModel) + UDF (Unidirectional Data Flow)
-Registration + Login/out and some simple logic (Using Backendless as Backend)\
+Registration + Login/out and some simple logic (Using Supabase as Backend)\
 ViewModel+Repository+Hilt+Compose+Flow+Datastore+Room+Retrofit (newest frameworks)
 ```mermaid
 graph TD
@@ -51,7 +51,7 @@ graph TD
 - Throws/returns domain-safe results
 
 
-### to use Backendless as backend, register https://backendless.com/ and follow the steps below:
+### (Backendless branch) register https://backendless.com/ and follow the steps below:
 ```kotlin
 // app/src/main/java/com/lokahe/androidmvvm/data/remote/Api.kt
 
