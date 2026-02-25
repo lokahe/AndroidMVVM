@@ -7,7 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavController
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.lokahe.androidmvvm.ui.preference.PreferenceTheme
 import com.lokahe.androidmvvm.ui.preference.preferenceTheme
 
@@ -20,7 +21,7 @@ val LocalDrawerState =
     compositionLocalOf<DrawerState> { noLocalProvidedFor("LocalDrawerState") }
 
 val LocalNavController =
-    compositionLocalOf<NavController> { noLocalProvidedFor("LocalNavController") }
+    compositionLocalOf<NavBackStack<NavKey>> { noLocalProvidedFor("LocalNavController") }
 
 //@Composable
 //fun ProvidePreferenceTheme(
@@ -32,7 +33,7 @@ val LocalNavController =
 
 @Composable
 fun ProvideLocals(
-    navController: NavController,
+    navController: NavBackStack<NavKey>,
     viewModel: ViewModel,
     theme: PreferenceTheme = preferenceTheme(),
     drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),

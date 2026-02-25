@@ -11,10 +11,10 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(post: Post)
 
-    @Query("SELECT * FROM posts WHERE (:ownerId IS NULL OR ownerId = :ownerId)  ORDER BY created DESC LIMIT :pageSize OFFSET :offset")
+    @Query("SELECT * FROM posts WHERE (:authorId IS NULL OR authorId = :authorId)  ORDER BY createdAt DESC LIMIT :pageSize OFFSET :offset")
     suspend fun getAllPosts(
         pageSize: Int,
         offset: Int,
-        ownerId: String? = null
+        authorId: String? = null
     ): List<Post>
 }

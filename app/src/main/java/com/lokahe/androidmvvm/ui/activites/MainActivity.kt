@@ -1,5 +1,6 @@
 package com.lokahe.androidmvvm.ui.activites
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +22,8 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,25 +32,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.activity
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.lokahe.androidmvvm.LocalDrawerState
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.ProvideLocals
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.SIDE_MENU_ITEMS
-import com.lokahe.androidmvvm.Screen
 import com.lokahe.androidmvvm.UserHeaderOption
+import com.lokahe.androidmvvm.ui.MainDialog
+import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.screens.AccountScreen
 import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.PersonsScreen
 import com.lokahe.androidmvvm.ui.screens.SendPostScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
-import com.lokahe.androidmvvm.ui.widget.MainDialog
 import com.lokahe.androidmvvm.ui.widget.UserHeader
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -62,30 +66,37 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val navController = rememberNavController()
+            val backStack = rememberNavBackStack(Screen.Home)
             ProvideLocals(
-                navController = navController,
+                navController = backStack,
                 viewModel = viewModel
             ) {
                 AndroidMVVMTheme {
                     SideMenu {
-                        NavHost(
-                            navController = navController,
-                            startDestination = Screen.Home.route
-                        ) {
-                            composable(Screen.Home.route) { MainScreen() }
-                            composable(Screen.Account.route) { AccountScreen() }
-                            composable(Screen.Persons.route) { PersonsScreen() }
-                            composable(Screen.SendPost.route) { SendPostScreen() }
-                            activity(Screen.Settings.route) {
-                                activityClass = SettingsActivity::class
-                            }
-                        }
+                        NavDisplay(
+                            backStack = backStack,
+                            onBack = { if (backStack.size > 1) backStack.removeLast() },
+                            entryProvider = entryProvider {
+                                entry<Screen.Home> { MainScreen() }
+                                entry<Screen.Account> { AccountScreen(id = it.id) }
+                                entry<Screen.Persons> { PersonsScreen() }
+                                entry<Screen.SendPost> { SendPostScreen() }
+                                entry<Screen.Settings> {
+                                    val context = LocalContext.current
+                                    LaunchedEffect(Unit) {
+                                        context.startActivity(
+                                            Intent(context, SettingsActivity::class.java)
+                                        )
+                                    }
+                                }
+                            })
                     }
                     MainDialog()
                 }
             }
         }
+        android.util.Log.d("MainActivity", "onCreate: ${intent.data}")
+        intent.data?.let { viewModel.handleMagicLink(it) }
     }
 }
 
@@ -104,21 +115,7 @@ fun SideMenu(content: @Composable () -> Unit = {}) {
                 onItemSelected = { item ->
                     selectedMenuItem = item
                     scope.launch { drawerState.close() }
-                    navController.navigate(item.route) {
-                        // 1. Avoid multiple copies of the same destination when
-                        // reselecting the same item
-                        launchSingleTop = true
-
-                        // 2. (Recommended) Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations on the back stack
-                        // as you select different menu items
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
-                        }
-
-                        // 3. (Recommended) Restore state when reselecting a previously selected item
-                        restoreState = true
-                    }
+                    navController.add(item)
                 }
             )
         }
@@ -132,10 +129,12 @@ fun DrawerContent(
     selectedItem: Screen,
     onItemSelected: (Screen) -> Unit
 ) {
+    val viewModel = viewModel<MainViewModel>()
+    val user by viewModel.currentUser.collectAsState()
     ModalDrawerSheet(
         modifier = Modifier.width(300.dp),
     ) {
-        UserHeader(option = UserHeaderOption.Sign, onItemSelected = onItemSelected)
+        UserHeader(user, UserHeaderOption.Sign, onItemSelected)
         Spacer(modifier = Modifier.height(8.dp))
         SIDE_MENU_ITEMS.forEach { (screen, icon, label) ->
             NavigationDrawerItem(

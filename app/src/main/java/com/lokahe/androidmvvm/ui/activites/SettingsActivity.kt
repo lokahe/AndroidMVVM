@@ -9,10 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.rememberNavBackStack
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.ProvideLocals
 import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.preference.ListPreference
 import com.lokahe.androidmvvm.ui.preference.SliderDialogPreference
 import com.lokahe.androidmvvm.ui.preference.SwitchPreference
@@ -32,7 +33,7 @@ class SettingsActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             ProvideLocals(
-                navController = rememberNavController(),
+                navController = rememberNavBackStack(Screen.Home),
                 viewModel = viewModel
             ) {
                 AndroidMVVMTheme {

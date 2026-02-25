@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm
 
 import android.annotation.SuppressLint
+import android.content.res.Resources
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.core.graphics.ColorUtils
 import com.google.android.material.color.utilities.DynamicScheme
 import com.lokahe.androidmvvm.MyApplication.Companion.application
+import java.time.OffsetDateTime
 
 fun s(@StringRes id: Int): String = application.getString(id)
 fun Int.max(max: Int): Int = this.coerceAtMost(max)
@@ -25,13 +27,46 @@ fun Int.argb(): Int {
     return 0xFF shl 24 or this
 }
 
-fun toast(message: String, duration: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(application, message, duration).show()
-}
+fun Int.has(flag: Int): Boolean = this and flag != 0
+fun Int.set(flag: Int): Int = this or flag
+fun Int.set(vararg flags: Int): Int = flags.fold(this) { acc, flag -> acc or flag }
+fun Int.clear(flag: Int): Int = this and flag.inv()
 
 fun Int.toHexColor(): String {
     return String.format("#%08X", this)
 }
+
+fun Int.isStringRes(): Boolean {
+    return try {
+        // Returns "string", "drawable", "layout", etc.
+        application.resources.getResourceTypeName(this) == "string"
+    } catch (e: Resources.NotFoundException) {
+        false // The ID doesn't exist at all
+    }
+}
+
+fun Int.str(): String = if (isStringRes()) application.getString(this) else this.toString()
+
+fun String.emailCover() = this.replace("(?<=.).(?=.*@.)".toRegex(), "*")
+fun String.emptyNull(): String? = this.ifEmpty { null }
+fun String.toMillis(): Long {
+    // Supabase returns ISO_OFFSET_DATE_TIME
+    val odt = OffsetDateTime.parse(this)
+    return odt.toInstant().toEpochMilli()
+}
+
+fun CharSequence?.isNotNullOrEmpty(): Boolean = !this.isNullOrEmpty()
+fun CharSequence?.isNotNullOrBlank(): Boolean = !this.isNullOrBlank()
+fun CharSequence?.nuEmpty(): String = (if (this.isNullOrEmpty()) "" else this) as String
+
+fun toast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
+    message?.let { Toast.makeText(application, it, duration).show() }
+}
+
+fun curMillis() = System.currentTimeMillis()
+fun curSecond() = System.currentTimeMillis() / 1000
+
+fun <A, B> unNullPair(a: A?, b: B?): Pair<A, B>? = if (a != null && b != null) Pair(a, b) else null
 
 @SuppressLint("RestrictedApi")
 fun DynamicScheme.toColorScheme(): ColorScheme {

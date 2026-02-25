@@ -1,5 +1,6 @@
 package com.lokahe.androidmvvm.ui.widget
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,8 +29,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.Post
-import com.lokahe.androidmvvm.data.models.network.User
+import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.androidmvvm.data.models.supabase.User
+import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
 import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
@@ -37,75 +39,66 @@ import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
 @Composable
 fun AvatarIcon(
     modifier: Modifier = Modifier,
-    url: String
+    url: String?
 ) {
-    if (url.isNotEmpty()) {
+    url?.emptyNull()?.let {
         AsyncImage(
             model = url,
             contentDescription = stringResource(R.string.avatar),
             modifier = modifier.clip(RoundedCornerShape(20)),
             contentScale = Crop
         )
-    } else {
-        Icon(
-            modifier = modifier,
-            imageVector = Icons.Filled.Person,
-            contentDescription = ""
-        )
-    }
+    } ?: Icon(
+        modifier = modifier,
+        imageVector = Icons.Filled.Person,
+        contentDescription = ""
+    )
 }
 
 @Composable
 fun PostItem(
     index: Int,
-    post: Post
+    post: Post,
+    editMode: Boolean,
+    selected: Boolean = false,
+    onLongClick: () -> Unit = {},
+    onAuthorClick: (String) -> Unit = {},
+    onClick: (Int) -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
+    SuperCard(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        onClick = { onClick(index) },
+        onLongClick = onLongClick,
+        editMode = editMode,
+        selected = selected
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             Row(verticalAlignment = CenterVertically) {
                 AvatarIcon(
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .size(48.dp),
-                    url = post.avatar
+                    modifier = Modifier.padding(end = 16.dp).size(48.dp).clickable {
+                        onAuthorClick(post.authorId)
+                    },
+                    url = post.profiles.avatar
                 )
                 Text(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
                     text = postTitle(post),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Icon(
                     imageVector = Icons.Filled.Share,
-                    contentDescription = "Share",
-                    modifier = Modifier
-                        .padding(
-                            end = 30.dp
-                        )
-                        .size(20.dp),
+                    contentDescription = stringResource(R.string.share),
+                    modifier = Modifier.padding(end = 30.dp).size(20.dp),
                 )
                 Icon(
                     imageVector = Icons.Filled.ThumbUp,
-                    contentDescription = "Thumb up",
-                    modifier = Modifier
-                        .padding(
-                            end = 30.dp
-                        )
-                        .size(20.dp),
+                    contentDescription = stringResource(R.string.like),
+                    modifier = Modifier.padding(end = 30.dp).size(20.dp),
                 )
                 Icon(
                     imageVector = Icons.Filled.Star,
-                    contentDescription = "Star",
-                    modifier = Modifier
-                        .padding(
-                            end = 8.dp
-                        )
-                        .size(20.dp),
+                    contentDescription = stringResource(R.string.favor),
+                    modifier = Modifier.padding(end = 8.dp).size(20.dp),
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -113,15 +106,13 @@ fun PostItem(
                 text = post.content,
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (post.images.isNotEmpty()) {
-                Row() {
-                    post.images.split(",").forEach {
+            if (post.imageUrls.isNotEmpty()) {
+                Row {
+                    post.imageUrls.split(",").forEach {
                         AsyncImage(
                             model = it,
                             contentDescription = stringResource(R.string.image),
-                            modifier = Modifier
-                                .size(36.dp)
-                                .padding(end = 4.dp)
+                            modifier = Modifier.size(36.dp).padding(end = 4.dp)
                         )
                     }
                 }
@@ -131,75 +122,49 @@ fun PostItem(
 }
 
 @Composable
-fun UserItem(
-    index: Int,
-    user: User
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 12.dp)
-    ) {
+fun UserItem(index: Int, user: User) {
+    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
         Column(modifier = Modifier.padding(10.dp)) {
             Row {
                 AvatarIcon(
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .size(50.dp),
-                    url = user.avatar ?: ""
+                    modifier = Modifier.padding(end = 16.dp).size(50.dp),
+                    url = user.userMetadata?.avatarUrl
                 )
                 Text(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
                     text = userTitle(user),
                     style = MaterialTheme.typography.titleMedium
                 )
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = "Star",
-                    modifier = Modifier
-                        .padding(
-                            end = 10.dp
-                        )
-                        .size(20.dp),
+                    modifier = Modifier.padding(end = 10.dp).size(20.dp),
                 )
             }
         }
     }
 }
 
-fun LazyListScope.personItem(
-    index: Int,
-    person: Person
-) {
+fun LazyListScope.personItem(index: Int, person: Person) {
     item {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row {
                     AvatarIcon(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                            .size(36.dp),
+                        modifier = Modifier.padding(end = 16.dp).size(36.dp),
                         url = person.image
                     )
                     Text(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
                         text = genderLogo(person.name, person.gender),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "Star",
-                        modifier = Modifier.padding(
-                            end = 16.dp
-                        )
+                        modifier = Modifier.padding(end = 16.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))

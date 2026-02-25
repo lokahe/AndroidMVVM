@@ -1,175 +1,114 @@
 package com.lokahe.androidmvvm.data.repository
 
 import android.util.Log
-import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.models.Post
-import com.lokahe.androidmvvm.data.models.network.LoginRequest
-import com.lokahe.androidmvvm.data.models.network.RegisterRequest
-import com.lokahe.androidmvvm.data.models.network.User
+import com.google.gson.Gson
+import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
+import com.lokahe.androidmvvm.data.models.supabase.ApiError
+import com.lokahe.androidmvvm.data.models.supabase.ApiResult
+import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
+import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
+import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
+import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
+import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.androidmvvm.data.models.supabase.PostRequest
+import com.lokahe.androidmvvm.data.models.supabase.Profile
+import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
+import com.lokahe.androidmvvm.data.models.supabase.User
+import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
+import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.ApiService
-import com.lokahe.androidmvvm.s
-import com.lokahe.androidmvvm.utils.Utils.Companion.md5
+import com.lokahe.androidmvvm.data.remote.b
+import com.lokahe.androidmvvm.data.remote.eq
+import com.lokahe.androidmvvm.emptyNull
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import retrofit2.Response
 
 class HttpRepository @Inject constructor(
-    private val apiService: ApiService,
-    private val userManager: UserManager
+    private val apiService: ApiService
 ) {
-    suspend fun register(email: String, password: String, name: String): Result<String> {
-        return try {
-            val request = RegisterRequest(email, md5(password), name)
-            val response = apiService.register(request)
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()?.message ?: s(R.string.registration_successful))
-            } else {
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: R.string.registration_failed.toString()
-                    )
-                )
+    fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Flow<ApiResult<T>> {
+        return flow {
+            try {
+                emit(ApiResult.Loading)
+                val response = apiCall()
+                if (response.isSuccessful) {
+                    Log.d("safeApiCall", "response[isSuccessful]: $response")
+                    @Suppress("UNCHECKED_CAST")
+                    if (response.body() == null) emit(ApiResult.Success(Unit as T))
+                    else emit(ApiResult.Success(response.body()!!))
+                } else {
+                    Log.d("safeApiCall", "response: $response")
+                    // Parse errorBody to your data class
+                    val errorBody = response.errorBody()?.string()
+                    val apiError = Gson().fromJson(errorBody, ApiError::class.java)
+                        ?: ApiError(response.code(), "unknown", "Unknown error")
+                    emit(ApiResult.Failure(apiError))
+                }
+            } catch (e: Exception) {
+                Log.d("safeApiCall", "e: ${e.message}")
+                emit(ApiResult.Exception(e))
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
-    suspend fun isUserRegistered(email: String): Boolean {
-        // 1. Format the clause: email='john@doe.com'
-        val whereClause = "email='$email'"
-        // 2. Make the call
-        val response = apiService.isRegistered(whereClause)
-        if (response.isSuccessful) {
-            val usersList = response.body()
-            // 3. If list is not null and not empty, the user exists
-            return !usersList.isNullOrEmpty()
-        }
-        return false // Network error or API failure
-    }
+    fun gAuth(body: GoogleAuth): Flow<ApiResult<AuthResponse>> =
+        safeApiCall { apiService.googleAuth(body = body) }
 
-    suspend fun login(email: String, password: String): Result<String> {
-        return try {
-            val request = LoginRequest(email, md5(password))
-            val response = apiService.login(request)
-            if (response.isSuccessful && response.body()?.userToken?.isNotEmpty() == true) {
-                userManager.saveUser(response.body()!!)
-                Result.success(response.body()?.message ?: s(R.string.registration_successful))
-            } else {
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: s(R.string.registration_failed)
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    fun codeExchange(code: String, codeVerifier: String): Flow<ApiResult<AuthResponse>> =
+        safeApiCall { apiService.codeExchange(body = CodeExchangeRequest(code, codeVerifier)) }
 
-    suspend fun verifyToken(token: String): Boolean {
-        val response = apiService.verifyToken(token)
-        if (response.isSuccessful) {
-            return response.body() ?: false
-        }
-        return false // Network error or API failure
-    }
+    fun varifyToken(token: String): Flow<ApiResult<User>> =
+        safeApiCall { apiService.varifyToken(token = token.b) }
 
-    suspend fun logout(token: String): Result<String> {
-        return try {
-            val response = apiService.logout(token)
-            if (!response.isSuccessful) {
-                Log.e("Logout", "Error: ${response.body()?.message}")
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: ""
-                    )
-                )
-            } else {
-                Result.success(response.body()?.message ?: "")
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    fun refreshToken(refreshToken: String): Flow<ApiResult<AuthResponse>> =
+        safeApiCall { apiService.refreshToken(body = RefreshTokenRequest(refreshToken)) }
 
-    suspend fun updateProperty(
-        objectId: String,
+    fun signOut(token: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.signOut(token = token.b) }
+
+    fun sign(email: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.sign(body = OtpRequest(email)) }
+
+    fun verifyEmail(email: String, token: String): Flow<ApiResult<AuthResponse>> =
+        safeApiCall { apiService.verifyEmail(body = VerifyRequest("email", email, token)) }
+
+    fun fetchProfileById(token: String, id: String): Flow<ApiResult<Profile>> =
+        safeApiCall { apiService.fetchProfileById(token = token.b, id = id.eq) }
+
+    fun insertPost(token: String, post: PostRequest): Flow<ApiResult<List<Post>>> =
+        safeApiCall { apiService.insertPost(token = token.b, body = post) }
+
+    fun fetchPosts(
         token: String,
-        request: Any
-    ): Result<String> {
-        return try {
-            val response = apiService.updateProperty(
-                objectId = objectId,
-                token = token,
-                request = request
+        authorId: String? = null,
+        replyId: String = Api.EMPTY_UUID,
+        limit: Int = Api.PAGE_SIZE,
+        offset: Int = 0
+    ): Flow<ApiResult<List<Post>>> =
+        safeApiCall {
+            apiService.fetchPosts(
+                token = token.b,
+                authorId = authorId?.emptyNull()?.let { authorId.eq },
+                replyId = replyId.eq,
+                limit = limit,
+                offset = offset
             )
-            if (response.isSuccessful && response.body() != null) {
-                userManager.saveUser(response.body()!!)
-                Result.success(response.body()?.message ?: "")
-            } else {
-                Log.e("updateProperty", "Error: ${response.body()?.message}")
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: ""
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
-    }
 
-    suspend fun getUsers(pageSize: Int, offset: Int): Result<List<User>> {
-        return try {
-            val users = apiService.getUsers(pageSize, offset)
-            if (users.isSuccessful && users.body() != null && users.body()!!.isNotEmpty()) {
-                Result.success(users.body()!!)
-            } else {
-                Result.failure(
-                    Exception("")
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    fun deletePosts(token: String, ids: List<String>): Flow<ApiResult<Any>> =
+        safeApiCall {
+            apiService.deletePosts(token = token.b, inCondition = "in.(${ids.joinToString(",")})")
         }
-    }
 
-    suspend fun getPosts(pageSize: Int, offset: Int, whereClause: String = ""): Result<List<Post>> {
-        return try {
-            val posts =
-                if (whereClause.isNotEmpty())
-                    apiService.getPosts(
-                        whereClause = whereClause,
-                        pageSize = pageSize,
-                        offset = offset
-                    )
-                else apiService.getPosts(pageSize = pageSize, offset = offset)
-            if (posts.isSuccessful && posts.body() != null && posts.body()!!.isNotEmpty()) {
-                Result.success(posts.body()!!)
-            } else {
-                Result.failure(
-                    Exception("")
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    fun follow(token: String, followerId: String, targetId: String): Flow<ApiResult<Any>> =
+        safeApiCall {
+            apiService.follow(token = token.b, body = FollowRequest(followerId, targetId))
         }
-    }
 
-    suspend fun sendPost(token: String, request: Any): Result<String> {
-        return try {
-            val response = apiService.post(token = token, request = request)
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()?.message ?: s(R.string.send_successed))
-            } else {
-                Result.failure(
-                    Exception(
-                        response.body()?.message ?: s(R.string.send_failed)
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    fun unFollow(token: String, followerId: String, targetId: String): Flow<ApiResult<Any>> =
+        safeApiCall {
+            apiService.unFollow(token = token.b, followerId = followerId.eq, targetId = targetId.eq)
         }
-    }
 }

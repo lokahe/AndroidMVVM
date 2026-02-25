@@ -30,6 +30,7 @@
     <string name="female">Female</string>
     <string name="guest">guest</string>
     <string name="signInUp">Sign In/Up</string>
+    <string name="sign">Sign</string>
     <string name="logout">Logout</string>
     <string name="login">Login</string>
     <string name="confirm">Confirm</string>
@@ -66,4 +67,16 @@
     <string name="dark_mode">Dark mode</string>
     <string name="send_successed">Send successed</string>
     <string name="send_failed">Send failed</string>
+    <string name="sign_out">sign out</string>
+    <string name="sign_out_confirm">Confirm to sign out</string>
+    <string name="share">share</string>
+    <string name="like">like</string>
+    <string name="favor">favor</string>
+    <string name="delete_success">delete success</string>
+    <string name="delete_confirm">confirm to delete</string>
+    <string name="following_count">following: %d</string>
+    <string name="followers_count">followers: %d</string>
+    <string name="follow">follow</string>
+    <string name="followed">followed</string>
+    <string name="refresh">refresh</string>
 </resources>

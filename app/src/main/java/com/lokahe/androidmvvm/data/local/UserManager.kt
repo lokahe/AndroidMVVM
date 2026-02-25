@@ -3,9 +3,10 @@ package com.lokahe.androidmvvm.data.local
 import android.content.Context
 import android.util.Log
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
-import com.lokahe.androidmvvm.data.models.network.LoginResponse
+import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,41 +24,38 @@ class UserManager @Inject constructor(
     companion object {
         private val USER_DATA_KEY = stringPreferencesKey("user_data")
         private val USER_TOKEN_KEY = stringPreferencesKey("user_token")
+        private val USER_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("user_token_expires_at")
+        private val USER_REFRESH_TOKEN_KEY = stringPreferencesKey("user_refresh_token")
         private val USER_COLOR_SEED_KEY = stringPreferencesKey("user_color_seed")
+        private val CODE_VERIFIER = stringPreferencesKey("code_verifier")
     }
 
     /**
      * Helper to get just the token
      */
-    val userTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
+    val accessTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
         prefs[USER_TOKEN_KEY]
     }
 
-    /**
-     * Saves the full LoginResponse object and the token separately for easy access
-     */
-    suspend fun saveUser(response: LoginResponse) {
-        context.userStore.edit { prefs ->
-            // 1. Save the token specifically (often needed for Interceptors)
-            response.userToken?.let { prefs[USER_TOKEN_KEY] = it }
-            // 2. Save the entire object as a JSON string
-            prefs[USER_DATA_KEY] = gson.toJson(response)
-            // 3. calculate and save color seed
-            response.avatar?.let {
-                Utils.Companion.calculateMainColor(it)?.let { seed ->
-                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
-                }
-            }
-        }
+    val accessTokenExpiresAtFlow: Flow<Long?> = context.userStore.data.map { prefs ->
+        prefs[USER_TOKEN_EXPIRES_AT_KEY]
+    }
+
+    val refreshTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
+        prefs[USER_REFRESH_TOKEN_KEY]
+    }
+
+    val codeVerifierFlow: Flow<String?> = context.userStore.data.map { prefs ->
+        prefs[CODE_VERIFIER]
     }
 
     /**
      * Retrieves the full User object as a Flow
      */
-    val userFlow: Flow<LoginResponse?> = context.userStore.data.map { prefs ->
+    val userFlow: Flow<User?> = context.userStore.data.map { prefs ->
         prefs[USER_DATA_KEY]?.let {
             try {
-                gson.fromJson(it, LoginResponse::class.java)
+                gson.fromJson(it, User::class.java)
             } catch (e: Exception) {
                 Log.e("UserManager", "Error deserializing user data: ${e.message}")
                 null
@@ -80,13 +78,45 @@ class UserManager @Inject constructor(
     }
 
     /**
+     * save tokens
+     */
+    suspend fun saveToken(accessToken: String?, expiresAt: Long?, refreshToken: String?) {
+        context.userStore.edit { prefs ->
+            accessToken?.let { prefs[USER_TOKEN_KEY] = it }
+            expiresAt?.let { prefs[USER_TOKEN_EXPIRES_AT_KEY] = it }
+            refreshToken?.let { prefs[USER_REFRESH_TOKEN_KEY] = it }
+        }
+    }
+
+    suspend fun saveCodeVerifier(codeVerifier: String) {
+        context.userStore.edit { prefs -> prefs[CODE_VERIFIER] = codeVerifier }
+    }
+
+    /**
+     * save user
+     */
+    suspend fun saveUser(user: User?) {
+        user?.let {
+            context.userStore.edit { prefs ->
+                prefs[USER_DATA_KEY] = gson.toJson(it)
+                Utils.calculateMainColor(it.userMetadata?.avatarUrl)?.let { seed ->
+                    prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
+                }
+            }
+        }
+    }
+
+    /**
      * Clear data on Logout
      */
     suspend fun clearUser() {
         context.userStore.edit { prefs ->
             prefs.remove(USER_DATA_KEY)
             prefs.remove(USER_TOKEN_KEY)
+            prefs.remove(USER_REFRESH_TOKEN_KEY)
+            prefs.remove(USER_TOKEN_EXPIRES_AT_KEY)
             prefs.remove(USER_COLOR_SEED_KEY)
+            prefs.remove(CODE_VERIFIER)
         }
     }
 }

@@ -27,18 +27,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.LocalNavController
-import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.UserHeaderOption
 import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.ui.widget.UserHeader
-import com.lokahe.androidmvvm.viewmodels.MainViewModel
+import com.lokahe.androidmvvm.viewmodels.PostViewModel
 
 @Composable
 fun SendPostScreen() {
-    val viewModel = LocalViewModel.current as MainViewModel
+    val viewModel: PostViewModel = hiltViewModel()
     val navController = LocalNavController.current
     var content by remember { mutableStateOf("") }
     var images by remember { mutableStateOf("") }
@@ -96,7 +96,7 @@ fun SendPostScreen() {
                     modifier = Modifier.padding(start = 16.dp),
                     onClick = {
                         viewModel.sendPost(content, images) {
-                            navController.popBackStack()
+                            navController.removeLast()
                         }
                     }) {
                     Icon(
