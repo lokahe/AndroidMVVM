@@ -6,12 +6,16 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
+import com.lokahe.androidmvvm.addOrRemove
+import com.lokahe.androidmvvm.data.models.supabase.Follower
+import com.lokahe.androidmvvm.data.models.supabase.Liked
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import javax.inject.Singleton
 
@@ -97,11 +101,34 @@ class UserManager @Inject constructor(
      */
     suspend fun saveUser(user: User?) {
         user?.let {
+            Log.d("saveUser", "user: $user")
             context.userStore.edit { prefs ->
                 prefs[USER_DATA_KEY] = gson.toJson(it)
                 Utils.calculateMainColor(it.userMetadata?.avatarUrl)?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
+            }
+        }
+    }
+
+    suspend fun updateProfileLocal(
+        follower: Follower? = null,
+        liked: Liked? = null
+    ) {
+        Log.d("updateProfileLocal", "follower: $follower, liked: $liked")
+        userFlow.firstOrNull()?.let { user ->
+            user.profile?.let { prof ->
+                saveUser(
+                    @Suppress("UNCHECKED_CAST")
+                    user.copy(
+                        profile = prof.copy(
+                            followingList = follower?.let { prof.followingList.addOrRemove(it) as List<Follower> }
+                                ?: prof.followingList,
+                            likedList = liked?.let { prof.likedList.addOrRemove(it) as List<Liked> }
+                                ?: prof.likedList
+                        )
+                    )
+                )
             }
         }
     }

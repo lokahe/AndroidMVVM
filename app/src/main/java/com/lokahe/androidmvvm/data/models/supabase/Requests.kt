@@ -55,3 +55,10 @@ data class FollowRequest(
     @SerializedName("target_id")
     val targetId: String
 )
+
+data class LikeRequest(
+    @SerializedName("post_id")
+    val postId: String,
+    @SerializedName("user_id")
+    val userId: String
+)

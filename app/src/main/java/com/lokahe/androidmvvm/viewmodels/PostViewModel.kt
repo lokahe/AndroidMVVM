@@ -3,6 +3,8 @@ package com.lokahe.androidmvvm.viewmodels
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.local.UserManager
+import com.lokahe.androidmvvm.data.models.supabase.Like
+import com.lokahe.androidmvvm.data.models.supabase.Liked
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.remote.Api
@@ -75,6 +77,43 @@ class PostViewModel @Inject constructor(
                     .onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
+        }
+    }
+
+    fun like(postId: String) {
+        viewModelScope.launch {
+            unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
+                httpRepository.like(token, postId, user.id).cole().onSuccess {
+                    updateProfileLocal(liked = Liked(postId))
+                    updatePosts(postId, delLikeCount = 1)
+                }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
+        }
+    }
+
+    fun dislike(postId: String) {
+        viewModelScope.launch {
+            unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
+                httpRepository.dislike(token, postId, user.id).cole().onSuccess {
+                    updateProfileLocal(liked = Liked(postId))
+                    updatePosts(postId, delLikeCount = -1)
+                }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
+        }
+    }
+
+    private fun updatePosts(postId: String, delLikeCount: Int = 0) {
+        _posts.value = _posts.value.map {
+            if (it.id == postId) it.copy(
+                likes = listOf(Like((it.likes[0].count + delLikeCount).coerceAtLeast(0)))
+            ) else it
+        }
+        _userPosts.value = _userPosts.value.map {
+            if (it.id == postId) it.copy(
+                likes = listOf(Like((it.likes[0].count + delLikeCount).coerceAtLeast(0)))
+            ) else it
         }
     }
 }

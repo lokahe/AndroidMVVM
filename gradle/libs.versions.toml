@@ -26,6 +26,7 @@ ksp = "2.0.21-1.0.27" # Matches Kotlin 2.0.21
 coil = "2.7.0"
 paletteKtx = "1.0.0"
 browser = "1.9.0"
+icons = "1.7.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,7 +55,7 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" } # You can use a specific version
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "icons" } # You can use a specific version
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }

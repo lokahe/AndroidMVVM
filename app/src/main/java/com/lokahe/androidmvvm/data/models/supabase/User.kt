@@ -25,9 +25,9 @@ data class User(
     @SerializedName("id")
     val id: String,
     @SerializedName("email")
-    val email: String,
+    val email: String?,
     @SerializedName("phone")
-    val phone: String,
+    val phone: String?,
     @SerializedName("user_metadata")
     val userMetadata: UserMetadata?,
     // join
@@ -46,3 +46,4 @@ data class UserMetadata(
 
 fun User.name() = profile?.name ?: userMetadata?.name
 fun User.avatar() = profile?.avatar ?: userMetadata?.avatarUrl
+fun User.liked(postId: String) = profile?.likedList?.any { it.postId == postId } ?: false

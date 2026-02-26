@@ -8,6 +8,7 @@ import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
+import com.lokahe.androidmvvm.data.models.supabase.LikeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
@@ -111,4 +112,10 @@ class HttpRepository @Inject constructor(
         safeApiCall {
             apiService.unFollow(token = token.b, followerId = followerId.eq, targetId = targetId.eq)
         }
+
+    fun like(token: String, postId: String, userId: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.like(token = token.b, body = LikeRequest(postId, userId)) }
+
+    fun dislike(token: String, postId: String, userId: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.dislike(token = token.b, postId = postId.eq, userId = userId.eq) }
 }

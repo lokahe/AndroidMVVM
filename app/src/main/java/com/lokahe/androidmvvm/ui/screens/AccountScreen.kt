@@ -37,14 +37,10 @@ fun AccountScreen(id: String? = null) {
     LaunchedEffect(id) { if (!id.isNullOrEmpty()) viewModel.fetchUser(id) }
     var curTab by remember { mutableIntStateOf(0) }
     var isEditing by remember { mutableStateOf(false) }
-    // State for editable fields
-    val userEdited by remember { mutableStateOf(user) }
     MainScaffold(
         title = stringResource(R.string.account)
     ) { contentPadding ->
-        Column(
-            modifier = Modifier.padding(contentPadding)
-        ) {
+        Column(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
             UserHeader(user, UserHeaderOption.Edit) {
                 if (!isMe && me != null) {
                     val followed = me!!.profile?.followingList?.any { it.targetId == id } ?: false

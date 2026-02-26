@@ -4,6 +4,7 @@ import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
+import com.lokahe.androidmvvm.data.models.supabase.LikeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
@@ -103,7 +104,8 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("id") id: String,
         @Query("select") select: String = "*,followers:follows!target_id(count)," +
-                "following_list:follows!follower_id(target_id)",
+                "following_list:follows!follower_id(target_id)," +
+                "liked_list:likes!user_id(post_id)",
         @Header("Accept") accept: String = "application/vnd.pgrst.object+json"
     ): Response<Profile>
 
@@ -159,5 +161,21 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("follower_id") followerId: String,
         @Query("target_id") targetId: String
+    ): Response<Unit>
+
+    @POST("rest/v1/likes")
+    suspend fun like(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body body: LikeRequest
+    ): Response<Unit>
+
+    @DELETE("rest/v1/likes")
+    suspend fun dislike(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("post_id") postId: String,
+        @Query("user_id") userId: String
     ): Response<Unit>
 }

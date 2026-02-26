@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +23,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -59,10 +59,12 @@ fun AvatarIcon(
 fun PostItem(
     index: Int,
     post: Post,
+    liked: Boolean = false,
     editMode: Boolean,
     selected: Boolean = false,
     onLongClick: () -> Unit = {},
     onAuthorClick: (String) -> Unit = {},
+    onLikeClick: (Int) -> Unit = {},
     onClick: (Int) -> Unit = {}
 ) {
     SuperCard(
@@ -90,11 +92,22 @@ fun PostItem(
                     contentDescription = stringResource(R.string.share),
                     modifier = Modifier.padding(end = 30.dp).size(20.dp),
                 )
-                Icon(
-                    imageVector = Icons.Filled.ThumbUp,
-                    contentDescription = stringResource(R.string.like),
-                    modifier = Modifier.padding(end = 30.dp).size(20.dp),
-                )
+                Row(Modifier.padding(end = 30.dp)) {
+                    Icon(
+                        painter = painterResource(
+                            if (liked) R.drawable.ic_heart_filled
+                            else R.drawable.ic_heart_stroke
+                        ),
+                        contentDescription = stringResource(R.string.like),
+                        modifier = Modifier.size(20.dp).padding(end = 4.dp)
+                            .clickable { onLikeClick(index) },
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = post.likes[0].count.toString(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = stringResource(R.string.favor),

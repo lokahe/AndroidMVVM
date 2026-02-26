@@ -2,6 +2,8 @@ package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.data.local.UserManager
+import com.lokahe.androidmvvm.data.models.supabase.Follower
+import com.lokahe.androidmvvm.data.models.supabase.Followers
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -41,7 +43,8 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
                 httpRepository.follow(token, followerId, targetId).cole().onSuccess {
-                    refreshToken(false)
+                    updateProfileLocal(Follower(targetId))
+                    updateUser(delFollowCount = 1)
                 }.onFailure { toast(message = it.message) }
                     .onException { toast(message = it.message) }
             }
@@ -52,10 +55,24 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
                 httpRepository.unFollow(token, followerId, targetId).cole().onSuccess {
-                    refreshToken(false)
+                    updateProfileLocal(Follower(targetId))
+                    updateUser(delFollowCount = -1)
                 }.onFailure { toast(message = it.message) }
                     .onException { toast(message = it.message) }
             }
         }
+    }
+
+    private fun updateUser(delFollowCount: Int = 0) {
+        _user.value = _user.value?.copy(
+            profile = _user.value?.profile?.copy(
+                followers = listOf(
+                    Followers(
+                        ((_user.value?.profile?.followers[0]?.count
+                            ?: 0) + delFollowCount).coerceAtLeast(0)
+                    )
+                )
+            )
+        )
     }
 }

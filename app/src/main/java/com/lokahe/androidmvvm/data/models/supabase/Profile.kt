@@ -10,30 +10,32 @@ data class Profile(
     @SerializedName("avatar")
     val avatar: String?,
     @SerializedName("email")
-    val email: String,
+    val email: String?,
     @SerializedName("phone")
-    val phone: String,
+    val phone: String?,
     @SerializedName("address")
-    val address: String,
+    val address: String?,
     @SerializedName("birth")
-    val birth: String,
+    val birth: String?,
     @SerializedName("description")
-    val description: String,
+    val description: String?,
     @SerializedName("gender")
-    val gender: String,
+    val gender: String?,
     @SerializedName("created_at")
-    val createdAt: String,
+    val createdAt: String?,
     @SerializedName("updated_at")
-    val updatedAt: String,
+    val updatedAt: String?,
     @SerializedName("last_sign_in_at")
-    val lastSignInAt: String,
+    val lastSignInAt: String?,
     @SerializedName("email_confirmed_at")
-    val emailConfirmedAt: String,
+    val emailConfirmedAt: String?,
     // join
     @SerializedName("followers")
-    var followers: List<Followers>,
+    val followers: List<Followers>,
     @SerializedName("following_list")
-    var followingList: List<Follower>
+    val followingList: List<Follower>,
+    @SerializedName("liked_list")
+    val likedList: List<Liked>
 )
 
 data class Followers(
@@ -44,4 +46,29 @@ data class Followers(
 data class Follower(
     @SerializedName("target_id")
     val targetId: String
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Follower) return false
+        return targetId == other.targetId
+    }
+
+    override fun hashCode(): Int {
+        return targetId.hashCode()
+    }
+}
+
+data class Liked(
+    @SerializedName("post_id")
+    val postId: String
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Liked) return false
+        return postId == other.postId
+    }
+
+    override fun hashCode(): Int {
+        return postId.hashCode()
+    }
+}

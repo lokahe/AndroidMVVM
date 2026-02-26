@@ -20,9 +20,6 @@ data class Post(
     @SerializedName("reply_post_id")
     val replyPostId: String,
     // join
-    /**
-     * "profiles":{"name": "テスト花子", "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLAEyzlSvVi2dA9gUOtZpfd73CYnkzzytDcMt1fHQCJ482S9A=s96-c"},"likes":[{"count": 0}]},
-     */
     @SerializedName("profiles")
     val profiles: Profile,
     @SerializedName("likes")
