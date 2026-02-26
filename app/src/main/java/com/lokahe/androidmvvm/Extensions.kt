@@ -223,6 +223,7 @@ fun Any.size(): Int =
     }
 
 fun Int.between(min: Int, max: Int) = Math.max(Math.min(this, max), min)
+fun Int.px2Dp(): Float = (this.toFloat() / Resources.getSystem().displayMetrics.density)
 
 @Composable
 internal fun PaddingValues.copy(

@@ -89,7 +89,7 @@ fun AccountScreen(id: String? = null) {
                 onTabSelected = { curTab = it },
             ) { selectedTabIndex ->
                 when (selectedTabIndex) {
-                    0 -> PostsScreen(contentPadding.copy(top = 0.dp), user?.id ?: "")
+                    0 -> PostsScreen(contentPadding.copy(top = 0.dp), id ?: me?.id)
                     1 -> ProfileScreen(isEditing, user, contentPadding.copy(top = 0.dp))
                 }
             }

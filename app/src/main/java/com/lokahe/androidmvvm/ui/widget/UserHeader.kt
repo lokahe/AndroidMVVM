@@ -32,7 +32,7 @@ import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.avatar
 import com.lokahe.androidmvvm.data.models.supabase.name
 import com.lokahe.androidmvvm.emailCover
-import com.lokahe.androidmvvm.ui.Screen
+import com.lokahe.androidmvvm.ui.screens.Screen
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable

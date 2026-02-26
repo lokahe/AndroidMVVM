@@ -5,7 +5,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import com.lokahe.androidmvvm.ui.Screen
+import com.lokahe.androidmvvm.ui.screens.Screen
 
 val HOME_TABS = listOf("Posts", "Gallery", "Users")
 val ACCOUNT_TABS = listOf("Posts", "Profile")

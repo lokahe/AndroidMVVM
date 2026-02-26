@@ -25,13 +25,10 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- This must match the Callback URL you set in Backendless and X Portal -->
-                <!-- Example for: myapp://twitter-login -->
-                <!--                <data android:scheme="https" />-->
-                <!--                <data android:host="lovelyclam-us.backendless.app/api/users/oauth/twitter/authorize" />-->
-                <!-- Replace with your actual domain/scheme -->
-<!--                <data android:host="lokahe.github.io" android:scheme="https" />-->
-                <data android:host="androidmvvm" android:scheme="lokahe" />
+                <!--                <data android:host="lokahe.github.io" android:scheme="https" />-->
+                <data
+                    android:host="androidmvvm"
+                    android:scheme="lokahe" />
             </intent-filter>
         </activity>
         <activity android:name=".ui.activites.SettingsActivity" />

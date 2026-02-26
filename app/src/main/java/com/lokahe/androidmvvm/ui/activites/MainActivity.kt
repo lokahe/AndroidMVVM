@@ -46,10 +46,10 @@ import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.SIDE_MENU_ITEMS
 import com.lokahe.androidmvvm.UserHeaderOption
 import com.lokahe.androidmvvm.ui.MainDialog
-import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.screens.AccountScreen
 import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.PersonsScreen
+import com.lokahe.androidmvvm.ui.screens.Screen
 import com.lokahe.androidmvvm.ui.screens.SendPostScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.ui.widget.UserHeader

@@ -19,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,7 @@ fun SendPostScreen() {
     val navController = LocalNavController.current
     var content by remember { mutableStateOf("") }
     var images by remember { mutableStateOf("") }
+    val me by viewModel.currentUser.collectAsState()
     // Launcher for picking local image
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -91,7 +93,7 @@ fun SendPostScreen() {
         Column(
             modifier = Modifier.padding(it)
         ) {
-            UserHeader(option = UserHeaderOption.Send) {
+            UserHeader(user = me, option = UserHeaderOption.Send) {
                 IconButton(
                     modifier = Modifier.padding(start = 16.dp),
                     onClick = {

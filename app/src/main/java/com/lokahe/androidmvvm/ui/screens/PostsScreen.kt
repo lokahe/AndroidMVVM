@@ -1,29 +1,20 @@
 package com.lokahe.androidmvvm.ui.screens
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
@@ -38,97 +29,44 @@ import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
-import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.widget.PostItem
+import com.lokahe.androidmvvm.ui.widget.SuperLazyColum
 import com.lokahe.androidmvvm.viewmodels.PostViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostsScreen(
     paddingValues: PaddingValues,
-    userId: String? = null
+    authorId: String? = null,
+    onScroll: (Int) -> Unit = {}
 ) {
     val viewModel: PostViewModel = hiltViewModel()
     val navController = LocalNavController.current
     val me by viewModel.currentUser.collectAsState()
-    val isMe = userId.isNullOrEmpty() || userId == me?.id
-    val posts by remember(userId) { if (userId.isNullOrEmpty()) viewModel.posts else viewModel.userPosts }.collectAsState()
+    val isMe = authorId != null && authorId == me?.id
+    val posts by remember(authorId) { if (authorId.isNullOrEmpty()) viewModel.posts else viewModel.userPosts }.collectAsState()
     val selectedIndexes = remember { mutableStateSetOf<Int>() }
-    LaunchedEffect(userId) { viewModel.fetchPosts(PAGE_SIZE, 0, userId) }
+    LaunchedEffect(authorId) { viewModel.fetchPosts(PAGE_SIZE, 0, authorId) }
     var editMode by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
-    // Refresh state
-    var isRefreshing by remember { mutableStateOf(false) }
-    val pullRefreshState = rememberPullToRefreshState()
-    // Load more state
-    var isLoadingMore by remember { mutableStateOf(false) }
-    // Detect end of list for load more
-    val isAtBottom by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val visibleItemsInfo = layoutInfo.visibleItemsInfo
-            if (layoutInfo.totalItemsCount == 0) {
-                false
-            } else {
-                val lastVisibleItem = visibleItemsInfo.last()
-                val viewportHeight = layoutInfo.viewportEndOffset + layoutInfo.viewportStartOffset
-                (lastVisibleItem.index + 1 == layoutInfo.totalItemsCount) &&
-                        (lastVisibleItem.offset + lastVisibleItem.size <= viewportHeight) &&
-                        posts.size % PAGE_SIZE == 0
-            }
-        }
-    }
-
-    LaunchedEffect(isAtBottom) {
-        if (isAtBottom && !isLoadingMore && !isRefreshing) {
-            isLoadingMore = true
-            viewModel.fetchPosts(PAGE_SIZE, posts.size, userId)
-            isLoadingMore = false
-        }
-    }
 
     Column {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                isRefreshing = true
-                viewModel.fetchPosts(PAGE_SIZE, 0, userId)
-                isRefreshing = false
-            },
+        SuperLazyColum(
             modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth().weight(1f),
-            state = pullRefreshState
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize().padding(top = 4.dp),
-                    contentPadding = paddingValues
-                ) {
-                    itemsIndexed(posts) { index, post ->
-                        PostItem(
-                            index, post, editMode, selectedIndexes.contains(index),
-                            { if (isMe) editMode = !editMode },
-                            { authorId ->
-                                if (me != null && me!!.id == authorId) navController.add(Screen.Account())
-                                else navController.add(Screen.Account(post.authorId))
-                            }) {
-                            if (editMode) {
-                                if (selectedIndexes.contains(index)) selectedIndexes.remove(index)
-                                else selectedIndexes.add(index)
-                            }
-                        }
-                    }
-
-                    if (isLoadingMore) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxSize().padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                    }
+            paddingValues = paddingValues,
+            items = posts,
+            onScroll = onScroll,
+            onRefresh = { viewModel.fetchPosts(PAGE_SIZE, 0, authorId) },
+            onLoadMore = { viewModel.fetchPosts(PAGE_SIZE, posts.size, authorId) },
+        ) { index, post ->
+            PostItem(
+                index, post, editMode, selectedIndexes.contains(index),
+                onLongClick = { if (isMe) editMode = !editMode },
+                onAuthorClick = { userId ->
+                    if (userId != authorId) navController.add(Screen.Account(userId))
+                }) {
+                if (editMode) {
+                    if (selectedIndexes.contains(index)) selectedIndexes.remove(index)
+                    else selectedIndexes.add(index)
                 }
             }
         }
