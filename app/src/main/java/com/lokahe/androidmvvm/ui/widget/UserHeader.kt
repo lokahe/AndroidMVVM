@@ -117,7 +117,7 @@ fun UserHeader(
                     Text(
                         text = stringResource(
                             R.string.followers_count,
-                            user?.profile?.followers[0]?.count ?: 0
+                            user?.profile?.followers?.get(0)?.count ?: 0
                         )
                     )
                 }

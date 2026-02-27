@@ -1,12 +1,14 @@
 package com.lokahe.androidmvvm.data.models.supabase
 
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Profile(
     @SerializedName("id")
-    val id: String,
+    val id: String?,
     @SerializedName("name")
-    val name: String,
+    val name: String?,
     @SerializedName("avatar")
     val avatar: String?,
     @SerializedName("email")
@@ -31,18 +33,20 @@ data class Profile(
     val emailConfirmedAt: String?,
     // join
     @SerializedName("followers")
-    val followers: List<Followers>,
+    val followers: List<Followers>?,
     @SerializedName("following_list")
-    val followingList: List<Follower>,
+    val followingList: List<Follower>?,
     @SerializedName("liked_list")
-    val likedList: List<Liked>
+    val likedList: List<Liked>?
 )
 
+@Serializable
 data class Followers(
     @SerializedName("count")
     val count: Int
 )
 
+@Serializable
 data class Follower(
     @SerializedName("target_id")
     val targetId: String
@@ -58,6 +62,7 @@ data class Follower(
     }
 }
 
+@Serializable
 data class Liked(
     @SerializedName("post_id")
     val postId: String

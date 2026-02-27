@@ -68,7 +68,7 @@ class UserViewModel @Inject constructor(
             profile = _user.value?.profile?.copy(
                 followers = listOf(
                     Followers(
-                        ((_user.value?.profile?.followers[0]?.count
+                        ((_user.value?.profile?.followers?.get(0)?.count
                             ?: 0) + delFollowCount).coerceAtLeast(0)
                     )
                 )

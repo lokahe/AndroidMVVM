@@ -57,18 +57,19 @@ fun AvatarIcon(
 
 @Composable
 fun PostItem(
+    modifier: Modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
     index: Int,
     post: Post,
     liked: Boolean = false,
-    editMode: Boolean,
+    editMode: Boolean = false,
     selected: Boolean = false,
     onLongClick: () -> Unit = {},
     onAuthorClick: (String) -> Unit = {},
-    onLikeClick: (Int) -> Unit = {},
+    onLikeClick: (String) -> Unit = {},
     onClick: (Int) -> Unit = {}
 ) {
     SuperCard(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = modifier,
         onClick = { onClick(index) },
         onLongClick = onLongClick,
         editMode = editMode,
@@ -78,7 +79,7 @@ fun PostItem(
             Row(verticalAlignment = CenterVertically) {
                 AvatarIcon(
                     modifier = Modifier.padding(end = 16.dp).size(48.dp).clickable {
-                        onAuthorClick(post.authorId)
+                        post.authorId?.let { onAuthorClick(it) }
                     },
                     url = post.profiles.avatar
                 )
@@ -100,7 +101,7 @@ fun PostItem(
                         ),
                         contentDescription = stringResource(R.string.like),
                         modifier = Modifier.size(20.dp).padding(end = 4.dp)
-                            .clickable { onLikeClick(index) },
+                            .clickable { onLikeClick(post.id) },
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
@@ -116,10 +117,10 @@ fun PostItem(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = post.content,
+                text = post.content ?: "",
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (post.imageUrls.isNotEmpty()) {
+            if (!post.imageUrls.isNullOrEmpty()) {
                 Row {
                     post.imageUrls.split(",").forEach {
                         AsyncImage(

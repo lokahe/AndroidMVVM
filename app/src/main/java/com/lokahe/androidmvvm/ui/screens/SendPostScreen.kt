@@ -53,11 +53,7 @@ fun SendPostScreen() {
     MainScaffold(
         title = stringResource(R.string.send_post),
         bottomBar = {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .imePadding()
-            ) {
+            Column(modifier = Modifier.padding(16.dp).imePadding()) {
                 if (images.isNotEmpty()) {
                     LazyRow(modifier = Modifier.padding(vertical = 8.dp)) {
                         images.split(";").forEach {
@@ -89,17 +85,15 @@ fun SendPostScreen() {
                 }
             }
         }
-    ) {
+    ) { paddingValues ->
         Column(
-            modifier = Modifier.padding(it)
+            modifier = Modifier.padding(paddingValues)
         ) {
             UserHeader(user = me, option = UserHeaderOption.Send) {
                 IconButton(
                     modifier = Modifier.padding(start = 16.dp),
                     onClick = {
-                        viewModel.sendPost(content, images) {
-                            navController.removeLast()
-                        }
+                        viewModel.sendPost(content, images) { navController.removeLast() }
                     }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
@@ -107,17 +101,13 @@ fun SendPostScreen() {
                     )
                 }
             }
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
                     label = { Text(stringResource(R.string.content)) },
                     leadingIcon = { Icon(Icons.Default.Textsms, contentDescription = null) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     minLines = 9
                 )
             }

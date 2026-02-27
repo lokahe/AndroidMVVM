@@ -122,9 +122,9 @@ class UserManager @Inject constructor(
                     @Suppress("UNCHECKED_CAST")
                     user.copy(
                         profile = prof.copy(
-                            followingList = follower?.let { prof.followingList.addOrRemove(it) as List<Follower> }
+                            followingList = follower?.let { prof.followingList?.addOrRemove(it) as List<Follower> }
                                 ?: prof.followingList,
-                            likedList = liked?.let { prof.likedList.addOrRemove(it) as List<Liked> }
+                            likedList = liked?.let { prof.likedList?.addOrRemove(it) as List<Liked> }
                                 ?: prof.likedList
                         )
                     )

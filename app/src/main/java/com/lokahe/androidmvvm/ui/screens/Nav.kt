@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm.ui.screens
 
 import androidx.navigation3.runtime.NavKey
+import com.lokahe.androidmvvm.data.models.supabase.Post
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -19,4 +20,7 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SendPost : Screen
+
+    @Serializable
+    data class PostDetail(val post: Post) : Screen
 }

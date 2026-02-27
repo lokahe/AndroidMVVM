@@ -70,14 +70,13 @@ fun PostsScreen(
                 onAuthorClick = { userId ->
                     if (userId != authorId) navController.add(Screen.Account(userId))
                 },
-                onLikeClick = {
-                    if (liked) viewModel.dislike(post.id)
-                    else viewModel.like(post.id)
-                }
+                onLikeClick = { viewModel.toggleLike(it, liked) }
             ) {
                 if (editMode) {
                     if (selectedIndexes.contains(index)) selectedIndexes.remove(index)
                     else selectedIndexes.add(index)
+                } else {
+                    navController.add(Screen.PostDetail(post))
                 }
             }
         }

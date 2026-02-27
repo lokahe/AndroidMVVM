@@ -79,4 +79,8 @@
     <string name="follow">follow</string>
     <string name="followed">followed</string>
     <string name="refresh">refresh</string>
+    <string name="post">post</string>
+    <string name="tap_to_reply">tap to reply</string>
+    <string name="reply">reply</string>
+    <string name="send">send</string>
 </resources>

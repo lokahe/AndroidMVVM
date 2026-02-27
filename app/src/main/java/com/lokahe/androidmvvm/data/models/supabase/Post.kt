@@ -1,24 +1,26 @@
 package com.lokahe.androidmvvm.data.models.supabase
 
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Post(
     @SerializedName("id")
     val id: String,
     @SerializedName("author_id")
-    val authorId: String,
+    val authorId: String?,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("content")
-    val content: String,
+    val content: String?,
     @SerializedName("image_urls")
-    val imageUrls: String,
+    val imageUrls: String?,
     @SerializedName("video_urls")
-    val videoUrls: String,
+    val videoUrls: String?,
     @SerializedName("hashtag")
-    val hashtag: String,
+    val hashtag: String?,
     @SerializedName("reply_post_id")
-    val replyPostId: String,
+    val replyPostId: String?,
     // join
     @SerializedName("profiles")
     val profiles: Profile,
@@ -26,6 +28,7 @@ data class Post(
     val likes: List<Like>
 )
 
+@Serializable
 data class Like(
     @SerializedName("count")
     val count: Int

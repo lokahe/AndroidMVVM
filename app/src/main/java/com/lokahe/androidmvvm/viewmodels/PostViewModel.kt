@@ -33,8 +33,10 @@ class PostViewModel @Inject constructor(
     // State for the list of posts
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     private val _userPosts = MutableStateFlow<List<Post>>(emptyList())
+    private val _replyPosts = MutableStateFlow<List<Post>>(emptyList())
     val posts = _posts.asStateFlow()
     val userPosts = _userPosts.asStateFlow()
+    val replyPosts = _replyPosts.asStateFlow()
 
     fun fetchPosts(pageSize: Int, offset: Int, authorId: String? = null) {
         viewModelScope.launch {
@@ -67,17 +69,22 @@ class PostViewModel @Inject constructor(
         content: String,
         imageUrls: String = "",
         videoUrls: String = "",
+        reply2PostId: String = Api.EMPTY_UUID,
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
             unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
                 httpRepository.insertPost(
-                    token, PostRequest(user.id, content, imageUrls, videoUrls, "", Api.EMPTY_UUID)
+                    token, PostRequest(user.id, content, imageUrls, videoUrls, "", reply2PostId)
                 ).cole().onSuccess { onSuccess() } // TODO: dbRepository.insertPost(it.first())
                     .onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }
         }
+    }
+
+    fun toggleLike(postId: String, liked: Boolean) {
+        if (liked) dislike(postId) else like(postId)
     }
 
     fun like(postId: String) {
@@ -114,6 +121,17 @@ class PostViewModel @Inject constructor(
             if (it.id == postId) it.copy(
                 likes = listOf(Like((it.likes[0].count + delLikeCount).coerceAtLeast(0)))
             ) else it
+        }
+    }
+
+    fun fetchReplyPosts(pageSize: Int, offset: Int, postId: String) {
+        viewModelScope.launch {
+            getAccessToken()?.emptyNull()?.let { token ->
+                httpRepository.fetchPosts(token, replyId = postId).cole().onSuccess {
+                    _replyPosts.value = it
+                }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
         }
     }
 }
