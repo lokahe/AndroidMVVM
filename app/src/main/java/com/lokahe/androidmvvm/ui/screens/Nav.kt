@@ -23,4 +23,7 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data class PostDetail(val post: Post) : Screen
+
+    @Serializable
+    data class Users(val ids: List<String>) : Screen
 }

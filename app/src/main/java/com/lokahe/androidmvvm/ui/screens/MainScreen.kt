@@ -71,7 +71,7 @@ fun MainScreen() {
                 }
 
                 1 -> ExploreScreen(contentPadding)
-                2 -> UsersScreen(contentPadding)
+                2 -> PersonsScreen()
             }
         }
     }

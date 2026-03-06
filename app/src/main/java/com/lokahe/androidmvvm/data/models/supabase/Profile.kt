@@ -1,6 +1,8 @@
 package com.lokahe.androidmvvm.data.models.supabase
 
 import com.google.gson.annotations.SerializedName
+import com.lokahe.androidmvvm.data.remote.Api
+import com.lokahe.androidmvvm.nuEmpty
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -34,8 +36,10 @@ data class Profile(
     // join
     @SerializedName("followers")
     val followers: List<Followers>?,
+    @SerializedName("followings")
+    val followings: List<Followers>?,
     @SerializedName("following_list")
-    val followingList: List<Follower>?
+    val followingList: List<Following>?
 )
 
 @Serializable
@@ -45,13 +49,13 @@ data class Followers(
 )
 
 @Serializable
-data class Follower(
+data class Following(
     @SerializedName("target_id")
     val targetId: String
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Follower) return false
+        if (other !is Following) return false
         return targetId == other.targetId
     }
 
@@ -59,3 +63,22 @@ data class Follower(
         return targetId.hashCode()
     }
 }
+
+@Serializable
+data class Follower(
+    @SerializedName("follower_id")
+    val followerId: String
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Follower) return false
+        return followerId == other.followerId
+    }
+
+    override fun hashCode(): Int {
+        return followerId.hashCode()
+    }
+}
+
+fun Profile.toUser(): User =
+    User(this.id ?: Api.EMPTY_UUID, this.email, this.phone.nuEmpty(), null, this)

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lokahe.androidmvvm.AppDialog
+import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.UserHeaderOption
@@ -43,6 +44,7 @@ fun UserHeader(
     optionBtn: @Composable () -> Unit = {},
 ) {
     val viewModel = LocalViewModel.current as MainViewModel
+    val navController = LocalNavController.current
     val isLoggedIn by viewModel.isSignedIn.collectAsState()
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = {
@@ -108,6 +110,13 @@ fun UserHeader(
                     verticalAlignment = CenterVertically
                 ) {
                     Text(
+                        modifier = Modifier.clickable {
+                            user?.let { user ->
+                                viewModel.fetchFollowingIds(user.id) {
+                                    navController.add(Screen.Users(it))
+                                }
+                            }
+                        },
                         text = stringResource(
                             R.string.following_count,
                             user?.profile?.followingList?.size ?: 0
@@ -115,6 +124,13 @@ fun UserHeader(
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
+                        modifier = Modifier.clickable {
+                            user?.let { user ->
+                                viewModel.fetchFollowerIds(user.id) {
+                                    navController.add(Screen.Users(it))
+                                }
+                            }
+                        },
                         text = stringResource(
                             R.string.followers_count,
                             user?.profile?.followers?.get(0)?.count ?: 0

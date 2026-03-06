@@ -8,6 +8,8 @@ import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
+import com.lokahe.androidmvvm.data.models.supabase.Follower
+import com.lokahe.androidmvvm.data.models.supabase.Following
 import com.lokahe.androidmvvm.data.models.supabase.LikeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
@@ -20,6 +22,7 @@ import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.remote.ApiService
 import com.lokahe.androidmvvm.data.remote.b
 import com.lokahe.androidmvvm.data.remote.eq
+import com.lokahe.androidmvvm.data.remote.ins
 import com.lokahe.androidmvvm.emptyNull
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -78,6 +81,20 @@ class HttpRepository @Inject constructor(
     fun fetchProfileById(token: String, id: String): Flow<ApiResult<Profile>> =
         safeApiCall { apiService.fetchProfileById(token = token.b, id = id.eq) }
 
+    fun fetchProfilesByIds(token: String, ids: List<String>): Flow<ApiResult<List<Profile>>> =
+        safeApiCall {
+            apiService.fetchProfilesByIds(
+                token = token.b,
+                idFilter = ids.joinToString(",").ins
+            )
+        }
+
+    fun fetchFollowingIds(token: String, followerId: String): Flow<ApiResult<List<Following>>> =
+        safeApiCall { apiService.fetchFollowingIds(token = token.b, followerId = followerId.eq) }
+
+    fun fetchFollowerIds(token: String, targetId: String): Flow<ApiResult<List<Follower>>> =
+        safeApiCall { apiService.fetchFollowerIds(token = token.b, targetId = targetId.eq) }
+
     fun insertPost(token: String, post: PostRequest): Flow<ApiResult<List<Post>>> =
         safeApiCall { apiService.insertPost(token = token.b, body = post) }
 
@@ -102,7 +119,7 @@ class HttpRepository @Inject constructor(
 
     fun deletePosts(token: String, ids: List<String>): Flow<ApiResult<Any>> =
         safeApiCall {
-            apiService.deletePosts(token = token.b, inCondition = "in.(${ids.joinToString(",")})")
+            apiService.deletePosts(token = token.b, inCondition = ids.joinToString(",").ins)
         }
 
     fun follow(token: String, followerId: String, targetId: String): Flow<ApiResult<Any>> =

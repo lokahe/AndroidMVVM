@@ -1,103 +1,63 @@
 package com.lokahe.androidmvvm.ui.screens
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.lokahe.androidmvvm.LocalViewModel
-import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
-import com.lokahe.androidmvvm.ui.widget.UserItem
-import com.lokahe.androidmvvm.viewmodels.MainViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lokahe.androidmvvm.R
+import com.lokahe.androidmvvm.UserHeaderOption
+import com.lokahe.androidmvvm.ui.widget.MainScaffold
+import com.lokahe.androidmvvm.ui.widget.SuperLazyColum
+import com.lokahe.androidmvvm.ui.widget.UserHeader
+import com.lokahe.androidmvvm.viewmodels.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UsersScreen(paddingValues: PaddingValues) {
-    val viewModel = LocalViewModel.current as MainViewModel
+fun UsersScreen(
+    ids: List<String>,
+    onScroll: (Int) -> Unit = {}
+) {
+    val viewModel = viewModel<UserViewModel>()
+    val me by viewModel.currentUser.collectAsState()
     val users by viewModel.users.collectAsState()
+    LaunchedEffect(ids) { viewModel.fetchUsers(ids) }
     val listState = rememberLazyListState()
-    // Refresh state
-    var isRefreshing by remember { mutableStateOf(false) }
-    val pullRefreshState = rememberPullToRefreshState()
-    // Load more state
-    var isLoadingMore by remember { mutableStateOf(false) }
-    // Detect end of list for load more
-    val isAtBottom by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val visibleItemsInfo = layoutInfo.visibleItemsInfo
-            if (layoutInfo.totalItemsCount == 0) {
-                false
-            } else {
-                val lastVisibleItem = visibleItemsInfo.last()
-                val viewportHeight = layoutInfo.viewportEndOffset + layoutInfo.viewportStartOffset
-                (lastVisibleItem.index + 1 == layoutInfo.totalItemsCount) &&
-                        (lastVisibleItem.offset + lastVisibleItem.size <= viewportHeight) &&
-                        users.size % PAGE_SIZE == 0
-            }
-        }
-    }
-
-    LaunchedEffect(isAtBottom) {
-        if (isAtBottom && !isLoadingMore && !isRefreshing) {
-            isLoadingMore = true
-            viewModel.fetchUsers(PAGE_SIZE, users.size)
-            isLoadingMore = false
-        }
-    }
-
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.fetchUsers(PAGE_SIZE, 0)
-            isRefreshing = false
-        },
-        modifier = Modifier
-            .padding(paddingValues)
-            .padding(horizontal = 16.dp)
-            .fillMaxSize(),
-        state = pullRefreshState
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                itemsIndexed(users) { index, user ->
-                    UserItem(index, user)
-                }
-
-                if (isLoadingMore) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+    MainScaffold(
+        title = stringResource(R.string.users)
+    ) { contentPadding ->
+        SuperLazyColum(
+            modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth(),
+            paddingValues = contentPadding,
+            items = users,
+            onScroll = onScroll,
+            onRefresh = { },
+            onLoadMore = { },
+        ) { index, user ->
+            UserHeader(user, UserHeaderOption.Edit) {
+                if (me != null && user.id != me!!.id) {
+                    val followed =
+                        me!!.profile?.followingList?.any { it.targetId == user.id } ?: false
+                    Button(modifier = Modifier.padding(8.dp), onClick = {
+                        if (followed) viewModel.unFollow(me!!.id, user.id)
+                        else viewModel.follow(me!!.id, user.id)
+                    }) {
+                        Text(text = stringResource(if (followed) R.string.followed else R.string.follow))
                     }
                 }
             }
+            Spacer(Modifier.height(2.dp))
         }
     }
 }

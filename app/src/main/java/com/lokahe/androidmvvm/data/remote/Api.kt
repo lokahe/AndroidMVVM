@@ -16,3 +16,4 @@ object Api {
 val String.b: String get() = "Bearer $this"
 val String.eq: String get() = "eq.$this"
 val String.neq: String get() = "neq.$this"
+val String.ins: String get() = "in.($this)"

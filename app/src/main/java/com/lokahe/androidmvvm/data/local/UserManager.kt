@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
 import com.lokahe.androidmvvm.addOrRemove
-import com.lokahe.androidmvvm.data.models.supabase.Follower
+import com.lokahe.androidmvvm.data.models.supabase.Following
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
@@ -111,7 +111,7 @@ class UserManager @Inject constructor(
     }
 
     suspend fun updateProfileLocal(
-        follower: Follower? = null,
+        follower: Following? = null,
     ) {
         userFlow.firstOrNull()?.let { user ->
             user.profile?.let { prof ->
@@ -119,7 +119,7 @@ class UserManager @Inject constructor(
                     @Suppress("UNCHECKED_CAST")
                     user.copy(
                         profile = prof.copy(
-                            followingList = follower?.let { prof.followingList?.addOrRemove(it) as List<Follower> }
+                            followingList = follower?.let { prof.followingList?.addOrRemove(it) as List<Following> }
                                 ?: prof.followingList,
                         )
                     )
