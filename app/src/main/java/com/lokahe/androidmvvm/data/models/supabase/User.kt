@@ -46,4 +46,3 @@ data class UserMetadata(
 
 fun User.name() = profile?.name ?: userMetadata?.name
 fun User.avatar() = profile?.avatar ?: userMetadata?.avatarUrl
-fun User.liked(postId: String) = profile?.likedList?.any { it.postId == postId } ?: false

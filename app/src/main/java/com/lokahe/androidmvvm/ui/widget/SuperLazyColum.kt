@@ -54,7 +54,7 @@ fun <T> SuperLazyColum(
                 val viewportHeight = layoutInfo.viewportEndOffset + layoutInfo.viewportStartOffset
                 (lastVisibleItem.index + 1 == layoutInfo.totalItemsCount) &&
                         (lastVisibleItem.offset + lastVisibleItem.size <= viewportHeight)
-                        && items.size % pageSize == 0
+                        && items.isNotEmpty() && items.size % pageSize == 0
             }
         }
     }

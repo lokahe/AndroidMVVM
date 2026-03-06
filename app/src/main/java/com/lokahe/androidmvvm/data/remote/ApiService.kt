@@ -97,15 +97,13 @@ interface ApiService {
     ): Response<AuthResponse>
 
     /*** REST public scheme ***/
-
     @GET("rest/v1/profiles")
     suspend fun fetchProfileById(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
         @Header("Authorization") token: String,
         @Query("id") id: String,
         @Query("select") select: String = "*,followers:follows!target_id(count)," +
-                "following_list:follows!follower_id(target_id)," +
-                "liked_list:likes!user_id(post_id)",
+                "following_list:follows!follower_id(target_id)",
         @Header("Accept") accept: String = "application/vnd.pgrst.object+json"
     ): Response<Profile>
 
@@ -133,11 +131,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("id") id: String = Api.EMPTY_UUID.neq,
         @Query("author_id") authorId: String? = null,
+        @Query("liked.user_id") myUserId: String,
         @Query("reply_post_id") replyId: String, // e.g., "eq.00..000"
         @Query("limit") limit: Int,               // Page Size
         @Query("offset") offset: Int,             // Starting point
         @Query("order") order: String = "created_at.desc", // Best practice for pagination
-        @Query("select") columns: String = "*, profiles!Post_authorId_fkey(name, avatar), likes(count)"
+        @Query("select") columns: String = "*, profiles!Post_authorId_fkey(name, avatar), likes(count), liked:likes(user_id)"
     ): Response<List<Post>>
 
     @DELETE("rest/v1/posts")

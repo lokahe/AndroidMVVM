@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
 import com.lokahe.androidmvvm.addOrRemove
 import com.lokahe.androidmvvm.data.models.supabase.Follower
-import com.lokahe.androidmvvm.data.models.supabase.Liked
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
@@ -113,9 +112,7 @@ class UserManager @Inject constructor(
 
     suspend fun updateProfileLocal(
         follower: Follower? = null,
-        liked: Liked? = null
     ) {
-        Log.d("updateProfileLocal", "follower: $follower, liked: $liked")
         userFlow.firstOrNull()?.let { user ->
             user.profile?.let { prof ->
                 saveUser(
@@ -124,8 +121,6 @@ class UserManager @Inject constructor(
                         profile = prof.copy(
                             followingList = follower?.let { prof.followingList?.addOrRemove(it) as List<Follower> }
                                 ?: prof.followingList,
-                            likedList = liked?.let { prof.likedList?.addOrRemove(it) as List<Liked> }
-                                ?: prof.likedList
                         )
                     )
                 )

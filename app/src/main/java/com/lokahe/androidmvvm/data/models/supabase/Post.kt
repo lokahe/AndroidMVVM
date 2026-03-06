@@ -25,13 +25,20 @@ data class Post(
     @SerializedName("profiles")
     val profiles: Profile,
     @SerializedName("likes")
-    val likes: List<Like>
+    val likes: List<Like>,
+    @SerializedName("liked")
+    val liked: List<LikeStatus>
 )
 
 @Serializable
 data class Like(
     @SerializedName("count")
     val count: Int
+)
+
+@Serializable
+data class LikeStatus(
+    @SerializedName("user_id") val userId: String
 )
 
 data class PostRequest(

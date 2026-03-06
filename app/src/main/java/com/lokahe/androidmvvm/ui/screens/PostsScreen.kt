@@ -28,7 +28,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.data.models.supabase.liked
 import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
 import com.lokahe.androidmvvm.ui.widget.PostItem
 import com.lokahe.androidmvvm.ui.widget.SuperLazyColum
@@ -59,7 +58,7 @@ fun PostsScreen(
             onRefresh = { viewModel.fetchPosts(PAGE_SIZE, 0, authorId) },
             onLoadMore = { viewModel.fetchPosts(PAGE_SIZE, posts.size, authorId) },
         ) { index, post ->
-            val liked = me?.liked(post.id) ?: false
+            val liked = post.liked.isNotEmpty()
             PostItem(
                 index = index,
                 post = post,
@@ -76,7 +75,7 @@ fun PostsScreen(
                     if (selectedIndexes.contains(index)) selectedIndexes.remove(index)
                     else selectedIndexes.add(index)
                 } else {
-                    navController.add(Screen.PostDetail(post))
+                    navController.add(Screen.PostDetail(posts[index]))
                 }
             }
         }

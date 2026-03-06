@@ -11,7 +11,6 @@ import com.lokahe.androidmvvm.data.models.UserPreferences
 import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.Follower
-import com.lokahe.androidmvvm.data.models.supabase.Liked
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -129,8 +128,7 @@ open class BaseViewModel(
 
     suspend fun updateProfileLocal(
         follower: Follower? = null,
-        liked: Liked? = null
-    ) = userManager.updateProfileLocal(follower, liked)
+    ) = userManager.updateProfileLocal(follower)
 
     private suspend fun User.fetchProfile(token: String?): User =
         this.apply {

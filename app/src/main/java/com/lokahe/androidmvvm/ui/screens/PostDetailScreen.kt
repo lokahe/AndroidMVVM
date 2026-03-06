@@ -35,7 +35,6 @@ import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.copy
 import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.liked
 import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
 import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.ui.widget.PostItem
@@ -46,10 +45,9 @@ import com.lokahe.androidmvvm.viewmodels.PostViewModel
 fun PostDetailScreen(post: Post) {
     val viewModel = viewModel<PostViewModel>()
     val navController = LocalNavController.current
-    val replyPosts by viewModel.replyPosts.collectAsState()
     LaunchedEffect(post) { viewModel.fetchReplyPosts(PAGE_SIZE, 0, post.id) }
-    val me by viewModel.currentUser.collectAsState()
-    val liked = me?.profile?.likedList?.any { it.postId == post.id } ?: false
+    val replyPosts by viewModel.replyPosts.collectAsState()
+    var liked by remember { mutableStateOf(post.liked.isNotEmpty()) }
     var replying by remember { mutableStateOf(false) }
     var replyContent by remember { mutableStateOf("") }
     var images by remember { mutableStateOf("") }
@@ -66,7 +64,7 @@ fun PostDetailScreen(post: Post) {
             PostItem(
                 index = 0, post = post, liked = liked, editMode = false,
                 onAuthorClick = { navController.add(Screen.Account(it)) },
-                onLikeClick = { viewModel.toggleLike(it, liked) }
+                onLikeClick = { viewModel.toggleLike(it, liked) { liked = !liked } }
             )
             SuperLazyColum(
                 modifier = Modifier.padding(start = 8.dp).fillMaxWidth().weight(1f),
@@ -75,7 +73,7 @@ fun PostDetailScreen(post: Post) {
                 onRefresh = { viewModel.fetchReplyPosts(PAGE_SIZE, 0, post.id) },
                 onLoadMore = { viewModel.fetchReplyPosts(PAGE_SIZE, replyPosts.size, post.id) },
             ) { index, post ->
-                val liked = me?.liked(post.id) ?: false
+                val liked = post.liked.isNotEmpty()
                 PostItem(
                     index = index,
                     post = post,

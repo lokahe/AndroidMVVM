@@ -84,6 +84,7 @@ class HttpRepository @Inject constructor(
     fun fetchPosts(
         token: String,
         authorId: String? = null,
+        userId: String? = null,
         replyId: String = Api.EMPTY_UUID,
         limit: Int = Api.PAGE_SIZE,
         offset: Int = 0
@@ -92,6 +93,7 @@ class HttpRepository @Inject constructor(
             apiService.fetchPosts(
                 token = token.b,
                 authorId = authorId?.emptyNull()?.let { authorId.eq },
+                myUserId = userId?.eq ?: Api.EMPTY_UUID.eq,
                 replyId = replyId.eq,
                 limit = limit,
                 offset = offset

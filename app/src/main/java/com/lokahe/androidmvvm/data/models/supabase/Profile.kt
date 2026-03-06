@@ -35,9 +35,7 @@ data class Profile(
     @SerializedName("followers")
     val followers: List<Followers>?,
     @SerializedName("following_list")
-    val followingList: List<Follower>?,
-    @SerializedName("liked_list")
-    val likedList: List<Liked>?
+    val followingList: List<Follower>?
 )
 
 @Serializable
@@ -59,21 +57,5 @@ data class Follower(
 
     override fun hashCode(): Int {
         return targetId.hashCode()
-    }
-}
-
-@Serializable
-data class Liked(
-    @SerializedName("post_id")
-    val postId: String
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Liked) return false
-        return postId == other.postId
-    }
-
-    override fun hashCode(): Int {
-        return postId.hashCode()
     }
 }
