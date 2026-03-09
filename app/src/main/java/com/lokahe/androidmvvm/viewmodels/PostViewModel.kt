@@ -1,5 +1,6 @@
 package com.lokahe.androidmvvm.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.local.UserManager
@@ -15,6 +16,7 @@ import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.unNullPair
+import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -152,6 +154,23 @@ class PostViewModel @Inject constructor(
                     replyId = postId
                 ).cole().onSuccess {
                     _replyPosts.value = it
+                }.onFailure { toast(it.message) }
+                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            }
+        }
+    }
+
+    fun uploadImage(imageUri: Uri) {
+        viewModelScope.launch {
+            getAccessToken()?.emptyNull()?.let { token ->
+                httpRepository.uploadImage(
+                    token = token,
+                    path = "/${Utils.md5(token)}/${System.currentTimeMillis()}.jpg",
+                    imageUri = imageUri,
+                    onProgress = {
+                        android.util.Log.d("uploadImage", "uploadImage: $it")
+                    }).cole().onSuccess {
+                    toast(R.string.upload_success.str())
                 }.onFailure { toast(it.message) }
                     .onException { toast(it.message ?: R.string.unkown_error.str()) }
             }

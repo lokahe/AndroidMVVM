@@ -83,4 +83,5 @@
     <string name="tap_to_reply">tap to reply</string>
     <string name="reply">reply</string>
     <string name="send">send</string>
+    <string name="upload_success">upload success</string>
 </resources>

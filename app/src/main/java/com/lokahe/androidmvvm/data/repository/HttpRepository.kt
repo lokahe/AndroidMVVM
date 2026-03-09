@@ -1,7 +1,9 @@
 package com.lokahe.androidmvvm.data.repository
 
+import android.net.Uri
 import android.util.Log
 import com.google.gson.Gson
+import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.supabase.ApiError
 import com.lokahe.androidmvvm.data.models.supabase.ApiResult
@@ -15,6 +17,7 @@ import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.supabase.Profile
+import com.lokahe.androidmvvm.data.models.supabase.ProgressUriRequestBody
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
@@ -27,6 +30,7 @@ import com.lokahe.androidmvvm.emptyNull
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MultipartBody
 import retrofit2.Response
 
 class HttpRepository @Inject constructor(
@@ -137,4 +141,27 @@ class HttpRepository @Inject constructor(
 
     fun dislike(token: String, postId: String, userId: String): Flow<ApiResult<Any>> =
         safeApiCall { apiService.dislike(token = token.b, postId = postId.eq, userId = userId.eq) }
+
+    fun uploadImage(
+        token: String,
+        path: String = "",
+        imageUri: Uri,
+        onProgress: (percent: Int) -> Unit
+    ): Flow<ApiResult<Any>> {
+        // 1. ファイルオブジェクトを作成
+//        val file = File(imagePath)
+        // 2. MediaTypeを指定してRequestBodyを作成
+        val progressBody = ProgressUriRequestBody(
+            MyApplication.application,
+            imageUri,
+            "image/jpeg"
+        ) { percent -> onProgress(percent) }
+        return safeApiCall {
+            apiService.uploadImage(
+                bearerToken = token.b,
+                path = path,
+                image = MultipartBody.Part.createFormData("file", "image.jpg", progressBody)
+            )
+        }
+    }
 }
