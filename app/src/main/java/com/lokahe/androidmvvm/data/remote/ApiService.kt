@@ -4,6 +4,9 @@ import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
+import com.lokahe.androidmvvm.data.models.supabase.Follower
+import com.lokahe.androidmvvm.data.models.supabase.Following
+import com.lokahe.androidmvvm.data.models.supabase.LikeRequest
 import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
@@ -13,14 +16,19 @@ import com.lokahe.androidmvvm.data.models.supabase.SetPasswordRequest
 import com.lokahe.androidmvvm.data.models.supabase.SignRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
+import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -39,13 +47,6 @@ interface ApiService {
         @Header("Content-Type") contentType: String = "application/json",
         @Body body: CodeExchangeRequest
     ): Response<AuthResponse>
-
-    @GET("auth/v1/authorize")
-    suspend fun xAuth(
-        @Header("apikey") apiKey: String = Api.ANON_KEY,
-        @Query("provider") provider: String = "x",
-        @Query("redirect_to") redirectTo: String = Api.REDIRECT
-    ): Response<Any>
 
     @GET("auth/v1/user")
     suspend fun varifyToken(
@@ -96,7 +97,6 @@ interface ApiService {
     ): Response<AuthResponse>
 
     /*** REST public scheme ***/
-
     @GET("rest/v1/profiles")
     suspend fun fetchProfileById(
         @Header("apikey") apiKey: String = Api.ANON_KEY,
@@ -106,6 +106,31 @@ interface ApiService {
                 "following_list:follows!follower_id(target_id)",
         @Header("Accept") accept: String = "application/vnd.pgrst.object+json"
     ): Response<Profile>
+
+    @GET("rest/v1/profiles")
+    suspend fun fetchProfilesByIds(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("id") idFilter: String,
+        @Query("select") select: String = "*,followers:follows!target_id(count)," +
+                "followings:follows!follower_id(count)"
+    ): Response<List<Profile>>
+
+    @GET("rest/v1/follows")
+    suspend fun fetchFollowingIds(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("follower_id") followerId: String,
+        @Query("select") select: String = "target_id",
+    ): Response<List<Following>>
+
+    @GET("rest/v1/follows")
+    suspend fun fetchFollowerIds(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("target_id") targetId: String,
+        @Query("select") select: String = "follower_id",
+    ): Response<List<Follower>>
 
     @PATCH("rest/v1/profiles")
     suspend fun updateProfile(
@@ -131,11 +156,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("id") id: String = Api.EMPTY_UUID.neq,
         @Query("author_id") authorId: String? = null,
+        @Query("liked.user_id") myUserId: String,
         @Query("reply_post_id") replyId: String, // e.g., "eq.00..000"
         @Query("limit") limit: Int,               // Page Size
         @Query("offset") offset: Int,             // Starting point
         @Query("order") order: String = "created_at.desc", // Best practice for pagination
-        @Query("select") columns: String = "*, profiles!Post_authorId_fkey(name, avatar), likes(count)"
+        @Query("select") columns: String = "*, profiles!Post_authorId_fkey(name, avatar), likes(count), liked:likes(user_id)"
     ): Response<List<Post>>
 
     @DELETE("rest/v1/posts")
@@ -160,4 +186,30 @@ interface ApiService {
         @Query("follower_id") followerId: String,
         @Query("target_id") targetId: String
     ): Response<Unit>
+
+    @POST("rest/v1/likes")
+    suspend fun like(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body body: LikeRequest
+    ): Response<Unit>
+
+    @DELETE("rest/v1/likes")
+    suspend fun dislike(
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Header("Authorization") token: String,
+        @Query("post_id") postId: String,
+        @Query("user_id") userId: String
+    ): Response<Unit>
+
+    @Multipart
+    @POST("storage/v1/object/{bucket}/{path}")
+    suspend fun uploadImage(
+        @Header("Authorization") bearerToken: String,
+        @Header("apikey") apiKey: String = Api.ANON_KEY,
+        @Path("bucket") bucket: String = "posts",
+        @Path("path") path: String,
+        @Part image: MultipartBody.Part
+    ): Response<ResponseBody>
 }

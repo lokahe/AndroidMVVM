@@ -185,18 +185,20 @@ fun Any.toBoolean(): Boolean {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun Any.addOrRemove(any: Any): Set<Any> =
+fun <T> Collection<T>.addOrRemove(t: T): Collection<*> =
     when (this) {
         is Set<*> -> {
-            if (this.contains(any)) {
-                this.minus(any)
-            } else {
-                this.plus(any)
-            }
+            if (this.contains(t)) this.minus(t) else this.plus(t)
         }
 
-        else -> setOf(any)
-    } as Set<Any>
+        is List<*> -> {
+            if (this.contains(t)) this.minus(t) else this.plus(t)
+        }
+
+        else -> {
+            this
+        }
+    }
 
 fun Any.expextSize(any: Any): Int =
     when (this) {
@@ -223,6 +225,7 @@ fun Any.size(): Int =
     }
 
 fun Int.between(min: Int, max: Int) = Math.max(Math.min(this, max), min)
+fun Int.px2Dp(): Float = (this.toFloat() / Resources.getSystem().displayMetrics.density)
 
 @Composable
 internal fun PaddingValues.copy(

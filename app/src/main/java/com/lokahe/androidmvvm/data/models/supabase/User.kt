@@ -25,9 +25,9 @@ data class User(
     @SerializedName("id")
     val id: String,
     @SerializedName("email")
-    val email: String,
+    val email: String?,
     @SerializedName("phone")
-    val phone: String,
+    val phone: String?,
     @SerializedName("user_metadata")
     val userMetadata: UserMetadata?,
     // join

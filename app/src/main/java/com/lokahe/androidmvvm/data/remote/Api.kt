@@ -1,11 +1,11 @@
 package com.lokahe.androidmvvm.data.remote
 
-object Api {
-    const val GOOGLE_WEB_CLIENT_ID = "" // Fill yours
+import com.lokahe.androidmvvm.BuildConfig
 
-    // Supabase Apis
-    const val SPB_URL = "" // Fill yours
-    const val ANON_KEY =  "" // Fill yours
+object Api {
+    const val GOOGLE_WEB_CLIENT_ID = BuildConfig.GOOGLE_WEB_CLIENT_ID
+    const val SPB_URL = BuildConfig.SPB_URL
+    const val ANON_KEY = BuildConfig.ANON_KEY
 
     const val REDIRECT = "lokahe://androidmvvm"
     const val SPB_AUTH_URL = "${SPB_URL}auth/v1/authorize"
@@ -16,3 +16,4 @@ object Api {
 val String.b: String get() = "Bearer $this"
 val String.eq: String get() = "eq.$this"
 val String.neq: String get() = "neq.$this"
+val String.ins: String get() = "in.($this)"

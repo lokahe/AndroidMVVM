@@ -13,9 +13,7 @@ import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.remote.Api
-import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
 import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
@@ -25,8 +23,6 @@ import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -124,6 +120,26 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun fetchFollowingIds(followerId: String, onResult: (List<String>) -> Unit) {
+        viewModelScope.launch {
+            getAccessToken()?.emptyNull()?.let { token ->
+                httpRepository.fetchFollowingIds(token, followerId).cole().onSuccess {
+                    onResult(it.map { it.targetId })
+                }.onFailure { toast(it.message) }
+            }
+        }
+    }
+
+    fun fetchFollowerIds(targetId: String, onResult: (List<String>) -> Unit) {
+        viewModelScope.launch {
+            getAccessToken()?.emptyNull()?.let { token ->
+                httpRepository.fetchFollowerIds(token, targetId).cole().onSuccess {
+                    onResult(it.map { it.followerId })
+                }.onFailure { toast(it.message) }
+            }
+        }
+    }
+
     fun updateAvatar(url: String) {
         viewModelScope.launch {
 //            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
@@ -189,29 +205,6 @@ class MainViewModel @Inject constructor(
     val verifyEmail: State<String> = _verifyEmail
     fun resetVerifyEmail() {
         _verifyEmail.value = ""
-    }
-
-    // State for the list of users
-    private val _users = MutableStateFlow<List<User>>(emptyList())
-    val users = _users.asStateFlow()
-
-    init {
-        fetchUsers(PAGE_SIZE, 0)
-    }
-
-    fun fetchUsers(pageSize: Int, offset: Int) {
-        viewModelScope.launch {
-//            val result = httpRepository.getUsers(pageSize, offset)
-//            result.onSuccess { users ->
-//                _users.update { currentList ->
-//                    if (offset == 0) users
-//                    else currentList + users
-//                }
-//            }
-//            result.onFailure { error ->
-//                toast(error.message ?: R.string.unkown_error.toString())
-//            }
-        }
     }
 
     // State for the list of persons (Database)

@@ -13,10 +13,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.ProvideLocals
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.ui.Screen
 import com.lokahe.androidmvvm.ui.preference.ListPreference
 import com.lokahe.androidmvvm.ui.preference.SliderDialogPreference
 import com.lokahe.androidmvvm.ui.preference.SwitchPreference
+import com.lokahe.androidmvvm.ui.screens.Screen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.ui.widget.SettingScaffold
 import com.lokahe.androidmvvm.ui.widget.settingsCard

@@ -19,12 +19,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -38,24 +40,37 @@ import com.lokahe.androidmvvm.viewmodels.PostViewModel
 
 @Composable
 fun SendPostScreen() {
+    val context = LocalContext.current
     val viewModel: PostViewModel = hiltViewModel()
     val navController = LocalNavController.current
     var content by remember { mutableStateOf("") }
     var images by remember { mutableStateOf("") }
+    val me by viewModel.currentUser.collectAsState()
     // Launcher for picking local image
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
-        uri?.let { images += "$it;" }
+        uri?.let {
+            try {
+                // 1. Grant persistable permission so background threads can read it
+                val contentResolver = context.contentResolver
+                val takeFlags: Int = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                contentResolver.takePersistableUriPermission(it, takeFlags)
+                android.util.Log.d("SendPostScreen", "uri1: $it")
+                images += "$it;"
+                viewModel.uploadImage(it)
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+                android.util.Log.d("SendPostScreen", "uri2: $it")
+                images += "$it;"
+            }
+        }
     }
+
     MainScaffold(
         title = stringResource(R.string.send_post),
         bottomBar = {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .imePadding()
-            ) {
+            Column(modifier = Modifier.padding(16.dp).imePadding()) {
                 if (images.isNotEmpty()) {
                     LazyRow(modifier = Modifier.padding(vertical = 8.dp)) {
                         images.split(";").forEach {
@@ -87,17 +102,15 @@ fun SendPostScreen() {
                 }
             }
         }
-    ) {
+    ) { paddingValues ->
         Column(
-            modifier = Modifier.padding(it)
+            modifier = Modifier.padding(paddingValues)
         ) {
-            UserHeader(option = UserHeaderOption.Send) {
+            UserHeader(user = me, option = UserHeaderOption.Send) {
                 IconButton(
                     modifier = Modifier.padding(start = 16.dp),
                     onClick = {
-                        viewModel.sendPost(content, images) {
-                            navController.removeLast()
-                        }
+                        viewModel.sendPost(content, images) { navController.removeLast() }
                     }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
@@ -105,17 +118,13 @@ fun SendPostScreen() {
                     )
                 }
             }
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
                     label = { Text(stringResource(R.string.content)) },
                     leadingIcon = { Icon(Icons.Default.Textsms, contentDescription = null) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     minLines = 9
                 )
             }

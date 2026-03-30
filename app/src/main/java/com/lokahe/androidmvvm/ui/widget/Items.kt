@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +23,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -57,16 +57,19 @@ fun AvatarIcon(
 
 @Composable
 fun PostItem(
+    modifier: Modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
     index: Int,
     post: Post,
-    editMode: Boolean,
+    liked: Boolean = false,
+    editMode: Boolean = false,
     selected: Boolean = false,
     onLongClick: () -> Unit = {},
     onAuthorClick: (String) -> Unit = {},
+    onLikeClick: (String) -> Unit = {},
     onClick: (Int) -> Unit = {}
 ) {
     SuperCard(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = modifier,
         onClick = { onClick(index) },
         onLongClick = onLongClick,
         editMode = editMode,
@@ -76,7 +79,7 @@ fun PostItem(
             Row(verticalAlignment = CenterVertically) {
                 AvatarIcon(
                     modifier = Modifier.padding(end = 16.dp).size(48.dp).clickable {
-                        onAuthorClick(post.authorId)
+                        post.authorId?.let { onAuthorClick(it) }
                     },
                     url = post.profiles.avatar
                 )
@@ -90,11 +93,22 @@ fun PostItem(
                     contentDescription = stringResource(R.string.share),
                     modifier = Modifier.padding(end = 30.dp).size(20.dp),
                 )
-                Icon(
-                    imageVector = Icons.Filled.ThumbUp,
-                    contentDescription = stringResource(R.string.like),
-                    modifier = Modifier.padding(end = 30.dp).size(20.dp),
-                )
+                Row(Modifier.padding(end = 30.dp)) {
+                    Icon(
+                        painter = painterResource(
+                            if (liked) R.drawable.ic_heart_filled
+                            else R.drawable.ic_heart_stroke
+                        ),
+                        contentDescription = stringResource(R.string.like),
+                        modifier = Modifier.size(20.dp).padding(end = 4.dp)
+                            .clickable { onLikeClick(post.id) },
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = post.likes[0].count.toString(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = stringResource(R.string.favor),
@@ -103,10 +117,10 @@ fun PostItem(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = post.content,
+                text = post.content ?: "",
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (post.imageUrls.isNotEmpty()) {
+            if (!post.imageUrls.isNullOrEmpty()) {
                 Row {
                     post.imageUrls.split(",").forEach {
                         AsyncImage(
