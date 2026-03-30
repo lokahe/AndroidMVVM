@@ -1,8 +1,9 @@
 # AndroidMVVM
 ![](https://img.shields.io/badge/Android-26%20--%2036-green.svg)
 
-## Preview
-<img src="./screenshots/Screenshot_20260106_033402.png" width="160" /><img src="./screenshots/Screenshot_20260106_033429.png" width="160" /><img src="./screenshots/Screenshot_20260106_033748.png" width="160" /><img src="./screenshots/Screenshot_20260106_033833.png" width="160" /><img src="./screenshots/Screenshot_20260106_033912.png" width="160" />
+## Preview 
+sign with github (email by verify code / magic link, google, x)\
+<img src="./screenshots/sr_login_with_github.gif" width="160" /><img src="./screenshots/Screenshot_20260106_033402.png" width="160" /><img src="./screenshots/Screenshot_20260106_033429.png" width="160" /><img src="./screenshots/Screenshot_20260106_033748.png" width="160" /><img src="./screenshots/Screenshot_20260106_033833.png" width="160" /><img src="./screenshots/Screenshot_20260106_033912.png" width="160" />
 
 ## Architecture: MVVM (Model-View-ViewModel) + UDF (Unidirectional Data Flow)
 Registration + Login/out and some simple logic (Using Supabase as Backend)\
