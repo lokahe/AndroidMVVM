@@ -1,3 +1,4 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +20,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val properties = Properties()
+        val propertiesFile = project.rootProject.file("local.properties")
+        if (propertiesFile.exists()) {
+            properties.load(propertiesFile.inputStream())
+        }
+        // Read from environment variables (GitHub Actions)
+        // fallback to empty string or local property for local development
+        val googleClientId = System.getenv("GOOGLE_WEB_CLIENT_ID") ?:
+            properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: ""
+        val spbUrl = System.getenv("SPB_URL") ?:
+            properties.getProperty("SPB_URL") ?: ""
+        val anonKey = System.getenv("ANON_KEY") ?:
+            properties.getProperty("ANON_KEY") ?: ""
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleClientId\"")
+        buildConfigField("String", "SPB_URL", "\"$spbUrl\"")
+        buildConfigField("String", "ANON_KEY", "\"$anonKey\"")
     }
 
     signingConfigs {
