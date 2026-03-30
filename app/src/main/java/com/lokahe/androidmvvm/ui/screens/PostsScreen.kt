@@ -47,6 +47,7 @@ fun PostsScreen(
     val posts by remember(authorId) { if (authorId.isNullOrEmpty()) viewModel.posts else viewModel.userPosts }.collectAsState()
     val selectedIndexes = remember { mutableStateSetOf<Int>() }
     LaunchedEffect(authorId) { viewModel.fetchPosts(PAGE_SIZE, 0, authorId) }
+    LaunchedEffect(me?.id) { viewModel.fetchPosts(PAGE_SIZE, 0, authorId) }
     var editMode by remember { mutableStateOf(false) }
 
     Column {
