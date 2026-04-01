@@ -1,8 +1,10 @@
-name: Android Build & Releaseon:
+name: Android Build & Release
+
+on:
   push:
     branches: [ "main" ]
     tags:
-      - 'v1.0.1' # Triggers on version tags like v1.0.1
+      - 'v1.0.1' # Triggers on any version tag starting with 'v' (e.g., v1.0.1)
   pull_request:
     branches: [ "main" ]
 
@@ -39,7 +41,7 @@ jobs:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      # Only run this step if a tag was pushed (e.g., git tag v1.0 && git push --tags)
+      # Only run this step if a tag was pushed (e.g., git tag v1.0.1 && git push --tags)
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
