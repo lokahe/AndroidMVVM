@@ -4,13 +4,16 @@ on:
   push:
     branches: [ "main" ]
     tags:
-      - 'v1.0.1' # Triggers on any version tag starting with 'v' (e.g., v1.0.1)
+      - 'v0.0.1' # Triggers on any version tag starting with 'v' (e.g., v1.0.1)
   pull_request:
     branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Opt into Node 24 to resolve deprecation warnings
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write # Required to create a release
 
