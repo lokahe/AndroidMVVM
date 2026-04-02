@@ -50,3 +50,7 @@ graph TD
 - Handles API calls
 - Converts DTOs
 - Throws/returns domain-safe results
+
+## Supabase as Backend and using REST Api to asccess datas
+remote database v0.0.1\
+<img src="./screenshots/supadata_database.png" />
