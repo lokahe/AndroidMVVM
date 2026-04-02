@@ -53,4 +53,4 @@ graph TD
 
 ## Supabase as Backend and using REST Api to asccess datas
 remote database v0.0.1\
-<img src="./screenshots/supadata_database.png" />
+<img src="./screenshots/supabase_database.png" />
