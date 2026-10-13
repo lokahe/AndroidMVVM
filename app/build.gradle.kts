@@ -108,6 +108,9 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
 
+    // Common HTTP module (OkHttp / Retrofit / ApiResult / safeApiCall)
+    implementation(project(":http"))
+
     // Retrofit
     implementation(libs.retrofit)
 

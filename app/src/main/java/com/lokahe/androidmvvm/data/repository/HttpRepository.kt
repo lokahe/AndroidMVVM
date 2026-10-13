@@ -1,12 +1,8 @@
 package com.lokahe.androidmvvm.data.repository
 
 import android.net.Uri
-import android.util.Log
-import com.google.gson.Gson
 import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.models.supabase.ApiError
-import com.lokahe.androidmvvm.data.models.supabase.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.CodeExchangeRequest
 import com.lokahe.androidmvvm.data.models.supabase.FollowRequest
@@ -17,7 +13,6 @@ import com.lokahe.androidmvvm.data.models.supabase.OtpRequest
 import com.lokahe.androidmvvm.data.models.supabase.Post
 import com.lokahe.androidmvvm.data.models.supabase.PostRequest
 import com.lokahe.androidmvvm.data.models.supabase.Profile
-import com.lokahe.androidmvvm.data.models.supabase.ProgressUriRequestBody
 import com.lokahe.androidmvvm.data.models.supabase.RefreshTokenRequest
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.data.models.supabase.VerifyRequest
@@ -27,40 +22,16 @@ import com.lokahe.androidmvvm.data.remote.b
 import com.lokahe.androidmvvm.data.remote.eq
 import com.lokahe.androidmvvm.data.remote.ins
 import com.lokahe.androidmvvm.emptyNull
+import com.lokahe.http.ApiResult
+import com.lokahe.http.ProgressUriRequestBody
+import com.lokahe.http.safeApiCall
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import okhttp3.MultipartBody
-import retrofit2.Response
 
 class HttpRepository @Inject constructor(
     private val apiService: ApiService
 ) {
-    fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Flow<ApiResult<T>> {
-        return flow {
-            try {
-                emit(ApiResult.Loading)
-                val response = apiCall()
-                if (response.isSuccessful) {
-                    Log.d("safeApiCall", "response[isSuccessful]: $response")
-                    @Suppress("UNCHECKED_CAST")
-                    if (response.body() == null) emit(ApiResult.Success(Unit as T))
-                    else emit(ApiResult.Success(response.body()!!))
-                } else {
-                    Log.d("safeApiCall", "response: $response")
-                    // Parse errorBody to your data class
-                    val errorBody = response.errorBody()?.string()
-                    val apiError = Gson().fromJson(errorBody, ApiError::class.java)
-                        ?: ApiError(response.code(), "unknown", "Unknown error")
-                    emit(ApiResult.Failure(apiError))
-                }
-            } catch (e: Exception) {
-                Log.d("safeApiCall", "e: ${e.message}")
-                emit(ApiResult.Exception(e))
-            }
-        }
-    }
-
     fun gAuth(body: GoogleAuth): Flow<ApiResult<AuthResponse>> =
         safeApiCall { apiService.googleAuth(body = body) }
 

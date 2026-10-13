@@ -14,5 +14,8 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AndroidMVVM"
-include(":app")
+include(
+    ":app",
+    ":http"
+)
  

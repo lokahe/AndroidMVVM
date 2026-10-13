@@ -8,7 +8,7 @@ import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.curSecond
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.UserPreferences
-import com.lokahe.androidmvvm.data.models.supabase.ApiResult
+import com.lokahe.http.ApiResult
 import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
 import com.lokahe.androidmvvm.data.models.supabase.Following
 import com.lokahe.androidmvvm.data.models.supabase.User
