@@ -37,6 +37,7 @@ import com.lokahe.androidmvvm.UserHeaderOption
 import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.ui.widget.UserHeader
 import com.lokahe.androidmvvm.viewmodels.PostViewModel
+import com.lokahe.log.L
 
 @Composable
 fun SendPostScreen() {
@@ -56,12 +57,12 @@ fun SendPostScreen() {
                 val contentResolver = context.contentResolver
                 val takeFlags: Int = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
                 contentResolver.takePersistableUriPermission(it, takeFlags)
-                android.util.Log.d("SendPostScreen", "uri1: $it")
+                L.d("SendPostScreen") { "uri1: $it" }
                 images += "$it;"
                 viewModel.uploadImage(it)
             } catch (e: SecurityException) {
                 e.printStackTrace()
-                android.util.Log.d("SendPostScreen", "uri2: $it")
+                L.d("SendPostScreen") { "uri2: $it" }
                 images += "$it;"
             }
         }

@@ -1,7 +1,6 @@
 package com.lokahe.androidmvvm.data.local
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -11,6 +10,7 @@ import com.lokahe.androidmvvm.data.models.supabase.Following
 import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
+import com.lokahe.log.L
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -60,7 +60,7 @@ class UserManager @Inject constructor(
             try {
                 gson.fromJson(it, User::class.java)
             } catch (e: Exception) {
-                Log.e("UserManager", "Error deserializing user data: ${e.message}")
+                L.e("UserManager") { "Error deserializing user data: ${e.message}" }
                 null
             }
         }
@@ -74,7 +74,7 @@ class UserManager @Inject constructor(
             try {
                 gson.fromJson(it, ColorSeed::class.java)
             } catch (e: Exception) {
-                Log.e("UserManager", "Error deserializing ColorSeed: ${e.message}")
+                L.e("UserManager") { "Error deserializing ColorSeed: ${e.message}" }
                 null
             }
         }
@@ -100,7 +100,7 @@ class UserManager @Inject constructor(
      */
     suspend fun saveUser(user: User?) {
         user?.let {
-            Log.d("saveUser", "user: $user")
+            L.d("saveUser") { "user: $user" }
             context.userStore.edit { prefs ->
                 prefs[USER_DATA_KEY] = gson.toJson(it)
                 Utils.calculateMainColor(it.userMetadata?.avatarUrl)?.let { seed ->

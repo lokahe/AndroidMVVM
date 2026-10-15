@@ -22,6 +22,7 @@
 AndroidMVVM/
 ├── app/        # 业务主模块（UI、业务逻辑、数据层）
 ├── http/       # 通用 HTTP 基础设施模块（无业务逻辑）
+├── log/        # 统一日志模块（级别管理 + 可插拔输出端）
 └── gradle/
     └── libs.versions.toml   # Version Catalog，统一管理依赖版本
 ```
@@ -67,10 +68,26 @@ com.lokahe.androidmvvm/
 
 **依赖注入约定**：`:app` 通过自己的 Hilt 模块（`NetWorkModule`）提供 `HttpConfig`（baseUrl 来自 `Api.SPB_URL`）并创建业务 `ApiService`；OkHttp / Retrofit 的实例化由 `:http` 的 `HttpModule` 完成。
 
-### 2.3 模块依赖关系
+### 2.3 `:log` — 统一日志模块
+
+包名 `com.lokahe.log`，零第三方依赖：
+
+| 文件 | 职责 |
+|---|---|
+| `LogLevel.kt` | 日志级别枚举（V/D/I/W/E），级别过滤基础 |
+| `LogConfig.kt` | 初始化配置：全局最小级别、总开关、输出端列表 |
+| `LogSink.kt` | 输出端接口 + 内置 `LogcatSink`；MMKV 存储 / 崩溃上报后续实现此接口注册即可，调用方无感 |
+| `L.kt` | 统一门面：`init(LogConfig)` 配置级别；`v/d/i/w/e` 提供立即求值与惰性求值（lambda）双版本 |
+| `LogExtensions.kt` | `logD { }` 等扩展函数，自动以调用方类名为 Tag |
+
+约定：初始化在 `MyApplication.onCreate`（debug 用 DEBUG 级别、release 用 WARN 级别）；其他模块只依赖 `L` 门面，禁止直接使用 `android.util.Log`。全项目存量 `Log.x` 调用已于 2026-10-15 全部迁移至 `L`，现仅 `LogSink.kt` 内置的 `LogcatSink` 直接调用 Android Log API（作为唯一输出适配器）。
+
+### 2.4 模块依赖关系
 
 ```
 :app ──implementation──▶ :http ──▶ Retrofit / OkHttp / Gson / Hilt
+:app ──implementation──▶ :log
+:http ──implementation──▶ :log
 ```
 
 ---
@@ -126,6 +143,7 @@ Repository 层
 | 认证 | Credentials + Play Services Auth + Google ID | 1.5.0 / 21.5.0 / 1.2.0 |
 | 其他 | Material Components / Palette / Icons-Extended | 1.13.0 / 1.0.0 / 1.7.8 |
 | 测试 | JUnit / AndroidX Test / Espresso / Compose UI Test | 4.13.2 / 1.3.0 / 3.7.0 |
+| 日志 | 自研 `:log` 模块（`L` 门面 + 可插拔 `LogSink`） | 无第三方依赖 |
 
 所有版本集中在 `gradle/libs.versions.toml` 中管理。
 
@@ -170,6 +188,7 @@ gradlew.bat :http:assembleDebug         # 仅构建 :http 模块
 |---|---|
 | 2026-10-14 | 抽取 `:http` 公共模块（`ApiResult`/`ApiError`、`safeApiCall`、`ProgressRequestBody`、`HttpConfig`、Hilt `HttpModule`）；`NetWorkModule` 精简为仅提供 `HttpConfig` 与 `ApiService`；app 内移除重复的通用实现。 |
 | 2026-10-14 | 新增本架构文档。 |
+| 2026-10-15 | 新增 `:log` 统一日志模块（级别管理、可插拔 Sink、惰性求值）；`MyApplication` 与 `:http/safeApiCall` 接入，同日完成全项目存量 `Log.x` 迁移（7 文件 13 处：GoogleAuther、UserManager、DataBaseModule、MainActivity、SendPostScreen、MainViewModel、PostViewModel）；后续规划 MMKV 持久化与崩溃级别日志上报。 |
 
 ## 8. 后续演进方向（待定）
 
@@ -178,3 +197,5 @@ gradlew.bat :http:assembleDebug         # 仅构建 :http 模块
 - [ ] Repository 层引入接口抽象，便于替换数据源与测试。
 - [ ] Navigation 3 目前为 alpha 版本，关注其稳定版发布并升级。
 - [ ] 开启 release 混淆（`isMinifyEnabled` 当前为 false）并补充 R8 规则。
+- [x] 存量 `Log.x` 调用迁移至 `:log` 的 `L`（GoogleAuther / UserManager / DataBaseModule / MainActivity / SendPostScreen / MainViewModel / PostViewModel，共 13 处）——已完成（2026-10-15）。
+- [ ] `:log` 接入 MMKV 持久化（文件 Sink）与崩溃级别日志上报。

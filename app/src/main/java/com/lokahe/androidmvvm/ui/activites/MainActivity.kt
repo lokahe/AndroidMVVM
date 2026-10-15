@@ -56,6 +56,7 @@ import com.lokahe.androidmvvm.ui.screens.UsersScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.ui.widget.UserHeader
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
+import com.lokahe.log.L
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -99,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        android.util.Log.d("MainActivity", "onCreate: ${intent.data}")
+        L.d("MainActivity") { "onCreate: ${intent.data}" }
         intent.data?.let { viewModel.handleMagicLink(it) }
     }
 }

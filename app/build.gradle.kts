@@ -111,6 +111,9 @@ dependencies {
     // Common HTTP module (OkHttp / Retrofit / ApiResult / safeApiCall)
     implementation(project(":http"))
 
+    // Common log module (L / LogConfig / LogSink)
+    implementation(project(":log"))
+
     // Retrofit
     implementation(libs.retrofit)
 

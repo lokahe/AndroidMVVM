@@ -21,6 +21,7 @@ import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
+import com.lokahe.log.L
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.firstOrNull
@@ -80,7 +81,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val codeVerifier =
                 Utils.generateCodeVerifier().apply { userManager.saveCodeVerifier(this) }
-            android.util.Log.d("signWithGithub", "codeVerifier: $codeVerifier")
+            L.d("signWithGithub") { "codeVerifier: $codeVerifier" }
             MyApplication.application.startActivity(
                 Intent(
                     Intent.ACTION_VIEW,
@@ -254,7 +255,7 @@ class MainViewModel @Inject constructor(
             viewModelScope.launch {
                 userManager.codeVerifierFlow.firstOrNull()?.emptyNull()
                     ?.let { codeVerifier ->
-                        android.util.Log.d("handleMagicLink", "codeVerifier: $codeVerifier")
+                        L.d("handleMagicLink") { "codeVerifier: $codeVerifier" }
                         httpRepository.codeExchange(code, codeVerifier).cole()
                             .onSuccess { save(it) }
                             .onFailure { toast(it.message) }

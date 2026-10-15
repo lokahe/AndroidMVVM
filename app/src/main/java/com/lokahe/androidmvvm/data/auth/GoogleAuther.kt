@@ -1,7 +1,6 @@
 package com.lokahe.androidmvvm.data.auth
 
 import android.content.Context
-import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -12,6 +11,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.lokahe.androidmvvm.data.remote.Api
+import com.lokahe.log.L
 import jakarta.inject.Inject
 
 class GoogleAuther @Inject constructor() {
@@ -34,7 +34,7 @@ class GoogleAuther @Inject constructor() {
             )
         } catch (e: GetCredentialException) {
             // Handle error
-            Log.e(TAG, e.message.toString())
+            L.e(TAG) { e.message.toString() }
         }
     }
 
@@ -52,7 +52,7 @@ class GoogleAuther @Inject constructor() {
                         // SUCCESS: Send idToken to your server for validation
                         return idToken
                     } catch (e: GoogleIdTokenParsingException) {
-                        Log.e(TAG, "Received invalid google id token response", e)
+                        L.e(TAG, e) { "Received invalid google id token response" }
                     }
                 }
             }
@@ -62,7 +62,7 @@ class GoogleAuther @Inject constructor() {
             }
 
             else -> {
-                Log.e(TAG, "Unexpected credential type")
+                L.e(TAG) { "Unexpected credential type" }
             }
         }
         return ""
