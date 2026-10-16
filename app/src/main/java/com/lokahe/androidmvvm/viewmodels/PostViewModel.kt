@@ -4,19 +4,21 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.models.supabase.Like
-import com.lokahe.androidmvvm.data.models.supabase.LikeStatus
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.PostRequest
-import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
-import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.unNullPair
 import com.lokahe.androidmvvm.utils.Utils
+import com.lokahe.domain.Const
+import com.lokahe.domain.model.Like
+import com.lokahe.domain.model.LikeStatus
+import com.lokahe.domain.model.Post
+import com.lokahe.domain.model.PostRequest
+import com.lokahe.domain.repository.AuthRepository
+import com.lokahe.domain.repository.PostRepository
+import com.lokahe.domain.repository.UserRepository
 import com.lokahe.log.L
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -27,11 +29,13 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class PostViewModel @Inject constructor(
-    private val prefRepository: PreferencesRepository,
+    repository: PreferencesRepository,
     private val dbRepository: DataBaseRepository,
-    private val httpRepository: HttpRepository,
-    private val userManager: UserManager,
-) : BaseViewModel(prefRepository, httpRepository, userManager) {
+    authRepository: AuthRepository,
+    userRepository: UserRepository,
+    private val postRepository: PostRepository,
+    userManager: UserManager,
+) : BaseViewModel(repository, authRepository, userRepository, userManager) {
 
     // State for the list of posts
 //    private val _detailPost = MutableStateFlow<Post?>(null)
@@ -48,14 +52,14 @@ class PostViewModel @Inject constructor(
 //        fetchReplyPosts(PAGE_SIZE, 0, post.id)
 //    }
 
-    fun fetchPosts(pageSize: Int = Api.PAGE_SIZE, offset: Int, authorId: String? = null) {
+    fun fetchPosts(pageSize: Int = Const.PAGE_SIZE, offset: Int, authorId: String? = null) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.fetchPosts(
+                postRepository.fetchPosts(
                     token,
                     authorId,
                     currentUser.value?.id,
-                    Api.EMPTY_UUID,
+                    Const.EMPTY_UUID,
                     pageSize,
                     offset
                 ).cole()
@@ -73,7 +77,7 @@ class PostViewModel @Inject constructor(
     fun deletePost(ids: List<String>) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.deletePosts(token, ids).cole().onSuccess {
+                postRepository.deletePosts(token, ids).cole().onSuccess {
                     _userPosts.update { currentList -> currentList.filter { !ids.contains(it.id) } }
                     toast(R.string.delete_success.str())
                 }.onFailure { toast(it.message) }
@@ -86,12 +90,12 @@ class PostViewModel @Inject constructor(
         content: String,
         imageUrls: String = "",
         videoUrls: String = "",
-        reply2PostId: String = Api.EMPTY_UUID,
+        reply2PostId: String = Const.EMPTY_UUID,
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
             unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
-                httpRepository.insertPost(
+                postRepository.insertPost(
                     token, PostRequest(user.id, content, imageUrls, videoUrls, "", reply2PostId)
                 ).cole().onSuccess { onSuccess() } // TODO: dbRepository.insertPost(it.first())
                     .onFailure { toast(it.message) }
@@ -107,7 +111,7 @@ class PostViewModel @Inject constructor(
     fun like(postId: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
-                httpRepository.like(token, postId, user.id).cole().onSuccess {
+                postRepository.like(token, postId, user.id).cole().onSuccess {
                     updatePosts(postId, delLikeCount = 1)
                     onSuccess()
                 }.onFailure { toast(it.message) }
@@ -119,7 +123,7 @@ class PostViewModel @Inject constructor(
     fun dislike(postId: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             unNullPair(getUser(), getAccessToken())?.let { (user, token) ->
-                httpRepository.dislike(token, postId, user.id).cole().onSuccess {
+                postRepository.dislike(token, postId, user.id).cole().onSuccess {
                     updatePosts(postId, delLikeCount = -1)
                     onSuccess()
                 }.onFailure { toast(it.message) }
@@ -144,10 +148,10 @@ class PostViewModel @Inject constructor(
 //        _detailPost.value = _detailPost.value?.let { transform(it) }
     }
 
-    fun fetchReplyPosts(pageSize: Int = Api.PAGE_SIZE, offset: Int, postId: String) {
+    fun fetchReplyPosts(pageSize: Int = Const.PAGE_SIZE, offset: Int, postId: String) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.fetchPosts(
+                postRepository.fetchPosts(
                     token,
                     userId = currentUser.value?.id,
                     limit = pageSize,
@@ -164,7 +168,7 @@ class PostViewModel @Inject constructor(
     fun uploadImage(imageUri: Uri) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.uploadImage(
+                postRepository.uploadImage(
                     token = token,
                     path = "/${Utils.md5(token)}/${System.currentTimeMillis()}.jpg",
                     imageUri = imageUri,

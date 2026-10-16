@@ -22,7 +22,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
+import com.lokahe.domain.Const.PAGE_SIZE
 
 @Composable
 fun <T> SuperLazyColum(

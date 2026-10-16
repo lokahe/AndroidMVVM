@@ -1,7 +1,7 @@
 package com.lokahe.androidmvvm.ui.screens
 
 import androidx.navigation3.runtime.NavKey
-import com.lokahe.androidmvvm.data.models.supabase.Post
+import com.lokahe.domain.model.Post
 import kotlinx.serialization.Serializable
 
 @Serializable

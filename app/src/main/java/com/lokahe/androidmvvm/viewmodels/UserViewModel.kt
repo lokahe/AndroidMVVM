@@ -2,12 +2,13 @@ package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.models.supabase.Followers
-import com.lokahe.androidmvvm.data.models.supabase.Following
-import com.lokahe.androidmvvm.data.models.supabase.User
-import com.lokahe.androidmvvm.data.models.supabase.toUser
-import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.domain.model.Followers
+import com.lokahe.domain.model.Following
+import com.lokahe.domain.model.User
+import com.lokahe.domain.model.toUser
+import com.lokahe.domain.repository.AuthRepository
+import com.lokahe.domain.repository.UserRepository
 import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.toast
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,16 +20,17 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val prefRepository: PreferencesRepository,
-    private val httpRepository: HttpRepository,
-    private val userManager: UserManager
-) : BaseViewModel(prefRepository, httpRepository, userManager) {
+    repository: PreferencesRepository,
+    authRepository: AuthRepository,
+    userRepository: UserRepository,
+    userManager: UserManager
+) : BaseViewModel(repository, authRepository, userRepository, userManager) {
 
     private val _user = MutableStateFlow<User?>(null)
     val user = _user.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     fun fetchUser(id: String) {
         viewModelScope.launch {
-            httpRepository.fetchProfileById(getAccessToken() ?: "", id).cole().onSuccess {
+            userRepository.fetchProfileById(getAccessToken() ?: "", id).cole().onSuccess {
                 _user.value = it.toUser()
             }.onFailure { toast(message = it.message) }.onException { toast(message = it.message) }
         }
@@ -38,7 +40,7 @@ class UserViewModel @Inject constructor(
     val users = _users.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun fetchUsers(ids: List<String>) {
         viewModelScope.launch {
-            httpRepository.fetchProfilesByIds(getAccessToken() ?: "", ids).cole().onSuccess {
+            userRepository.fetchProfilesByIds(getAccessToken() ?: "", ids).cole().onSuccess {
                 _users.value = it.map { profile -> profile.toUser() }
             }.onFailure { toast(message = it.message) }.onException { toast(message = it.message) }
         }
@@ -51,7 +53,7 @@ class UserViewModel @Inject constructor(
     fun follow(followerId: String, targetId: String) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.follow(token, followerId, targetId).cole().onSuccess {
+                userRepository.follow(token, followerId, targetId).cole().onSuccess {
                     updateProfileLocal(Following(targetId))
                     updateUser(delFollowCount = 1)
                 }.onFailure { toast(message = it.message) }
@@ -63,7 +65,7 @@ class UserViewModel @Inject constructor(
     fun unFollow(followerId: String, targetId: String) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.unFollow(token, followerId, targetId).cole().onSuccess {
+                userRepository.unFollow(token, followerId, targetId).cole().onSuccess {
                     updateProfileLocal(Following(targetId))
                     updateUser(delFollowCount = -1)
                 }.onFailure { toast(message = it.message) }

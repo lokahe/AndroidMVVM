@@ -34,8 +34,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.copy
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
+import com.lokahe.domain.Const.PAGE_SIZE
+import com.lokahe.domain.model.Post
 import com.lokahe.androidmvvm.ui.widget.MainScaffold
 import com.lokahe.androidmvvm.ui.widget.PostItem
 import com.lokahe.androidmvvm.ui.widget.SuperLazyColum

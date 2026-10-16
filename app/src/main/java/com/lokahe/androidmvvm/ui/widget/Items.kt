@@ -29,9 +29,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.emptyNull
+import com.lokahe.domain.model.Post
+import com.lokahe.domain.model.User
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
 import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
@@ -120,9 +120,10 @@ fun PostItem(
                 text = post.content ?: "",
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (!post.imageUrls.isNullOrEmpty()) {
+            val imageUrls = post.imageUrls
+            if (!imageUrls.isNullOrEmpty()) {
                 Row {
-                    post.imageUrls.split(",").forEach {
+                    imageUrls.split(",").forEach {
                         AsyncImage(
                             model = it,
                             contentDescription = stringResource(R.string.image),
@@ -142,7 +143,7 @@ fun UserItem(index: Int, user: User) {
             Row {
                 AvatarIcon(
                     modifier = Modifier.padding(end = 16.dp).size(50.dp),
-                    url = user.userMetadata?.avatarUrl
+                    url = user.avatarUrl
                 )
                 Text(
                     modifier = Modifier.weight(1f).fillMaxWidth(),

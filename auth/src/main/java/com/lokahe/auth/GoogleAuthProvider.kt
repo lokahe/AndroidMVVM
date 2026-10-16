@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.data.auth
+package com.lokahe.auth
 
 import android.content.Context
 import androidx.credentials.CredentialManager
@@ -10,35 +10,34 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.log.L
-import jakarta.inject.Inject
 
-class GoogleAuther @Inject constructor() {
+/** [AuthProvider] backed by Android Credential Manager + Google ID. */
+class GoogleAuthProvider(
+    private val webClientId: String
+) : AuthProvider {
+
+    override val id: String = "google"
+
     private val TAG = this.javaClass.simpleName
 
-    val googleIdOption by lazy {
+    private val googleIdOption by lazy {
         GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(Api.GOOGLE_WEB_CLIENT_ID)
+            .setServerClientId(webClientId)
             .build()
     }
 
-    suspend fun gOauth(context: Context, onResult: suspend (String) -> Unit = {}) {
+    override suspend fun signIn(context: Context): String? = try {
         val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
-        try {
-            onResult(
-                handleSignIn(
-                    CredentialManager.create(context).getCredential(context, request)
-                )
-            )
-        } catch (e: GetCredentialException) {
-            // Handle error
-            L.e(TAG) { e.message.toString() }
-        }
+        handleSignIn(CredentialManager.create(context).getCredential(context, request))
+    } catch (e: GetCredentialException) {
+        // Handle error
+        L.e(TAG) { e.message.toString() }
+        null
     }
 
-    fun handleSignIn(result: GetCredentialResponse): String {
+    private fun handleSignIn(result: GetCredentialResponse): String? {
         when (val credential = result.credential) {
             // Check if the credential is a Google ID Token
             is CustomCredential -> {
@@ -47,10 +46,8 @@ class GoogleAuther @Inject constructor() {
                         // Use the helper to parse the credential from the bundle
                         val googleIdTokenCredential =
                             GoogleIdTokenCredential.createFrom(credential.data)
-                        val idToken = googleIdTokenCredential.idToken
-
-                        // SUCCESS: Send idToken to your server for validation
-                        return idToken
+                        // SUCCESS: send idToken to the backend for validation
+                        return googleIdTokenCredential.idToken
                     } catch (e: GoogleIdTokenParsingException) {
                         L.e(TAG, e) { "Received invalid google id token response" }
                     }
@@ -58,13 +55,12 @@ class GoogleAuther @Inject constructor() {
             }
             // Handle Passkeys or other types if you added them to your request
             is PublicKeyCredential -> {
-                // Handle Passkey result
             }
 
             else -> {
                 L.e(TAG) { "Unexpected credential type" }
             }
         }
-        return ""
+        return null
     }
 }

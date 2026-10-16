@@ -20,7 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lokahe.androidmvvm.data.models.supabase.User
+import com.lokahe.domain.model.User
 
 @Composable
 fun ProfileScreen(

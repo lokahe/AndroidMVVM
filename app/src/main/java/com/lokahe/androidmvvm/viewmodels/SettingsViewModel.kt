@@ -2,53 +2,55 @@ package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.domain.repository.AuthRepository
+import com.lokahe.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val prefRepository: PreferencesRepository,
-    private val httpRepository: HttpRepository,
-    private val userManager: UserManager
-) : BaseViewModel(prefRepository, httpRepository, userManager) {
+    repository: PreferencesRepository,
+    authRepository: AuthRepository,
+    userRepository: UserRepository,
+    userManager: UserManager
+) : BaseViewModel(repository, authRepository, userRepository, userManager) {
 
     fun updateUseAvatarColor(useAvatarColor: Boolean) {
         viewModelScope.launch {
-            prefRepository.updateUseAvatarColor(useAvatarColor)
+            repository.updateUseAvatarColor(useAvatarColor)
         }
     }
 
     fun updateDarkMode(darkMode: Int) {
         viewModelScope.launch {
-            prefRepository.updateDarkMode(darkMode)
+            repository.updateDarkMode(darkMode)
         }
     }
 
 
     fun updateUserAge(age: Int) {
         viewModelScope.launch {
-            prefRepository.updateUserAge(age)
+            repository.updateUserAge(age)
         }
     }
 
     fun updateLoginStatus(isLoggedIn: Boolean) {
         viewModelScope.launch {
-            prefRepository.updateLoginStatus(isLoggedIn)
+            repository.updateLoginStatus(isLoggedIn)
         }
     }
 
     fun updateGender(gender: String) {
         viewModelScope.launch {
-            prefRepository.updateGender(gender)
+            repository.updateGender(gender)
         }
     }
 
     fun clearData() {
         viewModelScope.launch {
-            prefRepository.clearAllData()
+            repository.clearAllData()
         }
     }
 }

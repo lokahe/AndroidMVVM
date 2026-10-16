@@ -1,9 +1,7 @@
-package com.lokahe.androidmvvm.data.models.supabase
+package com.lokahe.backend.supabase.model
 
 import com.google.gson.annotations.SerializedName
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class Post(
     @SerializedName("id")
     val id: String,
@@ -30,13 +28,11 @@ data class Post(
     val liked: List<LikeStatus>
 )
 
-@Serializable
 data class Like(
     @SerializedName("count")
     val count: Int
 )
 
-@Serializable
 data class LikeStatus(
     @SerializedName("user_id") val userId: String
 )

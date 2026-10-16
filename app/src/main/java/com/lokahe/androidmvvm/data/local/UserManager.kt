@@ -1,61 +1,73 @@
 package com.lokahe.androidmvvm.data.local
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
 import com.lokahe.androidmvvm.addOrRemove
-import com.lokahe.androidmvvm.data.models.supabase.Following
-import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
+import com.lokahe.auth.PkceStore
+import com.lokahe.auth.Session
+import com.lokahe.auth.TokenStore
+import com.lokahe.domain.model.Following
+import com.lokahe.domain.model.User
 import com.lokahe.log.L
-import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import javax.inject.Singleton
 
+/**
+ * App-side session/profile facade.
+ *
+ * Token credentials and the PKCE verifier are delegated to the backend-neutral
+ * [TokenStore] / [PkceStore] (:auth); this class only owns the user profile
+ * JSON and UI-derived state (color seed). Swapping backends never touches it.
+ */
 @Singleton
 class UserManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    private val tokenStore: TokenStore,
+    private val pkceStore: PkceStore,
+    @Named("user_prefs") private val userStore: DataStore<Preferences>
 ) {
     private val gson = Gson()
 
     companion object {
         private val USER_DATA_KEY = stringPreferencesKey("user_data")
-        private val USER_TOKEN_KEY = stringPreferencesKey("user_token")
-        private val USER_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("user_token_expires_at")
-        private val USER_REFRESH_TOKEN_KEY = stringPreferencesKey("user_refresh_token")
         private val USER_COLOR_SEED_KEY = stringPreferencesKey("user_color_seed")
-        private val CODE_VERIFIER = stringPreferencesKey("code_verifier")
     }
 
-    /**
-     * Helper to get just the token
-     */
-    val accessTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
-        prefs[USER_TOKEN_KEY]
+    // ---- session (delegates to :auth) ----
+
+    suspend fun currentSession(): Session? = tokenStore.current()
+
+    suspend fun saveSession(session: Session) = tokenStore.save(session)
+
+    /** Keep the old partial-save semantics for existing call sites. */
+    suspend fun saveToken(accessToken: String?, expiresAt: Long?, refreshToken: String?) {
+        tokenStore.save(
+            Session(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                expiresAt = expiresAt
+            )
+        )
     }
 
-    val accessTokenExpiresAtFlow: Flow<Long?> = context.userStore.data.map { prefs ->
-        prefs[USER_TOKEN_EXPIRES_AT_KEY]
-    }
+    suspend fun saveCodeVerifier(codeVerifier: String) = pkceStore.save(codeVerifier)
 
-    val refreshTokenFlow: Flow<String?> = context.userStore.data.map { prefs ->
-        prefs[USER_REFRESH_TOKEN_KEY]
-    }
+    val codeVerifierFlow: Flow<String?> = pkceStore.codeVerifierFlow
 
-    val codeVerifierFlow: Flow<String?> = context.userStore.data.map { prefs ->
-        prefs[CODE_VERIFIER]
-    }
+    // ---- user profile ----
 
     /**
      * Retrieves the full User object as a Flow
      */
-    val userFlow: Flow<User?> = context.userStore.data.map { prefs ->
+    val userFlow: Flow<User?> = userStore.data.map { prefs ->
         prefs[USER_DATA_KEY]?.let {
             try {
                 gson.fromJson(it, User::class.java)
@@ -69,7 +81,7 @@ class UserManager @Inject constructor(
     /**
      * Retrieves the ColorSeed object as a Flow
      */
-    val colorSeedFlow: Flow<ColorSeed?> = context.userStore.data.map { prefs ->
+    val colorSeedFlow: Flow<ColorSeed?> = userStore.data.map { prefs ->
         prefs[USER_COLOR_SEED_KEY]?.let {
             try {
                 gson.fromJson(it, ColorSeed::class.java)
@@ -81,29 +93,14 @@ class UserManager @Inject constructor(
     }
 
     /**
-     * save tokens
-     */
-    suspend fun saveToken(accessToken: String?, expiresAt: Long?, refreshToken: String?) {
-        context.userStore.edit { prefs ->
-            accessToken?.let { prefs[USER_TOKEN_KEY] = it }
-            expiresAt?.let { prefs[USER_TOKEN_EXPIRES_AT_KEY] = it }
-            refreshToken?.let { prefs[USER_REFRESH_TOKEN_KEY] = it }
-        }
-    }
-
-    suspend fun saveCodeVerifier(codeVerifier: String) {
-        context.userStore.edit { prefs -> prefs[CODE_VERIFIER] = codeVerifier }
-    }
-
-    /**
      * save user
      */
     suspend fun saveUser(user: User?) {
         user?.let {
             L.d("saveUser") { "user: $user" }
-            context.userStore.edit { prefs ->
+            userStore.edit { prefs ->
                 prefs[USER_DATA_KEY] = gson.toJson(it)
-                Utils.calculateMainColor(it.userMetadata?.avatarUrl)?.let { seed ->
+                Utils.calculateMainColor(it.avatarUrl)?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
             }
@@ -132,13 +129,11 @@ class UserManager @Inject constructor(
      * Clear data on Logout
      */
     suspend fun clearUser() {
-        context.userStore.edit { prefs ->
+        tokenStore.clear()
+        pkceStore.clear()
+        userStore.edit { prefs ->
             prefs.remove(USER_DATA_KEY)
-            prefs.remove(USER_TOKEN_KEY)
-            prefs.remove(USER_REFRESH_TOKEN_KEY)
-            prefs.remove(USER_TOKEN_EXPIRES_AT_KEY)
             prefs.remove(USER_COLOR_SEED_KEY)
-            prefs.remove(CODE_VERIFIER)
         }
     }
 }

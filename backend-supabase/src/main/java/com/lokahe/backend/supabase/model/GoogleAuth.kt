@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.data.models.auth
+package com.lokahe.backend.supabase.model
 
 import com.google.gson.annotations.SerializedName
 

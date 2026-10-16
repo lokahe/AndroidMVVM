@@ -4,7 +4,7 @@
 
 ## 1. 项目概览
 
-一个基于 **MVVM + Jetpack Compose** 的 Android 社交类应用，后端使用 **Supabase**（认证 + 数据库 + 存储），支持邮箱 OTP 登录与 Google 登录。项目采用 Gradle 多模块 + Version Catalog 管理依赖，通用 HTTP 基础设施已抽取为独立公共模块 `:http`。
+一个基于 **MVVM + Jetpack Compose** 的 Android 社交类应用，支持邮箱 OTP 登录与 Google 登录。项目采用 Gradle 多模块 + Version Catalog 管理依赖：通用 HTTP 基础设施（`:http`）、认证凭据（`:auth`）、后端中立的领域契约（`:domain`）均已抽取为独立模块，Supabase 具体实现隔离在 `:backend-supabase` 中——UI/ViewModel 层不感知任何 Supabase 类型。
 
 | 项 | 值 |
 |---|---|
@@ -20,9 +20,12 @@
 
 ```
 AndroidMVVM/
-├── app/        # 业务主模块（UI、业务逻辑、数据层）
-├── http/       # 通用 HTTP 基础设施模块（无业务逻辑）
-├── log/        # 统一日志模块（级别管理 + 可插拔输出端）
+├── app/              # 业务主模块（UI、ViewModel、本地数据层）
+├── auth/             # 认证凭据模块（Session、TokenStore/PkceStore、AuthProvider SPI）
+├── domain/           # 领域模块（后端中立模型 + Repository 接口契约）
+├── backend-supabase/ # Supabase 实现（DTO/映射/Retrofit + 仓库绑定，可替换）
+├── http/             # 通用 HTTP 基础设施模块（无业务逻辑）
+├── log/              # 统一日志模块（级别管理 + 可插拔输出端）
 └── gradle/
     └── libs.versions.toml   # Version Catalog，统一管理依赖版本
 ```
@@ -35,12 +38,11 @@ AndroidMVVM/
 com.lokahe.androidmvvm/
 ├── MyApplication.kt          # @HiltAndroidApp 入口
 ├── data/
-│   ├── remote/               # Api（常量）、ApiService（Retrofit 接口定义）
-│   ├── local/                # Room（AppDatabase + DAO）、DataStore（UserManager 等）
-│   ├── models/               # 数据模型：supabase/（业务模型）、auth/、本地实体（Person、Post、UserPreferences）
-│   └── repository/           # HttpRepository（网络）、DataBaseRepository（Room）、PreferencesRepository（DataStore）
-├── di/                       # Hilt 模块：NetWorkModule、DataBaseModule、PreferencesModule
-├── viewmodels/               # BaseViewModel 及各业务 ViewModel（Main / Post / User / Settings）
+│   ├── local/                # Room（AppDatabase + DAO）、DataStore（UserManager、DataStoreExtensions）
+│   ├── models/               # 本地实体（Person、Post、UserPreferences）
+│   └── repository/           # DataBaseRepository（Room）、PreferencesRepository（DataStore）
+├── di/                       # Hilt 模块：DataBaseModule、PreferencesModule（含 @Named("user_prefs") DataStore）
+├── viewmodels/               # BaseViewModel（依赖 :domain 契约）及业务 ViewModel（Main / Post / User / Settings）
 ├── ui/
 │   ├── screens/              # Compose 页面 + Nav.kt（Navigation 3 路由定义）
 │   ├── activites/            # MainActivity（单 Activity 入口）、SettingsActivity
@@ -48,7 +50,6 @@ com.lokahe.androidmvvm/
 │   ├── preference/           # 自研 Preference（DataStore 绑定）组件库
 │   ├── theme/                # Material 3 主题（支持动态取色 ColorSeed）
 │   └── vectors/              # 自定义图标
-├── data/auth/GoogleAuther.kt # Google 登录封装（Credential Manager）
 └── utils / Const / Extensions / LocalProvider
 ```
 
@@ -82,12 +83,55 @@ com.lokahe.androidmvvm/
 
 约定：初始化在 `MyApplication.onCreate`（debug 用 DEBUG 级别、release 用 WARN 级别）；其他模块只依赖 `L` 门面，禁止直接使用 `android.util.Log`。全项目存量 `Log.x` 调用已于 2026-10-15 全部迁移至 `L`，现仅 `LogSink.kt` 内置的 `LogcatSink` 直接调用 Android Log API（作为唯一输出适配器）。
 
-### 2.4 模块依赖关系
+### 2.4 `:auth` — 认证凭据模块
+
+包名 `com.lokahe.auth`，后端无关：只负责"凭据的持有与获取"，不感知任何具体后端：
+
+| 文件 | 职责 |
+|---|---|
+| `Session.kt` | 中立会话模型（userId / accessToken / refreshToken / expiresAt），kotlinx-serialization 序列化 |
+| `TokenStore.kt` / `DataStoreTokenStore.kt` | 会话凭据存取接口 + DataStore 实现（`@Named("user_prefs")`） |
+| `PkceStore.kt` / `DataStorePkceStore.kt` | OAuth PKCE code_verifier 存取 |
+| `Pkce.kt` | PKCE（RFC 7636）S256 工具（verifier 生成 / challenge 计算） |
+| `AuthProvider.kt` / `GoogleAuthProvider.kt` | 平台凭据 SPI：获取原始凭据（如 Google OIDC id_token）；兑换成 Session 是后端层职责 |
+| `AuthModule.kt` | Hilt 绑定：TokenStore / PkceStore + `@Named("google")` AuthProvider（新增平台加一个 @Provides 即可） |
+
+`GOOGLE_WEB_CLIENT_ID` 通过本模块 `BuildConfig` 注入。
+
+### 2.5 `:domain` — 领域契约模块
+
+包名 `com.lokahe.domain`，后端中立的"模型 + 接口"层，无任何实现：
+
+| 内容 | 说明 |
+|---|---|
+| `model/User.kt` | 中立用户：provider metadata 拍平为 `name`/`fullName`/`avatarUrl`，`name()`/`avatar()` 扩展回退公开 Profile |
+| `model/Profile.kt` | 公开资料、Followers/Following/Follower、`Profile.toUser()` 映射 |
+| `model/Post.kt` | 帖子、Like/LikeStatus、PostRequest |
+| `model/AuthResult.kt` | 认证结果（Session + User） |
+| `repository/*.kt` | `AuthRepository` / `UserRepository` / `PostRepository` 契约（返回 `Flow<ApiResult<T>>`，`ApiResult` 来自 `:http`） |
+| `Const.kt` | 中立常量（`EMPTY_UUID`、`PAGE_SIZE`） |
+
+### 2.6 `:backend-supabase` — Supabase 实现模块
+
+包名 `com.lokahe.backend.supabase`，`:domain` 契约的 Supabase 实现，**唯一允许出现 Supabase 细节的模块**：
+
+| 内容 | 说明 |
+|---|---|
+| `model/*.kt` | Supabase DTO（Gson `@SerializedName`） |
+| `mapper/Mappers.kt` | DTO → domain 模型映射（metadata 拍平在此发生） |
+| `Api.kt` / `ApiService.kt` | 常量（含 PostgREST 查询助手）与 Retrofit 接口 |
+| `SupabaseRepository.kt` | 实现三个 domain 仓库接口（`safeApiCall` + `asDomain`） |
+| `di/SupabaseModule.kt` | 提供 `HttpConfig(baseUrl = Api.SPB_URL)` 并把 `SupabaseRepository` 绑定到 domain 接口 |
+
+更换后端 = 新写一个模块实现相同接口并重新绑定，`:app` 无需任何改动。
+
+### 2.7 模块依赖关系
 
 ```
-:app ──implementation──▶ :http ──▶ Retrofit / OkHttp / Gson / Hilt
-:app ──implementation──▶ :log
-:http ──implementation──▶ :log
+:app ──▶ :auth（Session / TokenStore / PkceStore / AuthProvider）──▶ :log
+:app ──▶ :domain（模型 + 仓库接口）──▶ :auth、:http
+:app ──▶ :backend-supabase（Supabase 实现）──▶ :domain、:http、:log
+:app ──▶ :http（本地仓库复用 ApiResult 等）、:log
 ```
 
 ---
@@ -105,20 +149,20 @@ ViewModel 层
   MainViewModel / PostViewModel / UserViewModel / SettingsViewModel
         │ 调用
         ▼
-Repository 层
-  HttpRepository（网络） DataBaseRepository（Room） PreferencesRepository（DataStore）
-        │                          │
-        ▼                          ▼
- 远端（Supabase）              本地存储
- Retrofit + OkHttp             Room / DataStore
-（:http 模块提供）
+Repository 层（:domain 契约 ← :backend-supabase 实现）
+  AuthRepository / UserRepository / PostRepository   DataBaseRepository（Room）   PreferencesRepository（DataStore）
+        │                                      │
+        ▼                                      ▼
+ 远端（Supabase，:backend-supabase 模块）    本地存储
+ Retrofit + OkHttp（:http 模块提供）          Room / DataStore
 ```
 
 关键模式：
 
 - **统一网络结果**：Repository 返回 `Flow<ApiResult<T>>`，ViewModel 收集后区分成功/失败更新 UI（`ApiResult` 来自 `:http`）。
 - **单 Activity + Compose 导航**：路由用 `@Serializable sealed interface Screen : NavKey` 定义（Navigation 3），支持 `lokahe://androidmvvm` 深链。
-- **用户态**：`UserManager`（DataStore）持久化 Supabase 会话（token / refresh_token / 过期时间），`BaseViewModel.currentUser` 以 `StateFlow` 暴露给 UI。
+- **用户态**：`UserManager` 为后端中立 facade（委托 `:auth` 的 `TokenStore` / `PkceStore` 与 `@Named("user_prefs")` DataStore），持久化会话（token / refresh_token / 过期时间）与用户；`BaseViewModel.currentUser` 以 `StateFlow` 暴露给 UI。
+- **后端可替换**：UI/ViewModel 仅依赖 `:domain` 接口与模型；端点、DTO、grant 形状等 Supabase 细节全部隔离在 `:backend-supabase`。
 - **主题**：Material 3 + Palette 动态取色（`ColorSeed`）。
 
 ---
@@ -157,7 +201,7 @@ Repository 层
 | Google OAuth | Google 登录（Credential Manager + GoogleID） | `GOOGLE_WEB_CLIENT_ID` |
 | Google Play Services | Credentials 回退支持 | — |
 
-构建时通过 `local.properties` 或环境变量注入（`app/build.gradle.kts` 的 `buildConfigField`）：
+构建时通过 `local.properties` 或环境变量注入（`SPB_URL` / `ANON_KEY` → `:backend-supabase`，`GOOGLE_WEB_CLIENT_ID` → `:auth`，各自模块的 `buildConfigField`）：
 
 ```properties
 # local.properties 示例
@@ -189,12 +233,13 @@ gradlew.bat :http:assembleDebug         # 仅构建 :http 模块
 | 2026-10-14 | 抽取 `:http` 公共模块（`ApiResult`/`ApiError`、`safeApiCall`、`ProgressRequestBody`、`HttpConfig`、Hilt `HttpModule`）；`NetWorkModule` 精简为仅提供 `HttpConfig` 与 `ApiService`；app 内移除重复的通用实现。 |
 | 2026-10-14 | 新增本架构文档。 |
 | 2026-10-15 | 新增 `:log` 统一日志模块（级别管理、可插拔 Sink、惰性求值）；`MyApplication` 与 `:http/safeApiCall` 接入，同日完成全项目存量 `Log.x` 迁移（7 文件 13 处：GoogleAuther、UserManager、DataBaseModule、MainActivity、SendPostScreen、MainViewModel、PostViewModel）；后续规划 MMKV 持久化与崩溃级别日志上报。 |
+| 2026-10-16 | 数据层解耦 Supabase：新增 `:auth`（Session、TokenStore/PkceStore、AuthProvider SPI）、`:domain`（中立模型 + Auth/User/Post 仓库接口）、`:backend-supabase`（DTO/映射/Retrofit 实现 + Hilt 绑定）三个模块；app 侧完成迁移——删除 `data/remote`、`data/models/{supabase,auth}`、`data/auth/GoogleAuther`、`HttpRepository`、`NetWorkModule`；`UserManager` 改为委托 `:auth` 存储的中立 facade（注入 `@Named("user_prefs")` DataStore），`BaseViewModel` 构造改为 (PreferencesRepository, AuthRepository, UserRepository, UserManager)，全部 ViewModel/UI 迁移至 domain 模型；`Utils` 移除 PKCE 助手（由 `:auth/Pkce` 接管）；敏感配置 buildConfigField 随迁至 `:auth` / `:backend-supabase`。 |
 
 ## 8. 后续演进方向（待定）
 
 - [ ] `:http` 增加单元测试（`safeApiCall` 的成功/失败路径）。
 - [ ] 业务接口鉴权拦截器（token 自动附加与刷新）下沉至 `:http` 或独立模块。
-- [ ] Repository 层引入接口抽象，便于替换数据源与测试。
+- [x] Repository 层引入接口抽象（`:domain` 的 AuthRepository / UserRepository / PostRepository，实现位于 `:backend-supabase`）——已完成（2026-10-16）。
 - [ ] Navigation 3 目前为 alpha 版本，关注其稳定版发布并升级。
 - [ ] 开启 release 混淆（`isMinifyEnabled` 当前为 false）并补充 R8 规则。
 - [x] 存量 `Log.x` 调用迁移至 `:log` 的 `L`（GoogleAuther / UserManager / DataBaseModule / MainActivity / SendPostScreen / MainViewModel / PostViewModel，共 13 处）——已完成（2026-10-15）。

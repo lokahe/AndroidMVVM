@@ -9,32 +9,34 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.data.auth.GoogleAuther
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.auth.GoogleAuth
-import com.lokahe.androidmvvm.data.remote.Api
 import com.lokahe.androidmvvm.data.repository.DataBaseRepository
-import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
 import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
+import com.lokahe.auth.AuthProvider
+import com.lokahe.auth.Pkce
+import com.lokahe.domain.repository.AuthRepository
+import com.lokahe.domain.repository.UserRepository
 import com.lokahe.log.L
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val prefRepository: PreferencesRepository,
+    repository: PreferencesRepository,
     private val dbRepository: DataBaseRepository,
-    private val httpRepository: HttpRepository,
-    private val userManager: UserManager,
-    private val googleAuther: GoogleAuther
-) : BaseViewModel(prefRepository, httpRepository, userManager) {
+    authRepository: AuthRepository,
+    userRepository: UserRepository,
+    userManager: UserManager,
+    @Named("google") private val googleProvider: AuthProvider
+) : BaseViewModel(repository, authRepository, userRepository, userManager) {
 
     init {
         // 2. Trigger the check immediately when ViewModel is created (App Start)
@@ -47,7 +49,7 @@ class MainViewModel @Inject constructor(
             // Note: We use .firstOrNull() to get the current value from the Flow once
             getAccessToken()?.emptyNull()?.let { token ->
                 // Verify with server
-                httpRepository.varifyToken(token).cole()
+                authRepository.verifyToken(token).cole()
                     .onFailure {
                         if (it.code == 403) {
                             refreshToken()
@@ -63,7 +65,7 @@ class MainViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            getAccessToken()?.emptyNull()?.let { httpRepository.signOut(it).cole() }
+            getAccessToken()?.emptyNull()?.let { authRepository.signOut(it).cole() }
             userManager.clearUser()
         }
     }
@@ -73,39 +75,48 @@ class MainViewModel @Inject constructor(
         MyApplication.application.startActivity(
             Intent(
                 Intent.ACTION_VIEW,
-                "${Api.SPB_AUTH_URL}?provider=x&redirect_to=${Api.REDIRECT}".toUri()
+                authRepository.buildAuthorizeUrl(provider = "x", codeChallenge = null).toUri()
             ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
     }
 
     fun signWithGithub() {
         viewModelScope.launch {
             val codeVerifier =
-                Utils.generateCodeVerifier().apply { userManager.saveCodeVerifier(this) }
+                Pkce.generateCodeVerifier().apply { userManager.saveCodeVerifier(this) }
             L.d("signWithGithub") { "codeVerifier: $codeVerifier" }
             MyApplication.application.startActivity(
                 Intent(
                     Intent.ACTION_VIEW,
-                    ("${Api.SPB_AUTH_URL}?provider=github&redirect_to=${Api.REDIRECT}&code_" +
-                            "challenge=${Utils.generateCodeChallenge(codeVerifier)}&code_challenge_method=S256").toUri()
+                    authRepository.buildAuthorizeUrl(
+                        provider = "github",
+                        codeChallenge = Pkce.generateCodeChallenge(codeVerifier)
+                    ).toUri()
                 ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
         }
     }
 
     fun signWithGoogle(context: Context) {
         viewModelScope.launch {
-            googleAuther.gOauth(context) { idToken ->
-                httpRepository.gAuth(body = GoogleAuth(idToken = idToken, nonce = null)).cole()
-                    .onSuccess { save(it) }
-                    .onFailure { toast(it.message) }
-                    .onException { toast(it.message ?: R.string.unkown_error.str()) }
+            val idToken = googleProvider.signIn(context)
+            if (idToken == null) {
+                toast(R.string.unkown_error.str())
+                return@launch
             }
+            authRepository.signInWithIdToken(
+                idToken = idToken,
+                provider = googleProvider.id,
+                nonce = null
+            ).cole()
+                .onSuccess { save(it) }
+                .onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
 
 
     fun sign(email: String) {
         viewModelScope.launch {
-            httpRepository.sign(email).cole().onSuccess {
+            authRepository.requestOtp(email).cole().onSuccess {
                 toast("Verify email sent, please confirm your email.") // TODO: R.string
                 _verifyEmail.value = email
             }.onFailure { toast(it.message) }
@@ -115,7 +126,7 @@ class MainViewModel @Inject constructor(
 
     fun verifyEmail(email: String, token: String) {
         viewModelScope.launch {
-            httpRepository.verifyEmail(email, token).cole().onSuccess { it -> save(it) }
+            authRepository.verifyOtp(email, token).cole().onSuccess { it -> save(it) }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
@@ -124,7 +135,7 @@ class MainViewModel @Inject constructor(
     fun fetchFollowingIds(followerId: String, onResult: (List<String>) -> Unit) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.fetchFollowingIds(token, followerId).cole().onSuccess {
+                userRepository.fetchFollowingIds(token, followerId).cole().onSuccess {
                     onResult(it.map { it.targetId })
                 }.onFailure { toast(it.message) }
             }
@@ -134,7 +145,7 @@ class MainViewModel @Inject constructor(
     fun fetchFollowerIds(targetId: String, onResult: (List<String>) -> Unit) {
         viewModelScope.launch {
             getAccessToken()?.emptyNull()?.let { token ->
-                httpRepository.fetchFollowerIds(token, targetId).cole().onSuccess {
+                userRepository.fetchFollowerIds(token, targetId).cole().onSuccess {
                     onResult(it.map { it.followerId })
                 }.onFailure { toast(it.message) }
             }
@@ -146,16 +157,6 @@ class MainViewModel @Inject constructor(
 //            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
 //            val token = userManager.userTokenFlow.firstOrNull()
 //            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
-//            val result = httpRepository.updateProperty(
-//                objectId = objectId,
-//                token = token,
-//                request = UpdateAvatarRequest(url)
-//            )
-//            result.onSuccess { message ->
-//                toast(message)
-//            }.onFailure { error ->
-//                toast(error.message ?: R.string.unkown_error.toString())
-//            }
         }
     }
 
@@ -170,34 +171,6 @@ class MainViewModel @Inject constructor(
             val userId = getUser()?.id ?: ""
             val token = getAccessToken()
             if (userId.isEmpty() || token.isNullOrEmpty()) return@launch
-
-            val updateMap = mapOf(
-                "phone" to phone,
-                "address" to address,
-                "birthDate" to birthDate,
-                "description" to description,
-                "gender" to gender
-            )
-
-//            val result = httpRepository.updateProperty(
-//                objectId = objectId,
-//                token = token,
-//                request = updateMap
-//            )
-//            result.onSuccess { message ->
-//                toast(message)
-//                userManager.saveUser(
-//                    currentUser.value!!.copy(
-//                        phone = phone,
-//                        address = address,
-//                        birthDate = birthDate,
-//                        description = description,
-//                        gender = gender
-//                    )
-//                )
-//            }.onFailure { error ->
-//                toast(error.message ?: R.string.unkown_error.toString())
-//            }
         }
     }
 
@@ -256,7 +229,7 @@ class MainViewModel @Inject constructor(
                 userManager.codeVerifierFlow.firstOrNull()?.emptyNull()
                     ?.let { codeVerifier ->
                         L.d("handleMagicLink") { "codeVerifier: $codeVerifier" }
-                        httpRepository.codeExchange(code, codeVerifier).cole()
+                        authRepository.exchangeCode(code, codeVerifier).cole()
                             .onSuccess { save(it) }
                             .onFailure { toast(it.message) }
                             .onException { toast(it.message ?: R.string.unkown_error.str()) }

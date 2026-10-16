@@ -28,7 +28,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.data.remote.Api.PAGE_SIZE
+import com.lokahe.domain.Const.PAGE_SIZE
 import com.lokahe.androidmvvm.ui.widget.PostItem
 import com.lokahe.androidmvvm.ui.widget.SuperLazyColum
 import com.lokahe.androidmvvm.viewmodels.PostViewModel

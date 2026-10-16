@@ -8,12 +8,13 @@ import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.curSecond
 import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.androidmvvm.data.models.UserPreferences
-import com.lokahe.http.ApiResult
-import com.lokahe.androidmvvm.data.models.supabase.AuthResponse
-import com.lokahe.androidmvvm.data.models.supabase.Following
-import com.lokahe.androidmvvm.data.models.supabase.User
-import com.lokahe.androidmvvm.data.repository.HttpRepository
 import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.domain.model.AuthResult
+import com.lokahe.domain.model.Following
+import com.lokahe.domain.model.User
+import com.lokahe.domain.repository.AuthRepository
+import com.lokahe.domain.repository.UserRepository
+import com.lokahe.http.ApiResult
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import kotlinx.coroutines.flow.Flow
@@ -30,9 +31,10 @@ import kotlinx.coroutines.runBlocking
 private val _activeDialogs = mutableStateListOf<AppDialog>()
 
 open class BaseViewModel(
-    private val repository: PreferencesRepository,
-    private val httpRepository: HttpRepository,
-    private val userManager: UserManager
+    protected val repository: PreferencesRepository,
+    protected val authRepository: AuthRepository,
+    protected val userRepository: UserRepository,
+    protected val userManager: UserManager
 ) : ViewModel() {
     // Expose the user as State for Compose
     val currentUser by lazy {
@@ -85,11 +87,11 @@ open class BaseViewModel(
 
     protected suspend fun getAccessToken(): String? {
         checkTokenExpires()
-        return userManager.accessTokenFlow.firstOrNull()
+        return userManager.currentSession()?.accessToken
     }
 
     private suspend fun checkTokenExpires() {
-        userManager.accessTokenExpiresAtFlow.firstOrNull()?.let {
+        userManager.currentSession()?.expiresAt?.let {
             if (it < curSecond()) {
                 refreshToken()
             }
@@ -97,17 +99,22 @@ open class BaseViewModel(
     }
 
     protected suspend fun refreshToken(clear: Boolean = true) {
-        val refreshToken = userManager.refreshTokenFlow.firstOrNull()
+        val refreshToken = userManager.currentSession()?.refreshToken
         if (!refreshToken.isNullOrEmpty()) {
-            httpRepository.refreshToken(refreshToken).cole()
+            authRepository.refreshToken(refreshToken).cole()
                 .onSuccess { save(it) }
                 .onFailure { toast(it.message); if (clear) userManager.clearUser() }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
 
-    protected suspend fun save(auth: AuthResponse) {
-        save(auth.accessToken, auth.expiresAt, auth.refreshToken, auth.user)
+    protected suspend fun save(auth: AuthResult) {
+        save(
+            auth.session.accessToken,
+            auth.session.expiresAt,
+            auth.session.refreshToken,
+            auth.user
+        )
     }
 
     protected suspend fun save(
@@ -118,8 +125,8 @@ open class BaseViewModel(
     ) {
         userManager.saveToken(token, expiresAt, refreshToken)
         user?.let { userManager.saveUser(it.fetchProfile(token)) } ?: token?.let { tk ->
-            httpRepository.varifyToken(tk).cole()
-                .onSuccess { userManager.saveUser(it.fetchProfile(token)) }
+            authRepository.verifyToken(tk).cole()
+                .onSuccess { userManager.saveUser(it.fetchProfile(tk)) }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
@@ -133,7 +140,7 @@ open class BaseViewModel(
     private suspend fun User.fetchProfile(token: String?): User =
         this.apply {
             token?.let { tk ->
-                httpRepository.fetchProfileById(tk, id).cole().onSuccess { profile = it }
+                userRepository.fetchProfileById(tk, id).cole().onSuccess { profile = it }
             }
         }
 

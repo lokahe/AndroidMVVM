@@ -96,7 +96,7 @@ dependencies {
     //navigation3
     implementation("androidx.navigation3:navigation3-runtime:1.1.0-alpha04")
     implementation("androidx.navigation3:navigation3-ui:1.1.0-alpha04")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation(libs.kotlinx.serialization.json)
 //    implementation(libs.androidx.browser)
 
     // Room database
@@ -114,16 +114,16 @@ dependencies {
     // Common log module (L / LogConfig / LogSink)
     implementation(project(":log"))
 
-    // Retrofit
-    implementation(libs.retrofit)
+    // Backend-neutral auth kit (Session / TokenStore / PKCE / AuthProvider)
+    implementation(project(":auth"))
 
-    // Gson Converter (to convert JSON to Kotlin objects)
-    implementation(libs.converter.gson)
+    // Domain contracts + models (repository interfaces, pure domain models)
+    implementation(project(":domain"))
 
-    // OkHttp (for logging and interceptors)
-    implementation(libs.okhttp)
-    implementation(libs.logging.interceptor)
+    // Supabase implementation of the domain contracts
+    implementation(project(":backend-supabase"))
 
+    // Retrofit / OkHttp / Gson now come transitively from :http (:backend-supabase owns the API)
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -136,14 +136,9 @@ dependencies {
     // Backendless
 //    implementation(libs.backendless)
 
-    // google play auth
-    implementation(libs.play.services.auth)
+    // Platform credential providers now live in :auth (GoogleAuthProvider)
 
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
-
-    //Firebase
+//Firebase
 //    implementation(platform("com.google.firebase:firebase-bom:33.8.0")) // Note: 33.8.0 is the current latest stable, 34.8.0 doesn't exist yet
 //    implementation("com.google.firebase:firebase-auth")
 

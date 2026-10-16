@@ -2,7 +2,6 @@ package com.lokahe.androidmvvm.utils
 
 import android.annotation.SuppressLint
 import android.graphics.drawable.BitmapDrawable
-import android.util.Base64
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -25,15 +24,13 @@ import com.lokahe.androidmvvm.MyApplication.Companion.application
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.argb
 import com.lokahe.androidmvvm.data.models.Person
-import com.lokahe.androidmvvm.data.models.supabase.Post
-import com.lokahe.androidmvvm.data.models.supabase.User
 import com.lokahe.androidmvvm.isNotNullOrBlank
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
 import com.lokahe.androidmvvm.toMillis
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
-import java.security.MessageDigest
-import java.security.SecureRandom
+import com.lokahe.domain.model.Post
+import com.lokahe.domain.model.User
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -152,48 +149,15 @@ class Utils {
         @Composable
         fun userTitle(user: User): AnnotatedString =
             buildAnnotatedString {
-                append(user.userMetadata?.fullName + "\n")
+                append(user.fullName + "\n")
                 withStyle(
                     style = SpanStyle(
                         color = MaterialTheme.colorScheme.secondary,
                         fontSize = MaterialTheme.typography.bodySmall.fontSize
                     )
                 ) {
-//                    append(user.userMetadata.)
+                    // Reserved for secondary info (e.g. handle / last active)
                 }
             }
-
-
-        /**
-         * Step A: Percent-Encoding Utility
-         * Standard URLEncoder doesn't strictly follow RFC 3986 (it encodes spaces as + instead of %20). Use this helper:
-         */
-        fun percentEncode(value: String): String {
-            return java.net.URLEncoder.encode(value, "UTF-8")
-                .replace("+", "%20")
-                .replace("*", "%2A")
-                .replace("%7E", "~")
-        }
-
-        fun generateCodeVerifier(): String {
-            val secureRandom = SecureRandom()
-            val bytes = ByteArray(32) // 256 bits
-            secureRandom.nextBytes(bytes)
-            // Use URL_SAFE, NO_WRAP, and NO_PADDING for PKCE compliance
-            return Base64.encodeToString(
-                bytes,
-                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
-            )
-        }
-
-        fun generateCodeChallenge(verifier: String): String {
-            val bytes = verifier.toByteArray(Charsets.US_ASCII)
-            val messageDigest = MessageDigest.getInstance("SHA-256")
-            val digest = messageDigest.digest(bytes)
-            return Base64.encodeToString(
-                digest,
-                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
-            )
-        }
     }
 }

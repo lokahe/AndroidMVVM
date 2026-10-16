@@ -29,10 +29,10 @@ import com.lokahe.androidmvvm.LocalNavController
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.UserHeaderOption
-import com.lokahe.androidmvvm.data.models.supabase.User
-import com.lokahe.androidmvvm.data.models.supabase.avatar
-import com.lokahe.androidmvvm.data.models.supabase.name
 import com.lokahe.androidmvvm.emailCover
+import com.lokahe.domain.model.User
+import com.lokahe.domain.model.avatar
+import com.lokahe.domain.model.name
 import com.lokahe.androidmvvm.ui.screens.Screen
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 

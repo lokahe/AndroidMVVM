@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.data.models.supabase
+package com.lokahe.backend.supabase.model
 
 import com.google.gson.annotations.SerializedName
 
@@ -36,7 +36,7 @@ import com.google.gson.annotations.SerializedName
 "provider":"email",
 "last_sign_in_at":"2026-02-17T07:36:16.456415Z",
 "created_at":"2026-02-17T07:36:16.456468Z",
-"updated_at":"2026-02-17T07:36:16.456468Z",
+"updated_at":"2026-02-17T08:20:43.795635Z",
 "email":"lokahe620@gmail.com"}],
 "created_at":"2026-02-17T07:36:16.450927Z",
 "updated_at":"2026-02-17T08:20:43.795635Z",

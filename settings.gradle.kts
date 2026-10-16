@@ -16,6 +16,9 @@ dependencyResolutionManagement {
 rootProject.name = "AndroidMVVM"
 include(
     ":app",
+    ":auth",
+    ":domain",
+    ":backend-supabase",
     ":http",
     ":log"
 )

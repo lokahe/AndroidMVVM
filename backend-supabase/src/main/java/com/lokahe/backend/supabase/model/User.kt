@@ -1,10 +1,9 @@
-package com.lokahe.androidmvvm.data.models.supabase
+package com.lokahe.backend.supabase.model
 
 import com.google.gson.annotations.SerializedName
 
 /**
 ```
-{
 {
 "id": "uuid-string",
 "aud": "authenticated",
@@ -19,7 +18,7 @@ import com.google.gson.annotations.SerializedName
 "created_at": "2024-01-01T00:00:00Z",
 "updated_at": "2024-02-16T12:00:00Z"
 }
-}
+```
  */
 data class User(
     @SerializedName("id")
@@ -43,6 +42,3 @@ data class UserMetadata(
     @SerializedName("avatar_url")
     val avatarUrl: String
 )
-
-fun User.name() = profile?.name ?: userMetadata?.name
-fun User.avatar() = profile?.avatar ?: userMetadata?.avatarUrl
