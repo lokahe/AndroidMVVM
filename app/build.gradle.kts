@@ -25,14 +25,40 @@ android {
         if (propertiesFile.exists()) {
             properties.load(propertiesFile.inputStream())
         }
-        // Read from environment variables (GitHub Actions)
-        // fallback to empty string or local property for local development
-        val googleClientId = System.getenv("GOOGLE_WEB_CLIENT_ID") ?:
-            properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: ""
-        val spbUrl = System.getenv("SPB_URL") ?:
-            properties.getProperty("SPB_URL") ?: ""
-        val anonKey = System.getenv("ANON_KEY") ?:
-            properties.getProperty("ANON_KEY") ?: ""
+        // Read from environment variables (GitHub Actions), then local.properties.
+        // Missing values MUST NOT become empty strings: Retrofit.Builder.baseUrl("")
+        // throws "Expected URL scheme 'http' or 'https'" and crashes the app during
+        // first composition (issue #3). Missing values get legal placeholders so the
+        // app still launches and network calls fail gracefully via safeApiCall.
+        val googleClientId = (System.getenv("GOOGLE_WEB_CLIENT_ID")
+            ?: properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: "").trim()
+        val anonKey = (System.getenv("ANON_KEY")
+            ?: properties.getProperty("ANON_KEY") ?: "").trim()
+        val rawSpbUrl = (System.getenv("SPB_URL")
+            ?: properties.getProperty("SPB_URL") ?: "").trim()
+
+        // Retrofit requires an absolute http(s) URL that ends with '/'.
+        val spbUrl = when {
+            rawSpbUrl.isEmpty() -> {
+                logger.warn(
+                    "SPB_URL is not set (local.properties / env). " +
+                        "Using a placeholder so the app can start; network calls will fail gracefully."
+                )
+                "https://supabase-not-configured.invalid/"
+            }
+            !rawSpbUrl.endsWith("/") -> {
+                logger.warn("SPB_URL does not end with '/' — appended automatically for Retrofit baseUrl.")
+                "$rawSpbUrl/"
+            }
+            else -> rawSpbUrl
+        }
+        if (googleClientId.isEmpty()) {
+            logger.warn("GOOGLE_WEB_CLIENT_ID is not set — Google sign-in will be unavailable.")
+        }
+        if (anonKey.isEmpty()) {
+            logger.warn("ANON_KEY is not set — Supabase API calls will be rejected (401).")
+        }
+
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleClientId\"")
         buildConfigField("String", "SPB_URL", "\"$spbUrl\"")
         buildConfigField("String", "ANON_KEY", "\"$anonKey\"")

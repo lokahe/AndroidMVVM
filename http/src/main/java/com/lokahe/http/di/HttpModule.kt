@@ -45,6 +45,11 @@ object HttpModule {
     @Provides
     @Singleton
     fun provideRetrofit(config: HttpConfig, okHttpClient: OkHttpClient): Retrofit {
+        // Defense-in-depth for issue #3: fail fast with an actionable message
+        // instead of OkHttp's cryptic "Expected URL scheme 'http' or 'https'".
+        require(config.baseUrl.isNotBlank()) {
+            "HttpConfig.baseUrl is blank — set SPB_URL in local.properties (or env) before building."
+        }
         return Retrofit.Builder()
             .baseUrl(config.baseUrl)
             .client(okHttpClient)
