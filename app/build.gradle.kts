@@ -25,43 +25,27 @@ android {
         if (propertiesFile.exists()) {
             properties.load(propertiesFile.inputStream())
         }
-        // Read from environment variables (GitHub Actions), then local.properties.
-        // Missing values MUST NOT become empty strings: Retrofit.Builder.baseUrl("")
-        // throws "Expected URL scheme 'http' or 'https'" and crashes the app during
-        // first composition (issue #3). Missing values get legal placeholders so the
-        // app still launches and network calls fail gracefully via safeApiCall.
-        val googleClientId = (System.getenv("GOOGLE_WEB_CLIENT_ID")
-            ?: properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: "").trim()
-        val anonKey = (System.getenv("ANON_KEY")
-            ?: properties.getProperty("ANON_KEY") ?: "").trim()
-        val rawSpbUrl = (System.getenv("SPB_URL")
-            ?: properties.getProperty("SPB_URL") ?: "").trim()
+        // Backend URL for :backend-rovortex (env for CI, local.properties for dev).
+        val rawRovortexUrl = (System.getenv("ROVORTEX_URL")
+            ?: properties.getProperty("ROVORTEX_URL") ?: "").trim()
 
         // Retrofit requires an absolute http(s) URL that ends with '/'.
-        val spbUrl = when {
-            rawSpbUrl.isEmpty() -> {
+        val rovortexUrl = when {
+            rawRovortexUrl.isEmpty() -> {
                 logger.warn(
-                    "SPB_URL is not set (local.properties / env). " +
+                    "ROVORTEX_URL is not set (local.properties / env). " +
                         "Using a placeholder so the app can start; network calls will fail gracefully."
                 )
-                "https://supabase-not-configured.invalid/"
+                "https://rovortex-not-configured.invalid/"
             }
-            !rawSpbUrl.endsWith("/") -> {
-                logger.warn("SPB_URL does not end with '/' — appended automatically for Retrofit baseUrl.")
-                "$rawSpbUrl/"
+            !rawRovortexUrl.endsWith("/") -> {
+                logger.warn("ROVORTEX_URL does not end with '/' — appended automatically for Retrofit baseUrl.")
+                "$rawRovortexUrl/"
             }
-            else -> rawSpbUrl
-        }
-        if (googleClientId.isEmpty()) {
-            logger.warn("GOOGLE_WEB_CLIENT_ID is not set — Google sign-in will be unavailable.")
-        }
-        if (anonKey.isEmpty()) {
-            logger.warn("ANON_KEY is not set — Supabase API calls will be rejected (401).")
+            else -> rawRovortexUrl
         }
 
-        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleClientId\"")
-        buildConfigField("String", "SPB_URL", "\"$spbUrl\"")
-        buildConfigField("String", "ANON_KEY", "\"$anonKey\"")
+        buildConfigField("String", "ROVORTEX_URL", "\"$rovortexUrl\"")
     }
 
     signingConfigs {
@@ -143,8 +127,8 @@ dependencies {
     // Domain contracts + models (repository interfaces, pure domain models)
     implementation(project(":domain"))
 
-    // Supabase implementation of the domain contracts
-    implementation(project(":backend-supabase"))
+    // Rovortex implementation of the domain contracts
+    implementation(project(":backend-rovortex"))
 
     // Preferences DataStore infrastructure (stores / PreferencesRepository)
     implementation(project(":store"))

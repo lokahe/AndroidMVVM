@@ -101,7 +101,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         L.d("MainActivity") { "onCreate: ${intent.data}" }
-        intent.data?.let { viewModel.handleMagicLink(it) }
     }
 }
 

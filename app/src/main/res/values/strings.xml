@@ -84,4 +84,10 @@
     <string name="reply">reply</string>
     <string name="send">send</string>
     <string name="upload_success">upload success</string>
+    <string name="username">Username</string>
+    <string name="invalid_username_format">3-32 chars, start with a letter, only letters/digits/_</string>
+    <string name="invalid_password_format">Password must be 8-128 characters</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="have_account">Already have an account? Sign in</string>
+    <string name="no_account">No account yet? Sign up</string>
 </resources>

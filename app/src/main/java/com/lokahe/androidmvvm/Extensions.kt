@@ -50,7 +50,7 @@ fun Int.str(): String = if (isStringRes()) application.getString(this) else this
 fun String.emailCover() = this.replace("(?<=.).(?=.*@.)".toRegex(), "*")
 fun String.emptyNull(): String? = this.ifEmpty { null }
 fun String.toMillis(): Long {
-    // Supabase returns ISO_OFFSET_DATE_TIME
+    // Backends return RFC3339 / ISO_OFFSET_DATE_TIME timestamps
     val odt = OffsetDateTime.parse(this)
     return odt.toInstant().toEpochMilli()
 }

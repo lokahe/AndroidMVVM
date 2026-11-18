@@ -5,7 +5,6 @@ import android.util.Patterns.EMAIL_ADDRESS
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,17 +20,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,9 +48,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -56,8 +61,7 @@ import com.lokahe.androidmvvm.AVATARS
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.ui.widget.EmailField
-import com.lokahe.androidmvvm.ui.widget.OtpInputField
+import com.lokahe.androidmvvm.ui.widget.GithubWebViewDialog
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
@@ -181,9 +185,24 @@ fun SignOutDialog() {
 @Composable
 fun SignInDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
-    val context = LocalContext.current
+    var isSignUp by remember { mutableStateOf(false) }
+    var showGithubWebView by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    val verifyEmail by viewModel.verifyEmail
+    var password by remember { mutableStateOf("") }
+    var passwordRepeat by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    val usernameValid = username.matches(Regex("^[A-Za-z][A-Za-z0-9_]{2,31}$"))
+    val emailValid = EMAIL_ADDRESS.matcher(email).matches()
+    val passwordValid = password.length in 8..128
+    val passwordMatch = password == passwordRepeat
+    val canSubmit = if (isSignUp) {
+        usernameValid && emailValid && passwordValid && passwordMatch
+    } else {
+        loginValid(email, passwordValid)
+    }
+
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
         title = {
@@ -195,83 +214,135 @@ fun SignInDialog() {
                     imageVector = Icons.AutoMirrored.Filled.Login,
                     contentDescription = stringResource(R.string.sign)
                 )
-                if (verifyEmail.isNotEmpty()) {
-                    Text(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .weight(1f)
-                            .basicMarquee(iterations = Int.MAX_VALUE),
-                        text = verifyEmail,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        softWrap = false // Ensure text doesn't wrap so it can scroll
-                    )
-                    IconButton(
-                        modifier = Modifier.size(30.dp).padding(0.dp),
-                        onClick = { viewModel.resetVerifyEmail() }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_edit_24),
-                            contentDescription = R.string.edit.toString(),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                Text(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    text = stringResource(if (isSignUp) R.string.sign_up else R.string.sign_in),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         },
         text = {
             Column {
-                if (verifyEmail.isEmpty()) EmailField(email, { email = it })
-                else OtpInputField { viewModel.verifyEmail(verifyEmail, it) }
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
+                if (isSignUp) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = username,
+                        onValueChange = { username = it },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (username.isEmpty() || usernameValid) R.string.username
+                                    else R.string.invalid_username_format
+                                )
+                            )
+                        },
+                        isError = username.isNotEmpty() && !usernameValid,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = email,
+                        onValueChange = { email = it },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (email.isEmpty() || emailValid) R.string.email
+                                    else R.string.invalid_email_format
+                                )
+                            )
+                        },
+                        isError = email.isNotEmpty() && !emailValid,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        singleLine = true
+                    )
+                } else {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text(stringResource(R.string.email)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        singleLine = true
+                    )
+                }
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = password,
+                    onValueChange = { password = it },
+                    label = {
+                        Text(
+                            stringResource(
+                                if (password.isEmpty() || passwordValid) R.string.password
+                                else R.string.invalid_password_format
+                            )
+                        )
+                    },
+                    isError = password.isNotEmpty() && !passwordValid,
+                    visualTransformation =
+                        if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Filled.Visibility
+                                else Icons.Filled.VisibilityOff,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true
+                )
+                if (isSignUp) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = passwordRepeat,
+                        onValueChange = { passwordRepeat = it },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (passwordRepeat.isEmpty() || passwordMatch)
+                                        R.string.password_repeat
+                                    else R.string.passwords_do_not_match
+                                )
+                            )
+                        },
+                        isError = passwordRepeat.isNotEmpty() && !passwordMatch,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true
+                    )
+                }
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
                     IconButton(
-                        onClick = { viewModel.signWithTwitter() },
+                        onClick = { showGithubWebView = true },
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .background(MaterialTheme.colorScheme.background)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_x), // You need to add ic_google.xml to res/drawable
-                            contentDescription = "X", // Provide a content description for accessibility
+                            painter = painterResource(id = R.drawable.ic_github),
+                            contentDescription = "GitHub",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    IconButton(
-                        onClick = { viewModel.signWithGoogle(context = context) },
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.background)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_google), // You need to add ic_google.xml to res/drawable
-                            contentDescription = "Google", // Provide a content description for accessibility
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    IconButton(
-                        onClick = { viewModel.signWithGithub() },
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.background)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_github), // You need to add ic_google.xml to res/drawable
-                            contentDescription = "Google", // Provide a content description for accessibility
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                }
+                TextButton(onClick = { isSignUp = !isSignUp }) {
+                    Text(
+                        stringResource(if (isSignUp) R.string.have_account else R.string.no_account),
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         },
         confirmButton = {
-            if (verifyEmail.isEmpty()) {
-                TextButton(
-                    enabled = EMAIL_ADDRESS.matcher(email).matches(),
-                    onClick = { viewModel.sign(email) }
-                ) {
-                    Text(stringResource(R.string.confirm))
+            TextButton(
+                enabled = canSubmit,
+                onClick = {
+                    if (isSignUp) viewModel.signUp(username, email, password)
+                    else viewModel.signIn(email, password)
                 }
+            ) {
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
@@ -282,7 +353,16 @@ fun SignInDialog() {
             }
         }
     )
+
+    if (showGithubWebView) {
+        GithubWebViewDialog(onDismiss = { showGithubWebView = false })
+    }
 }
+
+/** Login accepts either a valid email or a username (rovortex rule). */
+private fun loginValid(login: String, fallback: Boolean): Boolean =
+    EMAIL_ADDRESS.matcher(login).matches() ||
+        login.matches(Regex("^[A-Za-z][A-Za-z0-9_]{2,31}$")) && fallback
 
 @Composable
 fun AvatarSelectDialog() {

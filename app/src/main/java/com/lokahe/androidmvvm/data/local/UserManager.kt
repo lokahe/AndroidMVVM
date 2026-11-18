@@ -8,7 +8,6 @@ import com.google.gson.Gson
 import com.lokahe.androidmvvm.addOrRemove
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
-import com.lokahe.auth.PkceStore
 import com.lokahe.auth.Session
 import com.lokahe.auth.TokenStore
 import com.lokahe.domain.model.Following
@@ -24,14 +23,13 @@ import javax.inject.Singleton
 /**
  * App-side session/profile facade.
  *
- * Token credentials and the PKCE verifier are delegated to the backend-neutral
- * [TokenStore] / [PkceStore] (:auth); this class only owns the user profile
- * JSON and UI-derived state (color seed). Swapping backends never touches it.
+ * Token credentials are delegated to the backend-neutral [TokenStore]
+ * (:auth); this class only owns the user profile JSON and UI-derived state
+ * (color seed). Swapping backends never touches it.
  */
 @Singleton
 class UserManager @Inject constructor(
     private val tokenStore: TokenStore,
-    private val pkceStore: PkceStore,
     @Named("user_prefs") private val userStore: DataStore<Preferences>
 ) {
     private val gson = Gson()
@@ -57,10 +55,6 @@ class UserManager @Inject constructor(
             )
         )
     }
-
-    suspend fun saveCodeVerifier(codeVerifier: String) = pkceStore.save(codeVerifier)
-
-    val codeVerifierFlow: Flow<String?> = pkceStore.codeVerifierFlow
 
     // ---- user profile ----
 
@@ -130,7 +124,6 @@ class UserManager @Inject constructor(
      */
     suspend fun clearUser() {
         tokenStore.clear()
-        pkceStore.clear()
         userStore.edit { prefs ->
             prefs.remove(USER_DATA_KEY)
             prefs.remove(USER_COLOR_SEED_KEY)

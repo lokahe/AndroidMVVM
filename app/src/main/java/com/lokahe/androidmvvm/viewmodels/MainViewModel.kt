@@ -1,31 +1,23 @@
 package com.lokahe.androidmvvm.viewmodels
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
+import android.webkit.CookieManager
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import com.lokahe.androidmvvm.MyApplication
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.database.model.Person
-import com.lokahe.database.repository.DataBaseRepository
-import com.lokahe.store.repository.PreferencesRepository
 import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
-import com.lokahe.auth.AuthProvider
-import com.lokahe.auth.Pkce
+import com.lokahe.database.model.Person
+import com.lokahe.database.repository.DataBaseRepository
 import com.lokahe.domain.repository.AuthRepository
 import com.lokahe.domain.repository.UserRepository
 import com.lokahe.log.L
+import com.lokahe.store.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
-import jakarta.inject.Named
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -34,8 +26,7 @@ class MainViewModel @Inject constructor(
     private val dbRepository: DataBaseRepository,
     authRepository: AuthRepository,
     userRepository: UserRepository,
-    userManager: UserManager,
-    @Named("google") private val googleProvider: AuthProvider
+    userManager: UserManager
 ) : BaseViewModel(repository, authRepository, userRepository, userManager) {
 
     init {
@@ -51,7 +42,7 @@ class MainViewModel @Inject constructor(
                 // Verify with server
                 authRepository.verifyToken(token).cole()
                     .onFailure {
-                        if (it.code == 403) {
+                        if (it.code == 401 || it.code == 403) {
                             refreshToken()
                         } else {
                             toast(it.message)
@@ -65,71 +56,52 @@ class MainViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            getAccessToken()?.emptyNull()?.let { authRepository.signOut(it).cole() }
+            val refreshToken = userManager.currentSession()?.refreshToken
+            getAccessToken()?.emptyNull()?.let { token ->
+                authRepository.signOut(token, refreshToken ?: "").cole()
+            }
             userManager.clearUser()
         }
     }
 
-    fun signWithTwitter() {
-        // This tells Android: "Open the real browser with this URL"
-        MyApplication.application.startActivity(
-            Intent(
-                Intent.ACTION_VIEW,
-                authRepository.buildAuthorizeUrl(provider = "x", codeChallenge = null).toUri()
-            ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
-    }
-
-    fun signWithGithub() {
+    fun signIn(login: String, password: String) {
         viewModelScope.launch {
-            val codeVerifier =
-                Pkce.generateCodeVerifier().apply { userManager.saveCodeVerifier(this) }
-            L.d("signWithGithub") { "codeVerifier: $codeVerifier" }
-            MyApplication.application.startActivity(
-                Intent(
-                    Intent.ACTION_VIEW,
-                    authRepository.buildAuthorizeUrl(
-                        provider = "github",
-                        codeChallenge = Pkce.generateCodeChallenge(codeVerifier)
-                    ).toUri()
-                ).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
-        }
-    }
-
-    fun signWithGoogle(context: Context) {
-        viewModelScope.launch {
-            val idToken = googleProvider.signIn(context)
-            if (idToken == null) {
-                toast(R.string.unkown_error.str())
-                return@launch
-            }
-            authRepository.signInWithIdToken(
-                idToken = idToken,
-                provider = googleProvider.id,
-                nonce = null
-            ).cole()
+            authRepository.signInWithPassword(login.trim(), password).cole()
                 .onSuccess { save(it) }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
 
-
-    fun sign(email: String) {
+    fun signUp(username: String, email: String, password: String) {
         viewModelScope.launch {
-            authRepository.requestOtp(email).cole().onSuccess {
-                toast("Verify email sent, please confirm your email.") // TODO: R.string
-                _verifyEmail.value = email
-            }.onFailure { toast(it.message) }
+            authRepository.signUp(username.trim(), email.trim(), password).cole()
+                .onSuccess { save(it) }
+                .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
 
-    fun verifyEmail(email: String, token: String) {
-        viewModelScope.launch {
-            authRepository.verifyOtp(email, token).cole().onSuccess { it -> save(it) }
-                .onFailure { toast(it.message) }
-                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+    // ---- GitHub OAuth (in-app WebView, intercepts the gateway callback JSON) ----
+
+    /** Launch point handed to the WebView screen. */
+    fun githubAuthorizeUrl(): String = authRepository.buildAuthorizeUrl("github")
+
+    /** Called by the WebView screen with the raw JSON captured at the callback URL. */
+    fun onGitHubCallback(body: String) {
+        L.d("onGitHubCallback") { "body: $body" }
+        val auth = authRepository.parseOAuthResponse(body)
+        if (auth == null) {
+            toast(R.string.unkown_error.str())
+            return
         }
+        viewModelScope.launch { save(auth) }
+    }
+
+    /** Clear GitHub cookies so the next sign-in can pick a different account. */
+    fun clearGitHubCookies() {
+        CookieManager.getInstance().removeAllCookies(null)
+        CookieManager.getInstance().flush()
     }
 
     fun fetchFollowingIds(followerId: String, onResult: (List<String>) -> Unit) {
@@ -174,13 +146,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // State for the check is signed up
-    private val _verifyEmail = mutableStateOf("")
-    val verifyEmail: State<String> = _verifyEmail
-    fun resetVerifyEmail() {
-        _verifyEmail.value = ""
-    }
-
     // State for the list of persons (Database)
     private val _persons = mutableStateOf<List<Person>>(emptyList())
     val persons: State<List<Person>> = _persons
@@ -204,37 +169,5 @@ class MainViewModel @Inject constructor(
 
     fun addRandomPerson() {
         addPerson(Utils.randomPerson())
-    }
-
-    fun handleMagicLink(uri: Uri) {
-        // 1. Get the part after the '#'
-        uri.fragment?.let { fragment ->
-            // 2. Convert "key=value&key2=value2" into a Map
-            val params = fragment.split("&").associate {
-                val (key, value) = it.split("=")
-                key to value
-            }
-//            val type = params["type"]
-//            if (type == "magiclink") {
-            val accessToken = params["access_token"]
-            val expiresAt = params["expires_at"]?.toLong()
-            val refreshToken = params["refresh_token"]
-            accessToken?.emptyNull()?.let {
-                viewModelScope.launch { save(it, expiresAt, refreshToken) }
-            } ?: params["error_description"]?.emptyNull()?.let { toast(it) }
-//            }
-        }
-        uri.getQueryParameter("code")?.emptyNull()?.let { code ->
-            viewModelScope.launch {
-                userManager.codeVerifierFlow.firstOrNull()?.emptyNull()
-                    ?.let { codeVerifier ->
-                        L.d("handleMagicLink") { "codeVerifier: $codeVerifier" }
-                        authRepository.exchangeCode(code, codeVerifier).cole()
-                            .onSuccess { save(it) }
-                            .onFailure { toast(it.message) }
-                            .onException { toast(it.message ?: R.string.unkown_error.str()) }
-                    }
-            }
-        }
     }
 }

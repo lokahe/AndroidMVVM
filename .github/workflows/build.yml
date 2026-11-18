@@ -33,9 +33,7 @@ jobs:
 
       - name: Build with Gradle
         env:
-          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          SPB_URL: ${{ secrets.SPB_URL }}
-          ANON_KEY: ${{ secrets.ANON_KEY }}
+          ROVORTEX_URL: ${{ secrets.ROVORTEX_URL }}
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
