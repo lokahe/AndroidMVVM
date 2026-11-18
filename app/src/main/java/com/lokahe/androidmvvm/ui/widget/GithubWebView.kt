@@ -64,18 +64,12 @@ fun GithubWebViewDialog(onDismiss: () -> Unit) {
                         settings.domStorageEnabled = true
                         @SuppressLint("SetJavaScriptEnabled")
                         webViewClient = object : android.webkit.WebViewClient() {
+                            // Let every navigation (including the callback page)
+                            // load normally — the capture happens in onPageFinished.
                             override fun shouldOverrideUrlLoading(
                                 view: WebView?,
                                 request: WebResourceRequest?
-                            ): Boolean {
-                                val url = request?.url?.toString() ?: return false
-                                if (url.contains(GithubWebViewContract.CALLBACK_PREFIX)) {
-                                    view?.stopLoading()
-                                    errorText = "Unexpected callback without body"
-                                    return true
-                                }
-                                return false
-                            }
+                            ): Boolean = false
 
                             override fun onPageFinished(view: WebView?, url: String?) {
                                 if (url != null && url.contains(GithubWebViewContract.CALLBACK_PREFIX)) {
