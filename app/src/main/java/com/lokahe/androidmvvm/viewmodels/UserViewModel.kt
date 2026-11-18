@@ -2,7 +2,7 @@ package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.store.repository.PreferencesRepository
 import com.lokahe.domain.model.Followers
 import com.lokahe.domain.model.Following
 import com.lokahe.domain.model.User

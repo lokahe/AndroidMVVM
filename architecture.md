@@ -4,7 +4,7 @@
 
 ## 1. 项目概览
 
-一个基于 **MVVM + Jetpack Compose** 的 Android 社交类应用，支持邮箱 OTP 登录与 Google 登录。项目采用 Gradle 多模块 + Version Catalog 管理依赖：通用 HTTP 基础设施（`:http`）、认证凭据（`:auth`）、后端中立的领域契约（`:domain`）均已抽取为独立模块，Supabase 具体实现隔离在 `:backend-supabase` 中——UI/ViewModel 层不感知任何 Supabase 类型。
+一个基于 **MVVM + Jetpack Compose** 的 Android 社交类应用，支持邮箱 OTP 登录与 Google 登录。项目采用 Gradle 多模块 + Version Catalog 管理依赖：通用 HTTP 基础设施（`:http`）、认证凭据（`:auth`）、后端中立的领域契约（`:domain`）均已抽取为独立模块，Supabase 具体实现隔离在 `:backend-supabase` 中——UI/ViewModel 层不感知任何 Supabase 类型。本地存储同样模块化：偏好（`:store`，DataStore）与本地数据库（`:database`，Room）。
 
 | 项 | 值 |
 |---|---|
@@ -26,6 +26,8 @@ AndroidMVVM/
 ├── backend-supabase/ # Supabase 实现（DTO/映射/Retrofit + 仓库绑定，可替换）
 ├── http/             # 通用 HTTP 基础设施模块（无业务逻辑）
 ├── log/              # 统一日志模块（级别管理 + 可插拔输出端）
+├── store/            # 本地偏好存储模块（DataStore 双 store + PreferencesRepository）
+├── database/         # 本地数据库模块（Room 实体/DAO/AppDatabase/DataBaseRepository）
 └── gradle/
     └── libs.versions.toml   # Version Catalog，统一管理依赖版本
 ```
@@ -38,11 +40,8 @@ AndroidMVVM/
 com.lokahe.androidmvvm/
 ├── MyApplication.kt          # @HiltAndroidApp 入口
 ├── data/
-│   ├── local/                # Room（AppDatabase + DAO）、DataStore（UserManager、DataStoreExtensions）
-│   ├── models/               # 本地实体（Person、Post、UserPreferences）
-│   └── repository/           # DataBaseRepository（Room）、PreferencesRepository（DataStore）
-├── di/                       # Hilt 模块：DataBaseModule、PreferencesModule（含 @Named("user_prefs") DataStore）
-├── viewmodels/               # BaseViewModel（依赖 :domain 契约）及业务 ViewModel（Main / Post / User / Settings）
+│   └── local/                # UserManager —— app 侧会话/档案 facade（委托 :auth 存储 + 注入 UI 取色）
+├── viewmodels/               # BaseViewModel（依赖 :domain 契约 + :store 仓库）及业务 ViewModel（Main / Post / User / Settings）
 ├── ui/
 │   ├── screens/              # Compose 页面 + Nav.kt（Navigation 3 路由定义）
 │   ├── activites/            # MainActivity（单 Activity 入口）、SettingsActivity
@@ -136,6 +135,34 @@ com.lokahe.androidmvvm/
 
 ---
 
+### 2.8 `:store` — 本地偏好存储模块
+
+包名 `com.lokahe.store`，封装全部 DataStore 基础设施（不含业务逻辑）：
+
+| 文件 | 职责 |
+|---|---|
+| `data/DataStoreExtensions.kt` | 两个 Preferences DataStore 委托：`Context.dataStore`（"settings"，通用设置）与 `Context.userStore`（"user_prefs"，会话/档案） |
+| `model/UserPreferences.kt` | 偏好模型（用户名/年龄/性别/登录态/头像取色/暗色模式） |
+| `repository/PreferencesRepository.kt` | "settings" store 的类型化读写（`observeUserPreferences` + 各 update 方法） |
+| `di/PreferencesModule.kt` | Hilt 模块：提供两个 DataStore；`@Named("user_prefs")` 供 app 侧 `UserManager` 与 `:auth` 的 TokenStore/PkceStore 实现（Hilt 图在 `:app` 装配时汇合，无编译期耦合） |
+
+依赖：`datastore-preferences`、coroutines、Hilt；**不依赖任何业务模块**。app 侧 `UserManager` facade（委托 `:auth` 存储 + 注入 UI 取色派生）有意留在 `:app`（见 2.1），避免 `:store` 反向依赖应用层。
+
+### 2.9 `:database` — 本地数据库模块
+
+包名 `com.lokahe.database`，封装全部 Room 基础设施：
+
+| 文件 | 职责 |
+|---|---|
+| `model/Person.kt` / `Post.kt` | Room 实体（persons / posts 表；原 Gson/kotlinx 序列化注解已移除，Room 列名由字段名决定，schema 不变） |
+| `dao/PersonDao.kt` / `PostDao.kt` | DAO（suspend 查询） |
+| `AppDatabase.kt` | `@Database(version 1, exportSchema = false)` |
+| `repository/DataBaseRepository.kt` | 对 DAO 的薄封装（Person/Post 增查） |
+| `di/DataBaseModule.kt` | Hilt 模块：构建 `app_database.db`；debug 构建挂 `setQueryCallback` → `L.d("RoomLog")` 查询日志（使用模块自身 `BuildConfig`） |
+
+依赖：Room（runtime/ktx/compiler-KSP）、Hilt、`:log`；表名/列名与原 app 版本一致（无 schema 迁移需求）。
+
+
 ## 3. 整体架构（MVVM）
 
 ```
@@ -210,6 +237,8 @@ ANON_KEY=eyJhbGciOi...
 GOOGLE_WEB_CLIENT_ID=xxxx.apps.googleusercontent.com
 ```
 
+缺失项不阻断构建，而是输出 Gradle 配置期警告（issue #3 防护）：`SPB_URL` 缺失时注入占位值 `https://supabase-not-configured.invalid/`（保留 TLD，请求会快速失败而非启动崩溃），并自动补齐尾斜杠（Retrofit 要求）；`ANON_KEY` / `GOOGLE_WEB_CLIENT_ID` 缺失时仅警告。`:http` 的 `provideRetrofit` 对空白 baseUrl 做二次 fail-fast 校验。
+
 ---
 
 ## 6. 构建说明
@@ -234,6 +263,8 @@ gradlew.bat :http:assembleDebug         # 仅构建 :http 模块
 | 2026-10-14 | 新增本架构文档。 |
 | 2026-10-15 | 新增 `:log` 统一日志模块（级别管理、可插拔 Sink、惰性求值）；`MyApplication` 与 `:http/safeApiCall` 接入，同日完成全项目存量 `Log.x` 迁移（7 文件 13 处：GoogleAuther、UserManager、DataBaseModule、MainActivity、SendPostScreen、MainViewModel、PostViewModel）；后续规划 MMKV 持久化与崩溃级别日志上报。 |
 | 2026-10-16 | 数据层解耦 Supabase：新增 `:auth`（Session、TokenStore/PkceStore、AuthProvider SPI）、`:domain`（中立模型 + Auth/User/Post 仓库接口）、`:backend-supabase`（DTO/映射/Retrofit 实现 + Hilt 绑定）三个模块；app 侧完成迁移——删除 `data/remote`、`data/models/{supabase,auth}`、`data/auth/GoogleAuther`、`HttpRepository`、`NetWorkModule`；`UserManager` 改为委托 `:auth` 存储的中立 facade（注入 `@Named("user_prefs")` DataStore），`BaseViewModel` 构造改为 (PreferencesRepository, AuthRepository, UserRepository, UserManager)，全部 ViewModel/UI 迁移至 domain 模型；`Utils` 移除 PKCE 助手（由 `:auth/Pkce` 接管）；敏感配置 buildConfigField 随迁至 `:auth` / `:backend-supabase`。 |
+| 2026-10-16 | 本地存储模块化：新增 `:store`（DataStore 双 store `settings`/`user_prefs`、PreferencesRepository、PreferencesModule）与 `:database`（Room 实体 Person/Post、DAO、AppDatabase、DataBaseRepository、DataBaseModule）两个模块；app 侧删除 `data/models`、`data/local`（AppDatabase/DAO/DataStoreExtensions）、`data/repository`、`di/{DataBase,Preferences}Module`，`UserManager` facade 留在 `:app`（委托 :auth 存储 + UI 取色派生，避免 :store 反向依赖应用层）；app 移除 Room 直连依赖。同批移植 issue #3 修复：`:backend-supabase` SPB_URL 缺失时注入占位 `https://supabase-not-configured.invalid/`（尾斜杠规范化）并输出构建警告，`:auth` GOOGLE_WEB_CLIENT_ID 缺失警告，`:http` provideRetrofit 空 baseUrl fail-fast。 |
+
 
 ## 8. 后续演进方向（待定）
 

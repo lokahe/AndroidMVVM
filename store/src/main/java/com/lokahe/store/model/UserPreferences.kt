@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.data.models
+package com.lokahe.store.model
 
 data class UserPreferences(
     val userName: String,

@@ -23,7 +23,7 @@ import com.lokahe.androidmvvm.GENDERS
 import com.lokahe.androidmvvm.MyApplication.Companion.application
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.argb
-import com.lokahe.androidmvvm.data.models.Person
+import com.lokahe.database.model.Person
 import com.lokahe.androidmvvm.isNotNullOrBlank
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme

@@ -7,8 +7,8 @@ import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.curSecond
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.models.UserPreferences
-import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.store.model.UserPreferences
+import com.lokahe.store.repository.PreferencesRepository
 import com.lokahe.domain.model.AuthResult
 import com.lokahe.domain.model.Following
 import com.lokahe.domain.model.User

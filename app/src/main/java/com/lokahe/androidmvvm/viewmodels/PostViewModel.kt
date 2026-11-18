@@ -4,8 +4,8 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.repository.DataBaseRepository
-import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.database.repository.DataBaseRepository
+import com.lokahe.store.repository.PreferencesRepository
 import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.androidmvvm.str
 import com.lokahe.androidmvvm.toast

@@ -20,6 +20,8 @@ include(
     ":domain",
     ":backend-supabase",
     ":http",
-    ":log"
+    ":log",
+    ":store",
+    ":database"
 )
  

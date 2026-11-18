@@ -21,10 +21,26 @@ android {
         if (propertiesFile.exists()) {
             properties.load(propertiesFile.inputStream())
         }
-        val spbUrl = System.getenv("SPB_URL") ?:
+        val spbUrlRaw = System.getenv("SPB_URL") ?:
             properties.getProperty("SPB_URL") ?: ""
+        // Issue #3: an empty SPB_URL used to crash Retrofit.baseUrl() at startup.
+        // Fall back to a reserved-TLD placeholder so the app boots and fails fast
+        // (with an actionable message) on the first network call instead.
+        val spbUrl = if (spbUrlRaw.isBlank()) {
+            logger.warn(
+                "SPB_URL is not configured (env/local.properties). Using placeholder " +
+                        "'https://supabase-not-configured.invalid/' - requests will fail fast until it is set (issue #3)."
+            )
+            "https://supabase-not-configured.invalid/"
+        } else {
+            // Retrofit requires a base URL that ends with '/'
+            if (spbUrlRaw.endsWith("/")) spbUrlRaw else "$spbUrlRaw/"
+        }
         val anonKey = System.getenv("ANON_KEY") ?:
             properties.getProperty("ANON_KEY") ?: ""
+        if (anonKey.isBlank()) {
+            logger.warn("ANON_KEY is not configured (env/local.properties). Backend requests will return 401 until it is set.")
+        }
         buildConfigField("String", "SPB_URL", "\"$spbUrl\"")
         buildConfigField("String", "ANON_KEY", "\"$anonKey\"")
     }

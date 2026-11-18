@@ -125,10 +125,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 //    implementation(libs.androidx.browser)
 
-    // Room database
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
+    // Room database moved to :database (entities/DAOs/DataBaseRepository)
     //hilt
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -148,6 +145,12 @@ dependencies {
 
     // Supabase implementation of the domain contracts
     implementation(project(":backend-supabase"))
+
+    // Preferences DataStore infrastructure (stores / PreferencesRepository)
+    implementation(project(":store"))
+
+    // Local Room database (entities / DAOs / DataBaseRepository)
+    implementation(project(":database"))
 
     // Retrofit / OkHttp / Gson now come transitively from :http (:backend-supabase owns the API)
     // Test

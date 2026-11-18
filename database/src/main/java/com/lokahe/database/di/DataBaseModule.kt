@@ -1,11 +1,11 @@
-package com.lokahe.androidmvvm.di
+package com.lokahe.database.di
 
 import android.content.Context
 import androidx.room.Room
-import com.lokahe.androidmvvm.BuildConfig
-import com.lokahe.androidmvvm.data.local.AppDatabase
-import com.lokahe.androidmvvm.data.local.dao.PersonDao
-import com.lokahe.androidmvvm.data.local.dao.PostDao
+import com.lokahe.database.BuildConfig
+import com.lokahe.database.AppDatabase
+import com.lokahe.database.dao.PersonDao
+import com.lokahe.database.dao.PostDao
 import com.lokahe.log.L
 import dagger.Module
 import dagger.Provides

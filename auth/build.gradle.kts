@@ -24,6 +24,9 @@ android {
         }
         val googleClientId = System.getenv("GOOGLE_WEB_CLIENT_ID") ?:
             properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: ""
+        if (googleClientId.isBlank()) {
+            logger.warn("GOOGLE_WEB_CLIENT_ID is not configured (env/local.properties). Google sign-in will fail until it is set.")
+        }
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleClientId\"")
     }
 

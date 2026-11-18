@@ -1,4 +1,4 @@
-package com.lokahe.androidmvvm.data.repository
+package com.lokahe.store.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.lokahe.androidmvvm.data.models.UserPreferences
+import com.lokahe.store.model.UserPreferences
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import kotlinx.coroutines.flow.Flow

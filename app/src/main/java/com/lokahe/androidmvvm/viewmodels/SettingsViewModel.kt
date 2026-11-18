@@ -2,7 +2,7 @@ package com.lokahe.androidmvvm.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import com.lokahe.androidmvvm.data.local.UserManager
-import com.lokahe.androidmvvm.data.repository.PreferencesRepository
+import com.lokahe.store.repository.PreferencesRepository
 import com.lokahe.domain.repository.AuthRepository
 import com.lokahe.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

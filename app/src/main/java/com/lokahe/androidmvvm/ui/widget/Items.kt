@@ -28,7 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.data.models.Person
+import com.lokahe.database.model.Person
 import com.lokahe.androidmvvm.emptyNull
 import com.lokahe.domain.model.Post
 import com.lokahe.domain.model.User

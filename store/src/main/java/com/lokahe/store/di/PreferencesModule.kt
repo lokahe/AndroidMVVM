@@ -1,10 +1,10 @@
-package com.lokahe.androidmvvm.di
+package com.lokahe.store.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.lokahe.androidmvvm.data.local.dataStore
-import com.lokahe.androidmvvm.data.local.userStore
+import com.lokahe.store.data.dataStore
+import com.lokahe.store.data.userStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
