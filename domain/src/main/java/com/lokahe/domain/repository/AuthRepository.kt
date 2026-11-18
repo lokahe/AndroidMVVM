@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.Flow
  * in the implementation module. Swapping backends = re-binding this interface.
  */
 interface AuthRepository {
-    /** Exchange a platform credential (e.g. an OIDC id_token) for a session. */
-    fun signInWithIdToken(idToken: String, provider: String, nonce: String?): Flow<ApiResult<AuthResult>>
+    /** Sign in / register with email (or username) + password. */
+    fun signInWithPassword(login: String, password: String): Flow<ApiResult<AuthResult>>
 
-    /** OAuth/PKCE authorization-code exchange (web-based providers). */
-    fun exchangeCode(code: String, codeVerifier: String): Flow<ApiResult<AuthResult>>
+    /** Create an account with username + email + password; returns a session. */
+    fun signUp(username: String, email: String, password: String): Flow<ApiResult<AuthResult>>
 
     /** Validate the current access token and fetch the signed-in user. */
     fun verifyToken(token: String): Flow<ApiResult<User>>
@@ -25,18 +25,18 @@ interface AuthRepository {
     fun refreshToken(refreshToken: String): Flow<ApiResult<AuthResult>>
 
     /** Revoke the session server-side. */
-    fun signOut(token: String): Flow<ApiResult<Any>>
-
-    /** Send a sign-in OTP (magic link) to [email]. */
-    fun requestOtp(email: String): Flow<ApiResult<Any>>
-
-    /** Verify an OTP token received via email. */
-    fun verifyOtp(email: String, token: String): Flow<ApiResult<AuthResult>>
+    fun signOut(token: String, refreshToken: String): Flow<ApiResult<Any>>
 
     /**
-     * Build the backend's web-authorize URL that starts a browser-based
-     * OAuth flow (the app handles the redirect via deep link).
-     * [codeChallenge] is appended when a PKCE flow is used.
+     * Start the browser-based OAuth flow for [provider] (e.g. "github").
+     * The caller presents the URL in a web view / browser and feeds the
+     * callback payload back via [parseOAuthResponse].
      */
-    fun buildAuthorizeUrl(provider: String, codeChallenge: String?): String
+    fun buildAuthorizeUrl(provider: String): String
+
+    /**
+     * Parse the OAuth callback payload (the JSON the backend renders at its
+     * callback URL) into an [AuthResult]; null when it is not a session.
+     */
+    fun parseOAuthResponse(body: String): AuthResult?
 }

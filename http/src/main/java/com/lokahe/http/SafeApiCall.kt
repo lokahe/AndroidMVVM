@@ -23,15 +23,36 @@ fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Flow<ApiResult<T>> {
                 else emit(ApiResult.Success(response.body()!!))
             } else {
                 L.d("safeApiCall") { "response: $response" }
-                // Parse errorBody to your data class
-                val errorBody = response.errorBody()?.string()
-                val apiError = Gson().fromJson(errorBody, ApiError::class.java)
-                    ?: ApiError(response.code(), "unknown", "Unknown error")
-                emit(ApiResult.Failure(apiError))
+                emit(ApiResult.Failure(parseError(response.code(), response.errorBody()?.string())))
             }
         } catch (e: Exception) {
             L.d("safeApiCall", e) { "e: ${e.message}" }
             emit(ApiResult.Exception(e))
         }
+    }
+}
+
+/**
+ * Parse an error body in either envelope shape:
+ * - Supabase-ish flat:   {"code":401,"error_code":"...","msg":"..."}
+ * - Rovortex nested:     {"error":{"code":"machine_code","message":"..."}}
+ */
+fun parseError(httpCode: Int, errorBody: String?): ApiError {
+    val fallback = ApiError(httpCode, "unknown", "Unknown error")
+    if (errorBody.isNullOrBlank()) return fallback
+    return try {
+        val gson = Gson()
+        val envelope = gson.fromJson(errorBody, ApiError.Envelope::class.java)
+        if (envelope?.error?.code != null || envelope?.error?.message != null) {
+            ApiError(
+                code = httpCode,
+                errorCode = envelope.error.code ?: "unknown",
+                message = envelope.error.message ?: "Unknown error"
+            )
+        } else {
+            gson.fromJson(errorBody, ApiError::class.java) ?: fallback
+        }
+    } catch (e: Exception) {
+        fallback
     }
 }

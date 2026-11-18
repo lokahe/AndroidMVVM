@@ -18,7 +18,7 @@ include(
     ":app",
     ":auth",
     ":domain",
-    ":backend-supabase",
+    ":backend-rovortex",
     ":http",
     ":log",
     ":store",

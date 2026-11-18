@@ -34,4 +34,17 @@ data class ApiError(
     val errorCode: String,
     @SerializedName("msg")
     val message: String
-)
+) {
+    /** Backend envelope: {"error":{"code":"machine_code","message":"human text"}}. */
+    data class Envelope(
+        @SerializedName("error")
+        val error: Inner?
+    ) {
+        data class Inner(
+            @SerializedName("code")
+            val code: String?,
+            @SerializedName("message")
+            val message: String?
+        )
+    }
+}
