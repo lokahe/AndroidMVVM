@@ -12,6 +12,7 @@ import com.lokahe.auth.Session
 import com.lokahe.auth.TokenStore
 import com.lokahe.domain.model.Following
 import com.lokahe.domain.model.User
+import com.lokahe.domain.model.avatar
 import com.lokahe.log.L
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -94,7 +95,7 @@ class UserManager @Inject constructor(
             L.d("saveUser") { "user: $user" }
             userStore.edit { prefs ->
                 prefs[USER_DATA_KEY] = gson.toJson(it)
-                Utils.calculateMainColor(it.avatarUrl)?.let { seed ->
+                Utils.calculateMainColor(it.avatar())?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
             }

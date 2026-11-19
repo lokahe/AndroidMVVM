@@ -8,7 +8,11 @@ import kotlinx.coroutines.flow.Flow
 
 /** User/profile contract — implementation-agnostic. */
 interface UserRepository {
+    /** Fetch the signed-in user's own profile (rovortex: GET /api/users/me). */
     fun fetchProfileById(token: String, id: String): Flow<ApiResult<Profile>>
+
+    /** Update the signed-in user's avatar URL (rovortex: PATCH profile). */
+    fun updateAvatar(token: String, url: String): Flow<ApiResult<Profile>>
 
     fun fetchProfilesByIds(token: String, ids: List<String>): Flow<ApiResult<List<Profile>>>
 

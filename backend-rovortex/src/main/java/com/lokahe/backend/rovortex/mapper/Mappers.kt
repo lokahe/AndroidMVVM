@@ -3,13 +3,16 @@ package com.lokahe.backend.rovortex.mapper
 import com.lokahe.auth.Session
 import com.lokahe.backend.rovortex.model.AuthResponse
 import com.lokahe.backend.rovortex.model.MeResponse
+import com.lokahe.backend.rovortex.model.ProfilePatch
 import com.lokahe.backend.rovortex.model.RovortexUser
 import com.lokahe.domain.model.AuthResult
+import com.lokahe.domain.model.Profile
 import com.lokahe.domain.model.User
 
 /**
- * DTO → domain mapping. Rovortex has no profile/follow system yet, so the
- * domain user carries the account fields and profile stays null.
+ * DTO → domain mapping. Rovortex exposes the profile via /api/users/me
+ * (display_name / avatar_url / bio / website_url); it is mapped onto the
+ * neutral domain Profile so the UI keeps a single source.
  */
 
 fun RovortexUser.toDomain(): User = User(
@@ -27,9 +30,41 @@ fun MeResponse.toDomain(): User = User(
     email = email,
     phone = null,
     name = username,
-    fullName = username,
-    avatarUrl = null,
-    profile = null
+    fullName = displayName ?: username,
+    avatarUrl = avatarUrl,
+    profile = Profile(
+        id = id,
+        name = displayName,
+        avatar = avatarUrl,
+        email = email,
+        phone = null,
+        address = null,
+        birth = null,
+        description = bio,
+        gender = null,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        lastSignInAt = null,
+        emailConfirmedAt = emailVerified?.toString(),
+        followers = null,
+        followings = null,
+        followingList = null
+    )
+)
+
+/** Double-Option PATCH: only fields explicitly set (even to null) are sent. */
+fun buildProfilePatch(
+    displayName: String? = null,
+    hasDisplayName: Boolean = false,
+    avatarUrl: String? = null,
+    hasAvatarUrl: Boolean = false,
+    bio: String? = null,
+    hasBio: Boolean = false
+): ProfilePatch = ProfilePatch(
+    displayName = if (hasDisplayName) displayName else null,
+    avatarUrl = if (hasAvatarUrl) avatarUrl else null,
+    bio = if (hasBio) bio else null,
+    websiteUrl = null
 )
 
 fun AuthResponse.toAuthResult(): AuthResult = AuthResult(

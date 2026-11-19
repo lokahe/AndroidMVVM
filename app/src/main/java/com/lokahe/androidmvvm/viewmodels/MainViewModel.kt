@@ -18,6 +18,7 @@ import com.lokahe.log.L
 import com.lokahe.store.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -82,6 +83,19 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun requestPasswordReset(email: String) {
+        viewModelScope.launch {
+            authRepository.requestPasswordReset(email).cole()
+                .onSuccess {
+                    // Anti-enumeration: the backend always answers 202 even for
+                    // unknown emails, so this hint is conditional on format only.
+                    toast(R.string.password_reset_sent.str())
+                }
+                .onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+        }
+    }
+
     // ---- GitHub OAuth (in-app WebView, intercepts the gateway callback JSON) ----
 
     /** Launch point handed to the WebView screen. */
@@ -126,9 +140,17 @@ class MainViewModel @Inject constructor(
 
     fun updateAvatar(url: String) {
         viewModelScope.launch {
-//            val objectId = userManager.userFlow.firstOrNull()?.objectId ?: ""
-//            val token = userManager.userTokenFlow.firstOrNull()
-//            if (objectId.isEmpty() || token.isNullOrEmpty()) return@launch
+            val token = getAccessToken() ?: return@launch
+            userRepository.updateAvatar(token, url).cole()
+                .onSuccess { profile ->
+                    // Persist through the same path as login so the color seed
+                    // is recalculated from the new avatar.
+                    userManager.userFlow.firstOrNull()?.let { current ->
+                        userManager.saveUser(current.copy(profile = profile))
+                    }
+                }
+                .onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
 

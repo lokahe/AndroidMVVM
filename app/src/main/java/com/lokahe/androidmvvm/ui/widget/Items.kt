@@ -28,10 +28,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
-import com.lokahe.database.model.Person
 import com.lokahe.androidmvvm.emptyNull
+import com.lokahe.database.model.Person
 import com.lokahe.domain.model.Post
 import com.lokahe.domain.model.User
+import com.lokahe.domain.model.avatar
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
 import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
 import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
@@ -143,7 +144,7 @@ fun UserItem(index: Int, user: User) {
             Row {
                 AvatarIcon(
                     modifier = Modifier.padding(end = 16.dp).size(50.dp),
-                    url = user.avatarUrl
+                    url = user.avatar()
                 )
                 Text(
                     modifier = Modifier.weight(1f).fillMaxWidth(),

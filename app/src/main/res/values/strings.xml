@@ -90,4 +90,7 @@
     <string name="passwords_do_not_match">Passwords do not match</string>
     <string name="have_account">Already have an account? Sign in</string>
     <string name="no_account">No account yet? Sign up</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="password_reset_sent">Reset link sent — check your inbox</string>
+    <string name="preset_avatar">Preset avatar</string>
 </resources>

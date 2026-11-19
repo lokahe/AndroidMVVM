@@ -28,6 +28,13 @@ interface AuthRepository {
     fun signOut(token: String, refreshToken: String): Flow<ApiResult<Any>>
 
     /**
+     * Ask the backend to email a password-reset link for [email].
+     * The response is always accepted (anti-enumeration); the actual reset
+     * happens in the browser via the emailed link.
+     */
+    fun requestPasswordReset(email: String): Flow<ApiResult<Any>>
+
+    /**
      * Start the browser-based OAuth flow for [provider] (e.g. "github").
      * The caller presents the URL in a web view / browser and feeds the
      * callback payload back via [parseOAuthResponse].

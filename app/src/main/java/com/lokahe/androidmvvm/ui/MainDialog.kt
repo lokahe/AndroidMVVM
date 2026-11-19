@@ -1,16 +1,12 @@
 package com.lokahe.androidmvvm.ui
 
-import android.net.Uri
 import android.util.Patterns.EMAIL_ADDRESS
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,11 +21,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -326,6 +320,14 @@ fun SignInDialog() {
                         )
                     }
                 }
+                if (!isSignUp) {
+                    TextButton(onClick = { viewModel.requestPasswordReset(email) }) {
+                        Text(
+                            stringResource(R.string.forgot_password),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
                 TextButton(onClick = { isSignUp = !isSignUp }) {
                     Text(
                         stringResource(if (isSignUp) R.string.have_account else R.string.no_account),
@@ -367,64 +369,39 @@ private fun loginValid(login: String, fallback: Boolean): Boolean =
 @Composable
 fun AvatarSelectDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
-    // Launcher for picking local image
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            viewModel.updateAvatar(it.toString())
-            viewModel.dismissDialog()
-        }
-    }
 
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
-        title = { Text(text = "Select Avatar") },
+        title = { Text(text = stringResource(R.string.preset_avatar)) },
         text = {
-            Column {
-                // 1. Grid of Predefined Avatars
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(AVATARS.size) { index ->
-                        val url = AVATARS[index]
-                        Box(
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(20))
-                                .clickable {
-                                    viewModel.updateAvatar(url)
-                                    viewModel.dismissDialog()
-                                }
-                        ) {
-                            AsyncImage(
-                                model = url,
-                                contentDescription = "Avatar $index",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = Crop
-                            )
-                        }
+            // Rovortex stores the avatar as a public http(s) URL only, so local
+            // gallery images cannot be used until an upload endpoint exists.
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(AVATARS.size) { index ->
+                    val url = AVATARS[index]
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(20))
+                            .clickable {
+                                viewModel.updateAvatar(url)
+                                viewModel.dismissDialog()
+                            }
+                    ) {
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "Avatar $index",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = Crop
+                        )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 2. Button to pick from Gallery
-                Button(
-                    onClick = { launcher.launch("image/*") },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = null,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(stringResource(R.string.pick_from_gallery))
                 }
             }
         },

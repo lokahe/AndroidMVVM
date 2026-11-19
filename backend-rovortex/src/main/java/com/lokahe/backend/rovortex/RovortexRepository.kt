@@ -1,9 +1,11 @@
 package com.lokahe.backend.rovortex
 
 import android.net.Uri
+import com.lokahe.backend.rovortex.mapper.buildProfilePatch
 import com.lokahe.backend.rovortex.mapper.toAuthResult
 import com.lokahe.backend.rovortex.mapper.toDomain
 import com.lokahe.backend.rovortex.model.AuthRequest
+import com.lokahe.backend.rovortex.model.PasswordResetRequest
 import com.lokahe.backend.rovortex.model.RefreshRequest
 import com.lokahe.backend.rovortex.model.RegisterRequest
 import com.lokahe.domain.model.AuthResult
@@ -72,6 +74,9 @@ class RovortexRepository @Inject constructor(
     override fun signOut(token: String, refreshToken: String): Flow<ApiResult<Any>> =
         safeApiCall { apiService.logout(RefreshRequest(refreshToken)) }
 
+    override fun requestPasswordReset(email: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.requestPasswordReset(PasswordResetRequest(email.trim())) }
+
     override fun buildAuthorizeUrl(provider: String): String = Api.authorizeUrl(provider)
 
     /**
@@ -81,10 +86,19 @@ class RovortexRepository @Inject constructor(
     override fun parseOAuthResponse(body: String): AuthResult? =
         GsonProvider.authResponse(body)?.takeIf { !it.token.isNullOrEmpty() }?.toAuthResult()
 
-    // ---- UserRepository (profile/follow not available on rovortex yet) ----
+    // ---- UserRepository (follow endpoints not available on rovortex yet) ----
 
     override fun fetchProfileById(token: String, id: String): Flow<ApiResult<Profile>> =
-        notImplemented()
+        safeApiCall { apiService.me(bearerToken = token.bearer) }
+            .asDomain { it.toDomain().profile!! }
+
+    override fun updateAvatar(token: String, url: String): Flow<ApiResult<Profile>> =
+        safeApiCall {
+            apiService.patchProfile(
+                bearerToken = token.bearer,
+                body = buildProfilePatch(avatarUrl = url, hasAvatarUrl = true)
+            )
+        }.asDomain { it.toDomain().profile!! }
 
     override fun fetchProfilesByIds(token: String, ids: List<String>): Flow<ApiResult<List<Profile>>> =
         notImplemented()
