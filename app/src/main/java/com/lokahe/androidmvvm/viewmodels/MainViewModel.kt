@@ -37,7 +37,6 @@ class MainViewModel @Inject constructor(
 
     // In-flight verified-signup state (step 1 done, waiting for the code)
     private var pendingSignupEmail: String? = null
-    private var pendingSignupCode: String? = null
 
     private fun autoSignIn() {
         viewModelScope.launch {
@@ -78,12 +77,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun signUp(email: String, password: String, username: String? = null) {
+    fun signUp(email: String, code: String, password: String) {
         viewModelScope.launch {
-            authRepository.confirmSignupCode(email.trim(), pendingSignupCode.orEmpty(), password, username)
+            authRepository.confirmSignupCode(email.trim(), code.trim(), password, null)
                 .cole()
                 .onSuccess {
-                    pendingSignupCode = null
+                    pendingSignupEmail = null
                     save(it)
                 }
                 .onFailure { toast(it.message) }
@@ -93,8 +92,8 @@ class MainViewModel @Inject constructor(
 
     /**
      * Step 1 of verified-only signup: email a 6-digit code + browser link.
-     * The code is held in memory and consumed by [signUp] together with the
-     * password the user picked (the code itself cannot create an account).
+     * The code is entered on step 2 and passed straight to [signUp]
+     * (the code itself cannot create an account).
      */
     fun requestSignup(email: String) {
         viewModelScope.launch {
@@ -106,15 +105,6 @@ class MainViewModel @Inject constructor(
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
-    }
-
-    fun consumeSignupCode(code: String): Boolean {
-        if (code.length != 6) {
-            toast(R.string.invalid_code_format.str())
-            return false
-        }
-        pendingSignupCode = code
-        return true
     }
 
     val pendingSignupEmailFlow get() = pendingSignupEmail

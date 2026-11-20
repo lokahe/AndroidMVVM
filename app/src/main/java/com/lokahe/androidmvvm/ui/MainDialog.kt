@@ -55,6 +55,7 @@ import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.ui.widget.OAuthWebViewDialog
+import com.lokahe.androidmvvm.ui.widget.OtpInputField
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
@@ -139,7 +140,6 @@ fun SignInDialog() {
     var isSignUp by remember { mutableStateOf(false) }
     var showGithubWebView by remember { mutableStateOf(false) }
     var showGoogleWebView by remember { mutableStateOf(false) }
-    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordRepeat by remember { mutableStateOf("") }
@@ -149,7 +149,6 @@ fun SignInDialog() {
     var codeSent by remember { mutableStateOf(false) }
     var code by remember { mutableStateOf("") }
 
-    val usernameValid = username.matches(Regex("^[A-Za-z][A-Za-z0-9_]{2,31}$"))
     val emailValid = EMAIL_ADDRESS.matcher(email).matches()
     val passwordValid = password.length in 8..128
     val passwordMatch = password == passwordRepeat
@@ -157,7 +156,7 @@ fun SignInDialog() {
         if (codeSent) {
             code.length == 6 && passwordValid && passwordMatch
         } else {
-            emailValid && (username.isEmpty() || usernameValid)
+            emailValid
         }
     } else {
         loginValid(email, passwordValid)
@@ -188,15 +187,7 @@ fun SignInDialog() {
                         text = stringResource(R.string.code_sent_to, viewModel.pendingSignupEmailFlow ?: email),
                         style = MaterialTheme.typography.bodySmall
                     )
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = code,
-                        onValueChange = { code = it.filter(Char::isDigit).take(6) },
-                        label = { Text(stringResource(R.string.verification_code)) },
-                        isError = code.isNotEmpty() && code.length < 6,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        singleLine = true
-                    )
+                    OtpInputField(modifier = Modifier.fillMaxWidth()) { code = it }
                 } else if (isSignUp) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
@@ -212,21 +203,6 @@ fun SignInDialog() {
                         },
                         isError = email.isNotEmpty() && !emailValid,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = username,
-                        onValueChange = { username = it },
-                        label = {
-                            Text(
-                                stringResource(
-                                    if (username.isEmpty() || usernameValid) R.string.username_optional
-                                    else R.string.invalid_username_format
-                                )
-                            )
-                        },
-                        isError = username.isNotEmpty() && !usernameValid,
                         singleLine = true
                     )
                 } else {
@@ -351,7 +327,7 @@ fun SignInDialog() {
                 onClick = {
                     if (isSignUp) {
                         if (codeSent) {
-                            viewModel.signUp(email, password, username.ifEmpty { null })
+                            viewModel.signUp(email, code, password)
                         } else {
                             viewModel.requestSignup(email)
                             codeSent = true

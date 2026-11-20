@@ -55,10 +55,7 @@
     <string name="sign_out_confirm">Confirm to sign out</string>
     <string name="refresh">refresh</string>
     <string name="username">Username</string>
-    <string name="username_optional">Username (optional)</string>
     <string name="login_hint">Email or username</string>
-    <string name="verification_code">6-digit code</string>
-    <string name="invalid_code_format">Enter the 6-digit code from the email</string>
     <string name="signup_code_sent">Verification sent — check your inbox</string>
     <string name="code_sent_to">Verification code sent to %1$s. It expires in 15 minutes.</string>
     <string name="back_to_signup">Wrong email? Back</string>
