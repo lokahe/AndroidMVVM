@@ -35,6 +35,10 @@ class MainViewModel @Inject constructor(
         autoSignIn()
     }
 
+    // In-flight verified-signup state (step 1 done, waiting for the code)
+    private var pendingSignupEmail: String? = null
+    private var pendingSignupCode: String? = null
+
     private fun autoSignIn() {
         viewModelScope.launch {
             // Get the saved token
@@ -74,14 +78,46 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun signUp(username: String, email: String, password: String) {
+    fun signUp(email: String, password: String, username: String? = null) {
         viewModelScope.launch {
-            authRepository.signUp(username.trim(), email.trim(), password).cole()
-                .onSuccess { save(it) }
+            authRepository.confirmSignupCode(email.trim(), pendingSignupCode.orEmpty(), password, username)
+                .cole()
+                .onSuccess {
+                    pendingSignupCode = null
+                    save(it)
+                }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
+
+    /**
+     * Step 1 of verified-only signup: email a 6-digit code + browser link.
+     * The code is held in memory and consumed by [signUp] together with the
+     * password the user picked (the code itself cannot create an account).
+     */
+    fun requestSignup(email: String) {
+        viewModelScope.launch {
+            authRepository.requestSignup(email).cole()
+                .onSuccess {
+                    pendingSignupEmail = email.trim()
+                    toast(R.string.signup_code_sent.str())
+                }
+                .onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+        }
+    }
+
+    fun consumeSignupCode(code: String): Boolean {
+        if (code.length != 6) {
+            toast(R.string.invalid_code_format.str())
+            return false
+        }
+        pendingSignupCode = code
+        return true
+    }
+
+    val pendingSignupEmailFlow get() = pendingSignupEmail
 
     fun requestPasswordReset(email: String) {
         viewModelScope.launch {

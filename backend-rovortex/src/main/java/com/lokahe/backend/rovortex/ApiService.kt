@@ -10,6 +10,8 @@ import com.lokahe.backend.rovortex.model.ProfilePatch
 import com.lokahe.backend.rovortex.model.RefreshRequest
 import com.lokahe.backend.rovortex.model.RegisterRequest
 import com.lokahe.backend.rovortex.model.SessionResponse
+import com.lokahe.backend.rovortex.model.SignupConfirmCodeRequest
+import com.lokahe.backend.rovortex.model.SignupRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -40,6 +42,14 @@ interface ApiService {
 
     @POST("api/auth/password-reset/request")
     suspend fun requestPasswordReset(@Body body: PasswordResetRequest): Response<Unit>
+
+    /** Verified-only signup: sends a dual-channel email (6-digit code + link). */
+    @POST("api/auth/signup/request")
+    suspend fun requestSignup(@Body body: SignupRequest): Response<Unit>
+
+    /** Code channel: consumes the code and creates the verified account. */
+    @POST("api/auth/signup/confirm-code")
+    suspend fun confirmSignupCode(@Body body: SignupConfirmCodeRequest): Response<AuthResponse>
 
     @GET("api/users/me")
     suspend fun me(@Header("Authorization") bearerToken: String): Response<MeResponse>

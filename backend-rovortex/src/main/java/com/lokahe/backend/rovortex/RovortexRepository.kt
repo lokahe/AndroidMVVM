@@ -6,7 +6,8 @@ import com.lokahe.backend.rovortex.mapper.toDomain
 import com.lokahe.backend.rovortex.model.AuthRequest
 import com.lokahe.backend.rovortex.model.PasswordResetRequest
 import com.lokahe.backend.rovortex.model.RefreshRequest
-import com.lokahe.backend.rovortex.model.RegisterRequest
+import com.lokahe.backend.rovortex.model.SignupConfirmCodeRequest
+import com.lokahe.backend.rovortex.model.SignupRequest
 import com.lokahe.domain.model.AuthResult
 import com.lokahe.domain.model.IdentityInfo
 import com.lokahe.domain.model.Profile
@@ -47,9 +48,20 @@ class RovortexRepository @Inject constructor(
         safeApiCall { apiService.login(AuthRequest(login, password)) }
             .asDomain { it.toAuthResult() }
 
-    override fun signUp(username: String, email: String, password: String): Flow<ApiResult<AuthResult>> =
-        safeApiCall { apiService.register(RegisterRequest(username, email, password)) }
-            .asDomain { it.toAuthResult() }
+    override fun requestSignup(email: String): Flow<ApiResult<Any>> =
+        safeApiCall { apiService.requestSignup(SignupRequest(email.trim())) }
+
+    override fun confirmSignupCode(
+        email: String,
+        code: String,
+        password: String,
+        username: String?
+    ): Flow<ApiResult<AuthResult>> =
+        safeApiCall {
+            apiService.confirmSignupCode(
+                SignupConfirmCodeRequest(email.trim(), code.trim(), password, username?.trim()?.ifEmpty { null })
+            )
+        }.asDomain { it.toAuthResult() }
 
     override fun verifyToken(token: String): Flow<ApiResult<User>> =
         safeApiCall { apiService.me(bearerToken = token.bearer) }

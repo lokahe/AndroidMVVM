@@ -3,7 +3,7 @@ package com.lokahe.backend.rovortex.model
 import com.google.gson.annotations.SerializedName
 
 data class RegisterRequest(
-    @SerializedName("username") val username: String,
+    @SerializedName("username") val username: String?,
     @SerializedName("email") val email: String,
     @SerializedName("password") val password: String
 )
@@ -63,6 +63,19 @@ data class ProfilePatch(
 
 data class PasswordResetRequest(
     @SerializedName("email") val email: String
+)
+
+/** POST /api/auth/signup/request — ask the server to email the verification. */
+data class SignupRequest(
+    @SerializedName("email") val email: String
+)
+
+/** POST /api/auth/signup/confirm-code — 6-digit code channel (App path). */
+data class SignupConfirmCodeRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("code") val code: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("username") val username: String?
 )
 
 /** GET /api/users/me/identities */

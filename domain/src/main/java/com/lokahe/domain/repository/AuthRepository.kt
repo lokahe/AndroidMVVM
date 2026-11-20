@@ -12,11 +12,27 @@ import kotlinx.coroutines.flow.Flow
  * in the implementation module. Swapping backends = re-binding this interface.
  */
 interface AuthRepository {
-    /** Sign in / register with email (or username) + password. */
+    /** Sign in with email (or username) + password. */
     fun signInWithPassword(login: String, password: String): Flow<ApiResult<AuthResult>>
 
-    /** Create an account with username + email + password; returns a session. */
-    fun signUp(username: String, email: String, password: String): Flow<ApiResult<AuthResult>>
+    /**
+     * Verified-only signup, step 1: ask the backend to email the verification
+     * (a 6-digit code plus a browser confirm link). Always accepted
+     * (anti-enumeration); no account is created at this point.
+     */
+    fun requestSignup(email: String): Flow<ApiResult<Any>>
+
+    /**
+     * Verified-only signup, step 2 (code channel): consume the emailed code
+     * with the password held back by the UI; creates the account + session.
+     * [username] is optional — the backend derives one from the email prefix.
+     */
+    fun confirmSignupCode(
+        email: String,
+        code: String,
+        password: String,
+        username: String?
+    ): Flow<ApiResult<AuthResult>>
 
     /** Validate the current access token and fetch the signed-in user. */
     fun verifyToken(token: String): Flow<ApiResult<User>>

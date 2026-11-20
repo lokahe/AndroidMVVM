@@ -19,16 +19,17 @@ import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 /**
- * In-app GitHub OAuth flow. The rovortex gateway renders the session JSON
- * directly at its callback URL (no redirect back to the app), so the WebView
- * intercepts that request, grabs the body and closes the dialog.
+ * In-app OAuth flow (GitHub / Google). The rovortex gateway renders the
+ * session JSON directly at its callback URL (no redirect back to the app),
+ * so the WebView intercepts that request, grabs the body and closes the
+ * dialog.
  */
-object GithubWebViewContract {
-    const val CALLBACK_PREFIX = "api/auth/oauth/github/callback"
+object OAuthWebViewContract {
+    fun callbackPrefix(provider: String) = "api/auth/oauth/$provider/callback"
 }
 
 @Composable
-fun GithubWebViewDialog(onDismiss: () -> Unit) {
+fun OAuthWebViewDialog(provider: String, title: String, onDismiss: () -> Unit) {
     val viewModel = LocalViewModel.current as MainViewModel
     var resultJson by remember { mutableStateOf<String?>(null) }
     var errorText by remember { mutableStateOf<String?>(null) }
@@ -43,7 +44,7 @@ fun GithubWebViewDialog(onDismiss: () -> Unit) {
     if (errorText != null) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("GitHub sign-in failed") },
+            title = { Text(title) },
             text = { Text(errorText ?: "") },
             confirmButton = {
                 TextButton(onClick = onDismiss) { Text("OK") }
@@ -54,7 +55,7 @@ fun GithubWebViewDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Sign in with GitHub") },
+        title = { Text(title) },
         text = {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
@@ -72,7 +73,7 @@ fun GithubWebViewDialog(onDismiss: () -> Unit) {
                             ): Boolean = false
 
                             override fun onPageFinished(view: WebView?, url: String?) {
-                                if (url != null && url.contains(GithubWebViewContract.CALLBACK_PREFIX)) {
+                                if (url != null && url.contains(OAuthWebViewContract.callbackPrefix(provider))) {
                                     // The gateway renders the AuthResponse (or error
                                     // envelope) as the page body — capture it.
                                     view?.evaluateJavascript(
@@ -95,7 +96,7 @@ fun GithubWebViewDialog(onDismiss: () -> Unit) {
                                 }
                             }
                         }
-                        loadUrl(Api.authorizeUrl("github"))
+                        loadUrl(Api.authorizeUrl(provider))
                     }
                 }
             )

@@ -54,7 +54,7 @@ import com.lokahe.androidmvvm.AVATARS
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
-import com.lokahe.androidmvvm.ui.widget.GithubWebViewDialog
+import com.lokahe.androidmvvm.ui.widget.OAuthWebViewDialog
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
 
 @Composable
@@ -138,18 +138,27 @@ fun SignInDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
     var isSignUp by remember { mutableStateOf(false) }
     var showGithubWebView by remember { mutableStateOf(false) }
+    var showGoogleWebView by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordRepeat by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Verified-signup step 2: code entry after the email was sent
+    var codeSent by remember { mutableStateOf(false) }
+    var code by remember { mutableStateOf("") }
+
     val usernameValid = username.matches(Regex("^[A-Za-z][A-Za-z0-9_]{2,31}$"))
     val emailValid = EMAIL_ADDRESS.matcher(email).matches()
     val passwordValid = password.length in 8..128
     val passwordMatch = password == passwordRepeat
     val canSubmit = if (isSignUp) {
-        usernameValid && emailValid && passwordValid && passwordMatch
+        if (codeSent) {
+            code.length == 6 && passwordValid && passwordMatch
+        } else {
+            emailValid && (username.isEmpty() || usernameValid)
+        }
     } else {
         loginValid(email, passwordValid)
     }
@@ -174,22 +183,21 @@ fun SignInDialog() {
         },
         text = {
             Column {
-                if (isSignUp) {
+                if (isSignUp && codeSent) {
+                    Text(
+                        text = stringResource(R.string.code_sent_to, viewModel.pendingSignupEmailFlow ?: email),
+                        style = MaterialTheme.typography.bodySmall
+                    )
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
-                        value = username,
-                        onValueChange = { username = it },
-                        label = {
-                            Text(
-                                stringResource(
-                                    if (username.isEmpty() || usernameValid) R.string.username
-                                    else R.string.invalid_username_format
-                                )
-                            )
-                        },
-                        isError = username.isNotEmpty() && !usernameValid,
+                        value = code,
+                        onValueChange = { code = it.filter(Char::isDigit).take(6) },
+                        label = { Text(stringResource(R.string.verification_code)) },
+                        isError = code.isNotEmpty() && code.length < 6,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true
                     )
+                } else if (isSignUp) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = email,
@@ -206,44 +214,61 @@ fun SignInDialog() {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         singleLine = true
                     )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = username,
+                        onValueChange = { username = it },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (username.isEmpty() || usernameValid) R.string.username_optional
+                                    else R.string.invalid_username_format
+                                )
+                            )
+                        },
+                        isError = username.isNotEmpty() && !usernameValid,
+                        singleLine = true
+                    )
                 } else {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text(stringResource(R.string.email)) },
+                        label = { Text(stringResource(R.string.login_hint)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         singleLine = true
                     )
                 }
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = password,
-                    onValueChange = { password = it },
-                    label = {
-                        Text(
-                            stringResource(
-                                if (password.isEmpty() || passwordValid) R.string.password
-                                else R.string.invalid_password_format
+                if (!isSignUp || codeSent) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = password,
+                        onValueChange = { password = it },
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (password.isEmpty() || passwordValid) R.string.password
+                                    else R.string.invalid_password_format
+                                )
                             )
-                        )
-                    },
-                    isError = password.isNotEmpty() && !passwordValid,
-                    visualTransformation =
-                        if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector = if (passwordVisible) Icons.Filled.Visibility
-                                else Icons.Filled.VisibilityOff,
-                                contentDescription = null
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    singleLine = true
-                )
-                if (isSignUp) {
+                        },
+                        isError = password.isNotEmpty() && !passwordValid,
+                        visualTransformation =
+                            if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Filled.Visibility
+                                    else Icons.Filled.VisibilityOff,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true
+                    )
+                }
+                if (isSignUp && codeSent) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = passwordRepeat,
@@ -263,18 +288,32 @@ fun SignInDialog() {
                         singleLine = true
                     )
                 }
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                    IconButton(
-                        onClick = { showGithubWebView = true },
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.background)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_github),
-                            contentDescription = "GitHub",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                if (!codeSent) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                        IconButton(
+                            onClick = { showGithubWebView = true },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.background)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_github),
+                                contentDescription = "GitHub",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(
+                            onClick = { showGoogleWebView = true },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.background)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_google),
+                                contentDescription = "Google",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
                 if (!isSignUp) {
@@ -285,9 +324,22 @@ fun SignInDialog() {
                         )
                     }
                 }
-                TextButton(onClick = { isSignUp = !isSignUp }) {
+                TextButton(onClick = {
+                    if (isSignUp && codeSent) {
+                        codeSent = false
+                        code = ""
+                    } else {
+                        isSignUp = !isSignUp
+                    }
+                }) {
                     Text(
-                        stringResource(if (isSignUp) R.string.have_account else R.string.no_account),
+                        stringResource(
+                            when {
+                                isSignUp && codeSent -> R.string.back_to_signup
+                                isSignUp -> R.string.have_account
+                                else -> R.string.no_account
+                            }
+                        ),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -297,11 +349,27 @@ fun SignInDialog() {
             TextButton(
                 enabled = canSubmit,
                 onClick = {
-                    if (isSignUp) viewModel.signUp(username, email, password)
-                    else viewModel.signIn(email, password)
+                    if (isSignUp) {
+                        if (codeSent) {
+                            viewModel.signUp(email, password, username.ifEmpty { null })
+                        } else {
+                            viewModel.requestSignup(email)
+                            codeSent = true
+                        }
+                    } else {
+                        viewModel.signIn(email, password)
+                    }
                 }
             ) {
-                Text(stringResource(R.string.confirm))
+                Text(
+                    stringResource(
+                        when {
+                            isSignUp && codeSent -> R.string.confirm
+                            isSignUp -> R.string.next
+                            else -> R.string.confirm
+                        }
+                    )
+                )
             }
         },
         dismissButton = {
@@ -314,7 +382,10 @@ fun SignInDialog() {
     )
 
     if (showGithubWebView) {
-        GithubWebViewDialog(onDismiss = { showGithubWebView = false })
+        OAuthWebViewDialog(provider = "github", title = "Sign in with GitHub", onDismiss = { showGithubWebView = false })
+    }
+    if (showGoogleWebView) {
+        OAuthWebViewDialog(provider = "google", title = "Sign in with Google", onDismiss = { showGoogleWebView = false })
     }
 }
 
