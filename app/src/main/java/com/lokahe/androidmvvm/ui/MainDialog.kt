@@ -2,19 +2,17 @@ package com.lokahe.androidmvvm.ui
 
 import android.util.Patterns.EMAIL_ADDRESS
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -31,6 +29,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import com.lokahe.androidmvvm.AVATARS
 import com.lokahe.androidmvvm.AppDialog
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.R
@@ -370,45 +368,85 @@ private fun loginValid(login: String, fallback: Boolean): Boolean =
     EMAIL_ADDRESS.matcher(login).matches() ||
         login.matches(Regex("^[A-Za-z][A-Za-z0-9_]{2,31}$")) && fallback
 
+/** Provider raw id → display name (same mapping as AccountScreen). */
+internal fun platformName(provider: String): String = when (provider) {
+    "github" -> "GitHub"
+    "magic" -> "Magic Link"
+    else -> provider
+}
+
 @Composable
 fun AvatarSelectDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
+    val candidates by viewModel.identityAvatars.collectAsState()
+    val user by viewModel.currentUser.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.loadIdentityAvatars() }
 
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
         title = { Text(text = stringResource(R.string.preset_avatar)) },
         text = {
-            // Rovortex stores the avatar as a public http(s) URL only, so local
-            // gallery images cannot be used until an upload endpoint exists.
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(AVATARS.size) { index ->
-                    val url = AVATARS[index]
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(20))
-                            .clickable {
-                                viewModel.updateAvatar(url)
-                                viewModel.dismissDialog()
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.avatar_pick_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                if (candidates.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_identities),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    val current = user?.profile?.avatar
+                    candidates.forEach { identity ->
+                        val selected = current != null && current == identity.avatarUrl
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    viewModel.updateAvatar(identity.avatarUrl!!)
+                                    viewModel.dismissDialog()
+                                }
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = identity.avatarUrl,
+                                contentDescription = platformName(identity.provider),
+                                modifier = Modifier
+                                    .padding(end = 12.dp)
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .border(
+                                        width = if (selected) 2.dp else 0.dp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = RoundedCornerShape(22.dp)
+                                    ),
+                                contentScale = Crop
+                            )
+                            Column {
+                                Text(
+                                    text = platformName(identity.provider),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                if (selected) {
+                                    Text(
+                                        text = stringResource(R.string.avatar_current),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
-                    ) {
-                        AsyncImage(
-                            model = url,
-                            contentDescription = "Avatar $index",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = Crop
-                        )
+                        }
                     }
                 }
             }
         },
-        confirmButton = {} // No confirm needed, clicking an image selects it immediately
+        confirmButton = {}
     )
 }

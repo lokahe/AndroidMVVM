@@ -68,6 +68,8 @@
     <string name="forgot_password">Forgot password?</string>
     <string name="password_reset_sent">Reset link sent — check your inbox</string>
     <string name="preset_avatar">Preset avatar</string>
+    <string name="avatar_pick_hint">Choose an avatar from your connected platforms</string>
+    <string name="avatar_current">Current</string>
     <string name="section_account">Account</string>
     <string name="email_verified">Email verified</string>
     <string name="registered_at">Registered at</string>

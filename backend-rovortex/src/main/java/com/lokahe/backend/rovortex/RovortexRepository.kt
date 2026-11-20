@@ -104,7 +104,12 @@ class RovortexRepository @Inject constructor(
         safeApiCall { apiService.identities(bearerToken = token.bearer) }
             .asDomain { list ->
                 list.map {
-                    IdentityInfo(provider = it.provider, email = it.email, createdAt = it.createdAt)
+                    IdentityInfo(
+                        provider = it.provider,
+                        email = it.email,
+                        avatarUrl = it.avatarUrl,
+                        createdAt = it.createdAt
+                    )
                 }
             }
 

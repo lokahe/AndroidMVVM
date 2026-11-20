@@ -12,12 +12,15 @@ import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
 import com.lokahe.database.model.Person
 import com.lokahe.database.repository.DataBaseRepository
+import com.lokahe.domain.model.IdentityInfo
 import com.lokahe.domain.repository.AuthRepository
 import com.lokahe.domain.repository.UserRepository
 import com.lokahe.log.L
 import com.lokahe.store.repository.PreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -155,6 +158,22 @@ class MainViewModel @Inject constructor(
                         userManager.saveUser(current.copy(profile = profile))
                     }
                 }
+                .onFailure { toast(it.message) }
+                .onException { toast(it.message ?: R.string.unkown_error.str()) }
+        }
+    }
+
+    // ---- Avatar picker: avatar candidates from the connected platforms ----
+
+    private val _identityAvatars = MutableStateFlow<List<IdentityInfo>>(emptyList())
+    val identityAvatars: StateFlow<List<IdentityInfo>> = _identityAvatars
+
+    /** Load platform avatars for the picker dialog; called when it opens. */
+    fun loadIdentityAvatars() {
+        viewModelScope.launch {
+            val token = getAccessToken() ?: return@launch
+            userRepository.fetchIdentities(token).cole()
+                .onSuccess { list -> _identityAvatars.value = list.filter { it.avatarUrl != null } }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }

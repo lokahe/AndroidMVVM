@@ -83,6 +83,7 @@ data class IdentityResponse(
     @SerializedName("provider") val provider: String,
     @SerializedName("email") val email: String?,
     @SerializedName("has_raw_profile") val hasRawProfile: Boolean?,
+    @SerializedName("avatar_url") val avatarUrl: String?,
     @SerializedName("created_at") val createdAt: String?
 )
 

@@ -8,6 +8,8 @@ package com.lokahe.domain.model
 data class IdentityInfo(
     val provider: String,
     val email: String?,
+    /** 平台侧头像 URL（github/google 有，magic 无）。 */
+    val avatarUrl: String? = null,
     val createdAt: String?
 )
 
