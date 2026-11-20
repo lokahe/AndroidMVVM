@@ -24,13 +24,18 @@ object DataBaseModule {
             context,
             AppDatabase::class.java,
             "app_database.db" // The name of your SQLite file
-        ).also { dbBuilder ->
-            if (BuildConfig.DEBUG) {
-                dbBuilder.setQueryCallback({ sql, args ->
-                    L.d("RoomLog") { "$sql $args" }
-                }, Executors.newSingleThreadExecutor())
-            }
-        }.build()
+        )
+            // Local DB only holds demo Person rows; dropping the legacy posts
+            // table on upgrade is fine, so no Migration is authored.
+            .fallbackToDestructiveMigrationOnDowngrade()
+            .fallbackToDestructiveMigration()
+            .also { dbBuilder ->
+                if (BuildConfig.DEBUG) {
+                    dbBuilder.setQueryCallback({ sql, args ->
+                        L.d("RoomLog") { "$sql $args" }
+                    }, Executors.newSingleThreadExecutor())
+                }
+            }.build()
     }
 
     @Provides
