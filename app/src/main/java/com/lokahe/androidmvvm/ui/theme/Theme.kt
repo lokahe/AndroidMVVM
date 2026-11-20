@@ -1,6 +1,7 @@
 package com.lokahe.androidmvvm.ui.theme
 
 import android.os.Build
+import android.view.Window
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -9,11 +10,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.view.WindowCompat
 import com.lokahe.androidmvvm.LocalViewModel
 import com.lokahe.androidmvvm.utils.Utils.Companion.createColorScheme
 import com.lokahe.androidmvvm.viewmodels.BaseViewModel
@@ -69,9 +72,27 @@ fun AndroidMVVMTheme(
         }
     }
 
+    // enableEdgeToEdge() in the Activities only follows the SYSTEM dark mode;
+    // the in-app dark-mode preference needs the bar icons re-styled when it flips.
+    val activity = LocalContext.current.findActivity()
+    SideEffect {
+        activity?.window?.let { window: Window ->
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
         content = content
     )
+}
+
+private fun android.content.Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

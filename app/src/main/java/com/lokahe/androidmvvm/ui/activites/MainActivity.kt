@@ -82,10 +82,14 @@ class MainActivity : AppCompatActivity() {
                                 entry<Screen.Persons> { PersonsScreen() }
                                 entry<Screen.Settings> {
                                     val context = LocalContext.current
+                                    // The entry renders nothing; pop it right after
+                                    // launching the real settings Activity so coming
+                                    // back lands on the previous screen, not a blank one.
                                     LaunchedEffect(Unit) {
                                         context.startActivity(
                                             Intent(context, SettingsActivity::class.java)
                                         )
+                                        if (backStack.size > 1) backStack.removeLast()
                                     }
                                 }
                             })
