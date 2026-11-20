@@ -136,7 +136,7 @@ dependencies {
     // Local Room database (entities / DAOs / DataBaseRepository)
     implementation(project(":database"))
 
-    // Retrofit / OkHttp / Gson now come transitively from :http (:backend-supabase owns the API)
+    // Retrofit / OkHttp / Gson now come transitively from :http (:backend-rovortex owns the API)
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -23,19 +22,13 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale.Companion.Crop
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.lokahe.androidmvvm.R
 import com.lokahe.androidmvvm.emptyNull
-import com.lokahe.database.model.Person
-import com.lokahe.domain.model.Post
-import com.lokahe.domain.model.User
-import com.lokahe.domain.model.avatar
 import com.lokahe.androidmvvm.utils.Utils.Companion.genderLogo
-import com.lokahe.androidmvvm.utils.Utils.Companion.postTitle
-import com.lokahe.androidmvvm.utils.Utils.Companion.userTitle
+import com.lokahe.database.model.Person
 
 @Composable
 fun AvatarIcon(
@@ -54,111 +47,6 @@ fun AvatarIcon(
         imageVector = Icons.Filled.Person,
         contentDescription = ""
     )
-}
-
-@Composable
-fun PostItem(
-    modifier: Modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-    index: Int,
-    post: Post,
-    liked: Boolean = false,
-    editMode: Boolean = false,
-    selected: Boolean = false,
-    onLongClick: () -> Unit = {},
-    onAuthorClick: (String) -> Unit = {},
-    onLikeClick: (String) -> Unit = {},
-    onClick: (Int) -> Unit = {}
-) {
-    SuperCard(
-        modifier = modifier,
-        onClick = { onClick(index) },
-        onLongClick = onLongClick,
-        editMode = editMode,
-        selected = selected
-    ) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            Row(verticalAlignment = CenterVertically) {
-                AvatarIcon(
-                    modifier = Modifier.padding(end = 16.dp).size(48.dp).clickable {
-                        post.authorId?.let { onAuthorClick(it) }
-                    },
-                    url = post.profiles.avatar
-                )
-                Text(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    text = postTitle(post),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Icon(
-                    imageVector = Icons.Filled.Share,
-                    contentDescription = stringResource(R.string.share),
-                    modifier = Modifier.padding(end = 30.dp).size(20.dp),
-                )
-                Row(Modifier.padding(end = 30.dp)) {
-                    Icon(
-                        painter = painterResource(
-                            if (liked) R.drawable.ic_heart_filled
-                            else R.drawable.ic_heart_stroke
-                        ),
-                        contentDescription = stringResource(R.string.like),
-                        modifier = Modifier.size(20.dp).padding(end = 4.dp)
-                            .clickable { onLikeClick(post.id) },
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = post.likes[0].count.toString(),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = stringResource(R.string.favor),
-                    modifier = Modifier.padding(end = 8.dp).size(20.dp),
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = post.content ?: "",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            val imageUrls = post.imageUrls
-            if (!imageUrls.isNullOrEmpty()) {
-                Row {
-                    imageUrls.split(",").forEach {
-                        AsyncImage(
-                            model = it,
-                            contentDescription = stringResource(R.string.image),
-                            modifier = Modifier.size(36.dp).padding(end = 4.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UserItem(index: Int, user: User) {
-    Card(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-        Column(modifier = Modifier.padding(10.dp)) {
-            Row {
-                AvatarIcon(
-                    modifier = Modifier.padding(end = 16.dp).size(50.dp),
-                    url = user.avatar()
-                )
-                Text(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    text = userTitle(user),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = "Star",
-                    modifier = Modifier.padding(end = 10.dp).size(20.dp),
-                )
-            }
-        }
-    }
 }
 
 fun LazyListScope.personItem(index: Int, person: Person) {

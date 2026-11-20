@@ -45,10 +45,7 @@ fun MeResponse.toDomain(): User = User(
         createdAt = createdAt,
         updatedAt = updatedAt,
         lastSignInAt = null,
-        emailConfirmedAt = emailVerified?.toString(),
-        followers = null,
-        followings = null,
-        followingList = null
+        emailConfirmedAt = emailVerified?.toString()
     )
 )
 

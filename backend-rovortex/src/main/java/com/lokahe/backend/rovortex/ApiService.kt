@@ -3,18 +3,22 @@ package com.lokahe.backend.rovortex
 import com.lokahe.backend.rovortex.model.AuthRequest
 import com.lokahe.backend.rovortex.model.AuthResponse
 import com.lokahe.backend.rovortex.model.ChangePasswordRequest
+import com.lokahe.backend.rovortex.model.IdentityResponse
 import com.lokahe.backend.rovortex.model.MeResponse
 import com.lokahe.backend.rovortex.model.PasswordResetRequest
 import com.lokahe.backend.rovortex.model.ProfilePatch
 import com.lokahe.backend.rovortex.model.RefreshRequest
 import com.lokahe.backend.rovortex.model.RegisterRequest
+import com.lokahe.backend.rovortex.model.SessionResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 
 /**
  * Rovortex gateway API. All errors share the envelope
@@ -39,6 +43,18 @@ interface ApiService {
 
     @GET("api/users/me")
     suspend fun me(@Header("Authorization") bearerToken: String): Response<MeResponse>
+
+    @GET("api/users/me/identities")
+    suspend fun identities(@Header("Authorization") bearerToken: String): Response<List<IdentityResponse>>
+
+    @GET("api/users/me/sessions")
+    suspend fun sessions(@Header("Authorization") bearerToken: String): Response<List<SessionResponse>>
+
+    @DELETE("api/users/me/sessions/{id}")
+    suspend fun kickSession(
+        @Header("Authorization") bearerToken: String,
+        @Path("id") id: String
+    ): Response<Unit>
 
     @PATCH("api/users/me/profile")
     suspend fun patchProfile(

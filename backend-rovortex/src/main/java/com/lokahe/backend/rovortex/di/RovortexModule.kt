@@ -4,7 +4,6 @@ import com.lokahe.backend.rovortex.Api
 import com.lokahe.backend.rovortex.ApiService
 import com.lokahe.backend.rovortex.RovortexRepository
 import com.lokahe.domain.repository.AuthRepository
-import com.lokahe.domain.repository.PostRepository
 import com.lokahe.domain.repository.UserRepository
 import com.lokahe.http.HttpConfig
 import dagger.Binds
@@ -49,8 +48,4 @@ abstract class RovortexBindsModule {
     @Binds
     @Singleton
     abstract fun bindUserRepository(impl: RovortexRepository): UserRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindPostRepository(impl: RovortexRepository): PostRepository
 }

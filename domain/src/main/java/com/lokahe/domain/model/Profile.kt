@@ -17,41 +17,8 @@ data class Profile(
     val createdAt: String?,
     val updatedAt: String?,
     val lastSignInAt: String?,
-    val emailConfirmedAt: String?,
-    // join
-    val followers: List<Followers>?,
-    val followings: List<Followers>?,
-    val followingList: List<Following>?
+    val emailConfirmedAt: String?
 )
-
-@Serializable
-data class Followers(val count: Int)
-
-@Serializable
-data class Following(val targetId: String) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Following) return false
-        return targetId == other.targetId
-    }
-
-    override fun hashCode(): Int {
-        return targetId.hashCode()
-    }
-}
-
-@Serializable
-data class Follower(val followerId: String) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Follower) return false
-        return followerId == other.followerId
-    }
-
-    override fun hashCode(): Int {
-        return followerId.hashCode()
-    }
-}
 
 /** Map a public profile to the uniform domain [User] shape. */
 fun Profile.toUser(): User = User(

@@ -7,8 +7,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import com.lokahe.androidmvvm.ui.screens.Screen
 
-val HOME_TABS = listOf("Posts", "Gallery", "Users")
-val ACCOUNT_TABS = listOf("Posts", "Profile")
+val HOME_TABS = listOf("Gallery", "Persons")
+val ACCOUNT_TABS = listOf("Profile")
 
 val SIDE_MENU_ITEMS = listOf(
     Triple(Screen.Home, Icons.Filled.Home, s(R.string.home)),
@@ -39,14 +39,11 @@ sealed interface AppDialog {
     data object SignIn : AppDialog
     data object SignOut : AppDialog
     data object Avatar : AppDialog
-    data class Delete(val onConfirm: () -> Unit) : AppDialog
     // Add more later easily: data object DeleteAccount : AppDialog()
 }
 
 sealed class UserHeaderOption {
     data object None : UserHeaderOption()
     data object Sign : UserHeaderOption()
-    data object Edit : UserHeaderOption()
-    data object Send : UserHeaderOption()
 }
 

@@ -49,10 +49,7 @@ import com.lokahe.androidmvvm.ui.MainDialog
 import com.lokahe.androidmvvm.ui.screens.AccountScreen
 import com.lokahe.androidmvvm.ui.screens.MainScreen
 import com.lokahe.androidmvvm.ui.screens.PersonsScreen
-import com.lokahe.androidmvvm.ui.screens.PostDetailScreen
 import com.lokahe.androidmvvm.ui.screens.Screen
-import com.lokahe.androidmvvm.ui.screens.SendPostScreen
-import com.lokahe.androidmvvm.ui.screens.UsersScreen
 import com.lokahe.androidmvvm.ui.theme.AndroidMVVMTheme
 import com.lokahe.androidmvvm.ui.widget.UserHeader
 import com.lokahe.androidmvvm.viewmodels.MainViewModel
@@ -83,9 +80,6 @@ class MainActivity : AppCompatActivity() {
                                 entry<Screen.Home> { MainScreen() }
                                 entry<Screen.Account> { AccountScreen(id = it.id) }
                                 entry<Screen.Persons> { PersonsScreen() }
-                                entry<Screen.SendPost> { SendPostScreen() }
-                                entry<Screen.PostDetail> { PostDetailScreen(it.post) }
-                                entry<Screen.Users> { UsersScreen(it.ids) }
                                 entry<Screen.Settings> {
                                     val context = LocalContext.current
                                     LaunchedEffect(Unit) {

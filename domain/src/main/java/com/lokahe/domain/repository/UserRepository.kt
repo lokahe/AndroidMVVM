@@ -1,8 +1,8 @@
 package com.lokahe.domain.repository
 
-import com.lokahe.domain.model.Follower
-import com.lokahe.domain.model.Following
+import com.lokahe.domain.model.IdentityInfo
 import com.lokahe.domain.model.Profile
+import com.lokahe.domain.model.SessionInfo
 import com.lokahe.http.ApiResult
 import kotlinx.coroutines.flow.Flow
 
@@ -14,13 +14,12 @@ interface UserRepository {
     /** Update the signed-in user's avatar URL (rovortex: PATCH profile). */
     fun updateAvatar(token: String, url: String): Flow<ApiResult<Profile>>
 
-    fun fetchProfilesByIds(token: String, ids: List<String>): Flow<ApiResult<List<Profile>>>
+    /** Connected OAuth/magic platforms (rovortex: GET /api/users/me/identities). */
+    fun fetchIdentities(token: String): Flow<ApiResult<List<IdentityInfo>>>
 
-    fun fetchFollowingIds(token: String, followerId: String): Flow<ApiResult<List<Following>>>
+    /** Active login devices/sessions (rovortex: GET /api/users/me/sessions). */
+    fun fetchSessions(token: String): Flow<ApiResult<List<SessionInfo>>>
 
-    fun fetchFollowerIds(token: String, targetId: String): Flow<ApiResult<List<Follower>>>
-
-    fun follow(token: String, followerId: String, targetId: String): Flow<ApiResult<Unit>>
-
-    fun unFollow(token: String, followerId: String, targetId: String): Flow<ApiResult<Unit>>
+    /** Revoke one device session (rovortex: DELETE /api/users/me/sessions/{id}). */
+    fun kickSession(token: String, id: String): Flow<ApiResult<Unit>>
 }

@@ -3,8 +3,6 @@ package com.lokahe.androidmvvm.utils
 import android.annotation.SuppressLint
 import android.graphics.drawable.BitmapDrawable
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.AnnotatedString
@@ -27,13 +25,7 @@ import com.lokahe.database.model.Person
 import com.lokahe.androidmvvm.isNotNullOrBlank
 import com.lokahe.androidmvvm.s
 import com.lokahe.androidmvvm.toColorScheme
-import com.lokahe.androidmvvm.toMillis
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
-import com.lokahe.domain.model.Post
-import com.lokahe.domain.model.User
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 class Utils {
     companion object {
@@ -125,38 +117,6 @@ class Utils {
                             style = SpanStyle(color = Color(it.third))
                         ) { append(it.second) }
                     }
-                }
-            }
-
-        @Composable
-        fun postTitle(post: Post): AnnotatedString =
-            buildAnnotatedString {
-                append(post.profiles.name + "\n")
-                withStyle(
-                    style = SpanStyle(
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize
-                    )
-                ) {
-                    append(
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                            .withZone(ZoneId.systemDefault())
-                            .format(Instant.ofEpochMilli(post.createdAt.toMillis()))
-                    )
-                }
-            }
-
-        @Composable
-        fun userTitle(user: User): AnnotatedString =
-            buildAnnotatedString {
-                append(user.fullName + "\n")
-                withStyle(
-                    style = SpanStyle(
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize
-                    )
-                ) {
-                    // Reserved for secondary info (e.g. handle / last active)
                 }
             }
     }

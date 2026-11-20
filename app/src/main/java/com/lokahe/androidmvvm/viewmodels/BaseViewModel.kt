@@ -10,7 +10,6 @@ import com.lokahe.androidmvvm.data.local.UserManager
 import com.lokahe.store.model.UserPreferences
 import com.lokahe.store.repository.PreferencesRepository
 import com.lokahe.domain.model.AuthResult
-import com.lokahe.domain.model.Following
 import com.lokahe.domain.model.User
 import com.lokahe.domain.repository.AuthRepository
 import com.lokahe.domain.repository.UserRepository
@@ -133,9 +132,13 @@ open class BaseViewModel(
         dismissDialog(AppDialog.SignIn)
     }
 
-    suspend fun updateProfileLocal(
-        follower: Following? = null,
-    ) = userManager.updateProfileLocal(follower)
+    suspend fun updateProfileLocal() {
+        val token = userManager.currentSession()?.accessToken ?: return
+        val user = userManager.userFlow.firstOrNull() ?: return
+        userRepository.fetchProfileById(token, user.id).cole().onSuccess { profile ->
+            userManager.saveUser(user.copy(profile = profile))
+        }
+    }
 
     private suspend fun User.fetchProfile(token: String?): User =
         this.apply {

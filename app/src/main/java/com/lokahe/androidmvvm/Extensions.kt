@@ -184,22 +184,6 @@ fun Any.toBoolean(): Boolean {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-fun <T> Collection<T>.addOrRemove(t: T): Collection<*> =
-    when (this) {
-        is Set<*> -> {
-            if (this.contains(t)) this.minus(t) else this.plus(t)
-        }
-
-        is List<*> -> {
-            if (this.contains(t)) this.minus(t) else this.plus(t)
-        }
-
-        else -> {
-            this
-        }
-    }
-
 fun Any.expextSize(any: Any): Int =
     when (this) {
         is Set<*> -> if (this.contains(any)) this.size - 1 else this.size + 1

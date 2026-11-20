@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -68,7 +67,6 @@ fun MainDialog() {
             AppDialog.SignIn -> SignInDialog()
             AppDialog.SignOut -> SignOutDialog()
             AppDialog.Avatar -> AvatarSelectDialog()
-            is AppDialog.Delete -> DeleteDialog(it.onConfirm)
         }
     }
 }
@@ -92,47 +90,6 @@ fun LoadingDialog() {
             CircularProgressIndicator()
         }
     }
-}
-
-@Composable
-fun DeleteDialog(onConfirm: () -> Unit) {
-    val viewModel = LocalViewModel.current as MainViewModel
-    AlertDialog(
-        onDismissRequest = { viewModel.dismissDialog() },
-        title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = stringResource(R.string.confirm)
-                )
-                Text(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    text = stringResource(R.string.delete_confirm),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    viewModel.dismissDialog()
-                    onConfirm()
-                }
-            ) {
-                Text(stringResource(R.string.confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = { viewModel.dismissDialog() }
-            ) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
 }
 
 @Composable

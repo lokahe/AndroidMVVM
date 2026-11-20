@@ -118,26 +118,6 @@ class MainViewModel @Inject constructor(
         CookieManager.getInstance().flush()
     }
 
-    fun fetchFollowingIds(followerId: String, onResult: (List<String>) -> Unit) {
-        viewModelScope.launch {
-            getAccessToken()?.emptyNull()?.let { token ->
-                userRepository.fetchFollowingIds(token, followerId).cole().onSuccess {
-                    onResult(it.map { it.targetId })
-                }.onFailure { toast(it.message) }
-            }
-        }
-    }
-
-    fun fetchFollowerIds(targetId: String, onResult: (List<String>) -> Unit) {
-        viewModelScope.launch {
-            getAccessToken()?.emptyNull()?.let { token ->
-                userRepository.fetchFollowerIds(token, targetId).cole().onSuccess {
-                    onResult(it.map { it.followerId })
-                }.onFailure { toast(it.message) }
-            }
-        }
-    }
-
     fun updateAvatar(url: String) {
         viewModelScope.launch {
             val token = getAccessToken() ?: return@launch

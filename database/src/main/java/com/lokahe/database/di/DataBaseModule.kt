@@ -5,7 +5,6 @@ import androidx.room.Room
 import com.lokahe.database.BuildConfig
 import com.lokahe.database.AppDatabase
 import com.lokahe.database.dao.PersonDao
-import com.lokahe.database.dao.PostDao
 import com.lokahe.log.L
 import dagger.Module
 import dagger.Provides
@@ -39,11 +38,4 @@ object DataBaseModule {
     fun providePersonDao(database: AppDatabase): PersonDao {
         return database.personDao()
     }
-
-    @Provides
-    @Singleton
-    fun providePostDao(database: AppDatabase): PostDao {
-        return database.postDao()
-    }
-
 }

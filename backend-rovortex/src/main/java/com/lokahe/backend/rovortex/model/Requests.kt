@@ -64,3 +64,21 @@ data class ProfilePatch(
 data class PasswordResetRequest(
     @SerializedName("email") val email: String
 )
+
+/** GET /api/users/me/identities */
+data class IdentityResponse(
+    @SerializedName("provider") val provider: String,
+    @SerializedName("email") val email: String?,
+    @SerializedName("has_raw_profile") val hasRawProfile: Boolean?,
+    @SerializedName("created_at") val createdAt: String?
+)
+
+/** GET /api/users/me/sessions */
+data class SessionResponse(
+    @SerializedName("id") val id: String,
+    @SerializedName("device_label") val deviceLabel: String?,
+    @SerializedName("ua") val ua: String?,
+    @SerializedName("ip") val ip: String?,
+    @SerializedName("created_at") val createdAt: String?,
+    @SerializedName("expires_at") val expiresAt: String?
+)

@@ -5,19 +5,16 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.Gson
-import com.lokahe.androidmvvm.addOrRemove
 import com.lokahe.androidmvvm.ui.theme.ColorSeed
 import com.lokahe.androidmvvm.utils.Utils
 import com.lokahe.auth.Session
 import com.lokahe.auth.TokenStore
-import com.lokahe.domain.model.Following
 import com.lokahe.domain.model.User
 import com.lokahe.domain.model.avatar
 import com.lokahe.log.L
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import javax.inject.Singleton
 
@@ -98,24 +95,6 @@ class UserManager @Inject constructor(
                 Utils.calculateMainColor(it.avatar())?.let { seed ->
                     prefs[USER_COLOR_SEED_KEY] = gson.toJson(seed)
                 }
-            }
-        }
-    }
-
-    suspend fun updateProfileLocal(
-        follower: Following? = null,
-    ) {
-        userFlow.firstOrNull()?.let { user ->
-            user.profile?.let { prof ->
-                saveUser(
-                    @Suppress("UNCHECKED_CAST")
-                    user.copy(
-                        profile = prof.copy(
-                            followingList = follower?.let { prof.followingList?.addOrRemove(it) as List<Following> }
-                                ?: prof.followingList,
-                        )
-                    )
-                )
             }
         }
     }
