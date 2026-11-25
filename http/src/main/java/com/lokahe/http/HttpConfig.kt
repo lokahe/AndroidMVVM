@@ -11,5 +11,7 @@ data class HttpConfig(
     val connectTimeoutSeconds: Long = 30,
     val readTimeoutSeconds: Long = 30,
     val writeTimeoutSeconds: Long = 30,
-    val loggingLevel: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BODY
+    val loggingLevel: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BODY,
+    /** Headers added to every request by the backend module (e.g. X-Client-Platform). */
+    val defaultHeaders: Map<String, String> = emptyMap()
 )

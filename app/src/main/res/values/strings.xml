@@ -42,7 +42,6 @@
     <string name="confirm">Confirm</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
-    <string name="password_repeat">Password Repeat</string>
     <string name="sign_up">Sign Up</string>
     <string name="sign_in">Sign In</string>
     <string name="invalid_email_format">Invalid email format</string>
@@ -54,17 +53,11 @@
     <string name="sign_out">sign out</string>
     <string name="sign_out_confirm">Confirm to sign out</string>
     <string name="refresh">refresh</string>
-    <string name="username">Username</string>
-    <string name="login_hint">Email or username</string>
-    <string name="signup_code_sent">Verification sent — check your inbox</string>
+    <string name="code_sent_to_generic">Verification code sent — check your inbox</string>
     <string name="code_sent_to">Verification code sent to %1$s. It expires in 15 minutes.</string>
-    <string name="back_to_signup">Wrong email? Back</string>
+    <string name="back_to_entry">Wrong email? Back</string>
     <string name="dark_mode">Dark mode</string>
-    <string name="invalid_username_format">3-32 chars, start with a letter, only letters/digits/_</string>
     <string name="invalid_password_format">Password must be 8-128 characters</string>
-    <string name="passwords_do_not_match">Passwords do not match</string>
-    <string name="have_account">Already have an account? Sign in</string>
-    <string name="no_account">No account yet? Sign up</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="password_reset_sent">Reset link sent — check your inbox</string>
     <string name="preset_avatar">Preset avatar</string>

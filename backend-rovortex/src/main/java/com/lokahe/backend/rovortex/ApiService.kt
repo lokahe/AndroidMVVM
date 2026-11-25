@@ -3,6 +3,8 @@ package com.lokahe.backend.rovortex
 import com.lokahe.backend.rovortex.model.AuthRequest
 import com.lokahe.backend.rovortex.model.AuthResponse
 import com.lokahe.backend.rovortex.model.ChangePasswordRequest
+import com.lokahe.backend.rovortex.model.EmailEntryConfirmRequest
+import com.lokahe.backend.rovortex.model.EmailEntryRequest
 import com.lokahe.backend.rovortex.model.IdentityResponse
 import com.lokahe.backend.rovortex.model.MeResponse
 import com.lokahe.backend.rovortex.model.PasswordResetRequest
@@ -10,8 +12,6 @@ import com.lokahe.backend.rovortex.model.ProfilePatch
 import com.lokahe.backend.rovortex.model.RefreshRequest
 import com.lokahe.backend.rovortex.model.RegisterRequest
 import com.lokahe.backend.rovortex.model.SessionResponse
-import com.lokahe.backend.rovortex.model.SignupConfirmCodeRequest
-import com.lokahe.backend.rovortex.model.SignupRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -43,13 +43,16 @@ interface ApiService {
     @POST("api/auth/password-reset/request")
     suspend fun requestPasswordReset(@Body body: PasswordResetRequest): Response<Unit>
 
-    /** Verified-only signup: sends a dual-channel email (6-digit code + link). */
-    @POST("api/auth/signup/request")
-    suspend fun requestSignup(@Body body: SignupRequest): Response<Unit>
+    /**
+     * Unified email entry: 200 = valid credentials, logged in; 202 = verification
+     * email sent (wrong password / unknown account / no password).
+     */
+    @POST("api/auth/email-entry")
+    suspend fun emailEntry(@Body body: EmailEntryRequest): Response<AuthResponse>
 
-    /** Code channel: consumes the code and creates the verified account. */
-    @POST("api/auth/signup/confirm-code")
-    suspend fun confirmSignupCode(@Body body: SignupConfirmCodeRequest): Response<AuthResponse>
+    /** Code confirm: logs in (registered) or creates the account (unregistered). */
+    @POST("api/auth/email-entry/confirm")
+    suspend fun emailEntryConfirm(@Body body: EmailEntryConfirmRequest): Response<AuthResponse>
 
     @GET("api/users/me")
     suspend fun me(@Header("Authorization") bearerToken: String): Response<MeResponse>

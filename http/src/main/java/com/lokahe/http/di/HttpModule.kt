@@ -34,12 +34,20 @@ object HttpModule {
         loggingInterceptor: HttpLoggingInterceptor,
         config: HttpConfig
     ): OkHttpClient {
-        return OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .connectTimeout(config.connectTimeoutSeconds, TimeUnit.SECONDS)
             .readTimeout(config.readTimeoutSeconds, TimeUnit.SECONDS)
             .writeTimeout(config.writeTimeoutSeconds, TimeUnit.SECONDS)
-            .build()
+        if (config.defaultHeaders.isNotEmpty()) {
+            builder.addInterceptor { chain ->
+                val request = chain.request().newBuilder().apply {
+                    config.defaultHeaders.forEach { (name, value) -> header(name, value) }
+                }.build()
+                chain.proceed(request)
+            }
+        }
+        return builder.build()
     }
 
     @Provides

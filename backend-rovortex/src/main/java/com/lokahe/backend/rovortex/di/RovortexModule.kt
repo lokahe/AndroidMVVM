@@ -23,11 +23,16 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object RovortexProvidesModule {
 
-    // Backend endpoint configuration; OkHttp / Retrofit are built in the :http module
+    // Backend endpoint configuration; OkHttp / Retrofit are built in the :http module.
+    // X-Client-Platform: app selects the credential channels for email-entry
+    // (6-digit code + deep link) on the server's per-platform matrix.
     @Provides
     @Singleton
     fun provideHttpConfig(): HttpConfig {
-        return HttpConfig(baseUrl = Api.BASE_URL)
+        return HttpConfig(
+            baseUrl = Api.BASE_URL,
+            defaultHeaders = mapOf("X-Client-Platform" to "app")
+        )
     }
 
     @Provides

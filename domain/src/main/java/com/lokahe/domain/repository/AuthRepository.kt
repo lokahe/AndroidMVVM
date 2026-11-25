@@ -1,6 +1,7 @@
 package com.lokahe.domain.repository
 
 import com.lokahe.auth.Session
+import com.lokahe.domain.model.AuthEntryOutcome
 import com.lokahe.domain.model.AuthResult
 import com.lokahe.domain.model.User
 import com.lokahe.http.ApiResult
@@ -12,27 +13,26 @@ import kotlinx.coroutines.flow.Flow
  * in the implementation module. Swapping backends = re-binding this interface.
  */
 interface AuthRepository {
-    /** Sign in with email (or username) + password. */
-    fun signInWithPassword(login: String, password: String): Flow<ApiResult<AuthResult>>
+    /**
+     * Unified email entry (login + registration in one box). Valid
+     * credentials log in directly; everything else sends the same
+     * verification email — see [AuthEntryOutcome].
+     */
+    fun emailEntry(email: String, password: String): Flow<ApiResult<AuthEntryOutcome>>
 
     /**
-     * Verified-only signup, step 1: ask the backend to email the verification
-     * (a 6-digit code plus a browser confirm link). Always accepted
-     * (anti-enumeration); no account is created at this point.
+     * Confirm the emailed code: on a registered account the code is the
+     * login credential ([password] silently resets it); on an unregistered
+     * one the account is created ([password] required).
      */
-    fun requestSignup(email: String): Flow<ApiResult<Any>>
-
-    /**
-     * Verified-only signup, step 2 (code channel): consume the emailed code
-     * with the password held back by the UI; creates the account + session.
-     * [username] is optional — the backend derives one from the email prefix.
-     */
-    fun confirmSignupCode(
+    fun emailEntryConfirm(
         email: String,
         code: String,
-        password: String,
-        username: String?
+        password: String?
     ): Flow<ApiResult<AuthResult>>
+
+    /** Sign in with email (or username) + password. */
+    fun signInWithPassword(login: String, password: String): Flow<ApiResult<AuthResult>>
 
     /** Validate the current access token and fetch the signed-in user. */
     fun verifyToken(token: String): Flow<ApiResult<User>>

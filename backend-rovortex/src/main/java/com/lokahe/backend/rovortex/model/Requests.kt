@@ -65,17 +65,19 @@ data class PasswordResetRequest(
     @SerializedName("email") val email: String
 )
 
-/** POST /api/auth/signup/request — ask the server to email the verification. */
-data class SignupRequest(
-    @SerializedName("email") val email: String
+/** POST /api/auth/email-entry — unified login/registration entry. */
+data class EmailEntryRequest(
+    @SerializedName("email") val email: String,
+    /** Empty = passwordless path; the code is then the login credential. */
+    @SerializedName("password") val password: String
 )
 
-/** POST /api/auth/signup/confirm-code — 6-digit code channel (App path). */
-data class SignupConfirmCodeRequest(
+/** POST /api/auth/email-entry/confirm — 201 AuthResponse (login or account creation). */
+data class EmailEntryConfirmRequest(
     @SerializedName("email") val email: String,
     @SerializedName("code") val code: String,
-    @SerializedName("password") val password: String,
-    @SerializedName("username") val username: String?
+    /** Registered account: silently reset password; unregistered: required to create. */
+    @SerializedName("password") val password: String?
 )
 
 /** GET /api/users/me/identities */

@@ -12,6 +12,7 @@ import com.lokahe.androidmvvm.toast
 import com.lokahe.androidmvvm.utils.Utils
 import com.lokahe.database.model.Person
 import com.lokahe.database.repository.DataBaseRepository
+import com.lokahe.domain.model.AuthEntryOutcome
 import com.lokahe.domain.model.IdentityInfo
 import com.lokahe.domain.repository.AuthRepository
 import com.lokahe.domain.repository.UserRepository
@@ -38,8 +39,15 @@ class MainViewModel @Inject constructor(
         autoSignIn()
     }
 
-    // In-flight verified-signup state (step 1 done, waiting for the code)
-    private var pendingSignupEmail: String? = null
+    // Unified email-entry in-flight state (verification email sent, waiting
+    // for the code). The entry password is reused for account creation or
+    // silently set on login.
+    private var pendingEntryEmail: String? = null
+    private var pendingEntryPassword: String? = null
+
+    /** True while the flow is waiting for the emailed code (drives the UI step). */
+    private val _entryCodeSent = MutableStateFlow(false)
+    val entryCodeSent: StateFlow<Boolean> = _entryCodeSent
 
     private fun autoSignIn() {
         viewModelScope.launch {
@@ -73,20 +81,22 @@ class MainViewModel @Inject constructor(
 
     fun signIn(login: String, password: String) {
         viewModelScope.launch {
-            authRepository.signInWithPassword(login.trim(), password).cole()
-                .onSuccess { save(it) }
-                .onFailure { toast(it.message) }
-                .onException { toast(it.message ?: R.string.unkown_error.str()) }
-        }
-    }
-
-    fun signUp(email: String, code: String, password: String) {
-        viewModelScope.launch {
-            authRepository.confirmSignupCode(email.trim(), code.trim(), password, null)
-                .cole()
-                .onSuccess {
-                    pendingSignupEmail = null
-                    save(it)
+            authRepository.emailEntry(login.trim(), password).cole()
+                .onSuccess { outcome ->
+                    when (outcome) {
+                        is AuthEntryOutcome.LoggedIn -> {
+                            pendingEntryEmail = null
+                            pendingEntryPassword = null
+                            _entryCodeSent.value = false
+                            save(outcome.auth)
+                        }
+                        AuthEntryOutcome.CodeSent -> {
+                            pendingEntryEmail = login.trim()
+                            pendingEntryPassword = password
+                            _entryCodeSent.value = true
+                            toast(R.string.code_sent_to_generic.str())
+                        }
+                    }
                 }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
@@ -94,23 +104,31 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Step 1 of verified-only signup: email a 6-digit code + browser link.
-     * The code is entered on step 2 and passed straight to [signUp]
-     * (the code itself cannot create an account).
+     * Confirm the emailed code: logs in (registered) or creates the account
+     * (unregistered; the entry password is reused to create it).
      */
-    fun requestSignup(email: String) {
+    fun confirmEntryCode(code: String) {
+        val email = pendingEntryEmail ?: return
         viewModelScope.launch {
-            authRepository.requestSignup(email).cole()
+            authRepository.emailEntryConfirm(email, code, pendingEntryPassword?.takeIf { it.isNotEmpty() })
+                .cole()
                 .onSuccess {
-                    pendingSignupEmail = email.trim()
-                    toast(R.string.signup_code_sent.str())
+                    pendingEntryEmail = null
+                    pendingEntryPassword = null
+                    _entryCodeSent.value = false
+                    save(it)
                 }
                 .onFailure { toast(it.message) }
                 .onException { toast(it.message ?: R.string.unkown_error.str()) }
         }
     }
 
-    val pendingSignupEmailFlow get() = pendingSignupEmail
+    /** Back from the code step to the email+password box. */
+    fun resetEntryCodeStep() {
+        _entryCodeSent.value = false
+    }
+
+    val pendingEntryEmailFlow: String? get() = pendingEntryEmail
 
     fun requestPasswordReset(email: String) {
         viewModelScope.launch {

@@ -4,7 +4,6 @@ import android.util.Patterns.EMAIL_ADDRESS
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -135,30 +134,20 @@ fun SignOutDialog() {
 @Composable
 fun SignInDialog() {
     val viewModel = LocalViewModel.current as MainViewModel
-    var isSignUp by remember { mutableStateOf(false) }
     var showGithubWebView by remember { mutableStateOf(false) }
     var showGoogleWebView by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordRepeat by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Verified-signup step 2: code entry after the email was sent
-    var codeSent by remember { mutableStateOf(false) }
+    // Step 2 of the unified email entry is owned by the ViewModel
+    // (a 202 from email-entry means the verification email is out).
+    val codeSent by viewModel.entryCodeSent.collectAsState()
     var code by remember { mutableStateOf("") }
 
     val emailValid = EMAIL_ADDRESS.matcher(email).matches()
-    val passwordValid = password.length in 8..128
-    val passwordMatch = password == passwordRepeat
-    val canSubmit = if (isSignUp) {
-        if (codeSent) {
-            code.length == 6 && passwordValid && passwordMatch
-        } else {
-            emailValid
-        }
-    } else {
-        loginValid(email, passwordValid)
-    }
+    val passwordValid = password.isEmpty() || password.length in 8..128
+    val canSubmit = if (codeSent) code.length == 6 else emailValid && passwordValid
 
     AlertDialog(
         onDismissRequest = { viewModel.dismissDialog() },
@@ -173,20 +162,20 @@ fun SignInDialog() {
                 )
                 Text(
                     modifier = Modifier.padding(horizontal = 8.dp),
-                    text = stringResource(if (isSignUp) R.string.sign_up else R.string.sign_in),
+                    text = stringResource(R.string.signInUp),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
         },
         text = {
             Column {
-                if (isSignUp && codeSent) {
+                if (codeSent) {
                     Text(
-                        text = stringResource(R.string.code_sent_to, viewModel.pendingSignupEmailFlow ?: email),
+                        text = stringResource(R.string.code_sent_to, viewModel.pendingEntryEmailFlow ?: email),
                         style = MaterialTheme.typography.bodySmall
                     )
                     OtpInputField(modifier = Modifier.fillMaxWidth()) { code = it }
-                } else if (isSignUp) {
+                } else {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = email,
@@ -203,17 +192,6 @@ fun SignInDialog() {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         singleLine = true
                     )
-                } else {
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text(stringResource(R.string.login_hint)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        singleLine = true
-                    )
-                }
-                if (!isSignUp || codeSent) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = password,
@@ -221,12 +199,12 @@ fun SignInDialog() {
                         label = {
                             Text(
                                 stringResource(
-                                    if (password.isEmpty() || passwordValid) R.string.password
+                                    if (passwordValid) R.string.password
                                     else R.string.invalid_password_format
                                 )
                             )
                         },
-                        isError = password.isNotEmpty() && !passwordValid,
+                        isError = !passwordValid,
                         visualTransformation =
                             if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
@@ -241,29 +219,13 @@ fun SignInDialog() {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         singleLine = true
                     )
-                }
-                if (isSignUp && codeSent) {
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = passwordRepeat,
-                        onValueChange = { passwordRepeat = it },
-                        label = {
-                            Text(
-                                stringResource(
-                                    if (passwordRepeat.isEmpty() || passwordMatch)
-                                        R.string.password_repeat
-                                    else R.string.passwords_do_not_match
-                                )
-                            )
-                        },
-                        isError = passwordRepeat.isNotEmpty() && !passwordMatch,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        singleLine = true
-                    )
-                }
-                if (!codeSent) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                    TextButton(onClick = { viewModel.requestPasswordReset(email) }) {
+                        Text(
+                            stringResource(R.string.forgot_password),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
                         IconButton(
                             onClick = { showGithubWebView = true },
                             modifier = Modifier
@@ -290,32 +252,16 @@ fun SignInDialog() {
                         }
                     }
                 }
-                if (!isSignUp) {
-                    TextButton(onClick = { viewModel.requestPasswordReset(email) }) {
+                if (codeSent) {
+                    TextButton(onClick = {
+                        code = ""
+                        viewModel.resetEntryCodeStep()
+                    }) {
                         Text(
-                            stringResource(R.string.forgot_password),
+                            stringResource(R.string.back_to_entry),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                }
-                TextButton(onClick = {
-                    if (isSignUp && codeSent) {
-                        codeSent = false
-                        code = ""
-                    } else {
-                        isSignUp = !isSignUp
-                    }
-                }) {
-                    Text(
-                        stringResource(
-                            when {
-                                isSignUp && codeSent -> R.string.back_to_signup
-                                isSignUp -> R.string.have_account
-                                else -> R.string.no_account
-                            }
-                        ),
-                        style = MaterialTheme.typography.bodySmall
-                    )
                 }
             }
         },
@@ -323,27 +269,14 @@ fun SignInDialog() {
             TextButton(
                 enabled = canSubmit,
                 onClick = {
-                    if (isSignUp) {
-                        if (codeSent) {
-                            viewModel.signUp(email, code, password)
-                        } else {
-                            viewModel.requestSignup(email)
-                            codeSent = true
-                        }
+                    if (codeSent) {
+                        viewModel.confirmEntryCode(code)
                     } else {
                         viewModel.signIn(email, password)
                     }
                 }
             ) {
-                Text(
-                    stringResource(
-                        when {
-                            isSignUp && codeSent -> R.string.confirm
-                            isSignUp -> R.string.next
-                            else -> R.string.confirm
-                        }
-                    )
-                )
+                Text(stringResource(if (codeSent) R.string.confirm else R.string.next))
             }
         },
         dismissButton = {
@@ -362,11 +295,6 @@ fun SignInDialog() {
         OAuthWebViewDialog(provider = "google", title = "Sign in with Google", onDismiss = { showGoogleWebView = false })
     }
 }
-
-/** Login accepts either a valid email or a username (rovortex rule). */
-private fun loginValid(login: String, fallback: Boolean): Boolean =
-    EMAIL_ADDRESS.matcher(login).matches() ||
-        login.matches(Regex("^[A-Za-z][A-Za-z0-9_]{2,31}$")) && fallback
 
 /** Provider raw id → display name (same mapping as AccountScreen). */
 internal fun platformName(provider: String): String = when (provider) {

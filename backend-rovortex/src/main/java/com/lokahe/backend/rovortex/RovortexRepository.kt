@@ -4,10 +4,11 @@ import com.lokahe.backend.rovortex.mapper.buildProfilePatch
 import com.lokahe.backend.rovortex.mapper.toAuthResult
 import com.lokahe.backend.rovortex.mapper.toDomain
 import com.lokahe.backend.rovortex.model.AuthRequest
+import com.lokahe.backend.rovortex.model.EmailEntryConfirmRequest
+import com.lokahe.backend.rovortex.model.EmailEntryRequest
 import com.lokahe.backend.rovortex.model.PasswordResetRequest
 import com.lokahe.backend.rovortex.model.RefreshRequest
-import com.lokahe.backend.rovortex.model.SignupConfirmCodeRequest
-import com.lokahe.backend.rovortex.model.SignupRequest
+import com.lokahe.domain.model.AuthEntryOutcome
 import com.lokahe.domain.model.AuthResult
 import com.lokahe.domain.model.IdentityInfo
 import com.lokahe.domain.model.Profile
@@ -15,10 +16,13 @@ import com.lokahe.domain.model.SessionInfo
 import com.lokahe.domain.model.User
 import com.lokahe.domain.repository.AuthRepository
 import com.lokahe.domain.repository.UserRepository
+import com.lokahe.http.ApiError
 import com.lokahe.http.ApiResult
+import com.lokahe.http.parseError
 import com.lokahe.http.safeApiCall
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 /**
@@ -44,24 +48,45 @@ class RovortexRepository @Inject constructor(
 
     // ---- AuthRepository ----
 
+    /**
+     * Unified email entry: 200 carries AuthResponse (direct login); 202 has
+     * no body (verification email sent). Both are "successful" HTTP, so the
+     * two outcomes are split by status code before wrapping into ApiResult.
+     */
+    override fun emailEntry(email: String, password: String): Flow<ApiResult<AuthEntryOutcome>> =
+        flow {
+            emit(ApiResult.Loading)
+            val result = runCatching {
+                apiService.emailEntry(EmailEntryRequest(email.trim(), password))
+            }.fold(
+                { response ->
+                    if (response.code() == 200 && response.body() != null) {
+                        ApiResult.Success(AuthEntryOutcome.LoggedIn(response.body()!!.toAuthResult()))
+                    } else if (response.isSuccessful) {
+                        ApiResult.Success(AuthEntryOutcome.CodeSent)
+                    } else {
+                        ApiResult.Failure(
+                            parseErrorResponse(response.code(), response.errorBody()?.string())
+                        )
+                    }
+                },
+                { e -> ApiResult.Exception(e) }
+            )
+            emit(result)
+        }
+
+    override fun emailEntryConfirm(
+        email: String,
+        code: String,
+        password: String?
+    ): Flow<ApiResult<AuthResult>> =
+        safeApiCall {
+            apiService.emailEntryConfirm(EmailEntryConfirmRequest(email.trim(), code.trim(), password))
+        }.asDomain { it.toAuthResult() }
+
     override fun signInWithPassword(login: String, password: String): Flow<ApiResult<AuthResult>> =
         safeApiCall { apiService.login(AuthRequest(login, password)) }
             .asDomain { it.toAuthResult() }
-
-    override fun requestSignup(email: String): Flow<ApiResult<Any>> =
-        safeApiCall { apiService.requestSignup(SignupRequest(email.trim())) }
-
-    override fun confirmSignupCode(
-        email: String,
-        code: String,
-        password: String,
-        username: String?
-    ): Flow<ApiResult<AuthResult>> =
-        safeApiCall {
-            apiService.confirmSignupCode(
-                SignupConfirmCodeRequest(email.trim(), code.trim(), password, username?.trim()?.ifEmpty { null })
-            )
-        }.asDomain { it.toAuthResult() }
 
     override fun verifyToken(token: String): Flow<ApiResult<User>> =
         safeApiCall { apiService.me(bearerToken = token.bearer) }
@@ -133,3 +158,6 @@ class RovortexRepository @Inject constructor(
 }
 
 private val String.bearer: String get() = "Bearer $this"
+
+private fun parseErrorResponse(httpCode: Int, errorBody: String?): ApiError =
+    parseError(httpCode, errorBody)
