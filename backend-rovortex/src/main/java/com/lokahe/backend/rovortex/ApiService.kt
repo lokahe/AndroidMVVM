@@ -12,6 +12,7 @@ import com.lokahe.backend.rovortex.model.ProfilePatch
 import com.lokahe.backend.rovortex.model.RefreshRequest
 import com.lokahe.backend.rovortex.model.RegisterRequest
 import com.lokahe.backend.rovortex.model.SessionResponse
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -44,11 +45,12 @@ interface ApiService {
     suspend fun requestPasswordReset(@Body body: PasswordResetRequest): Response<Unit>
 
     /**
-     * Unified email entry: 200 = valid credentials, logged in; 202 = verification
-     * email sent (wrong password / unknown account / no password).
+     * Unified email entry: 200 = AuthResponse body (direct login); 202 = empty
+     * body (verification email sent). Typed as raw ResponseBody because the
+     * Gson converter chokes on the empty 202 body; the repository decides.
      */
     @POST("api/auth/email-entry")
-    suspend fun emailEntry(@Body body: EmailEntryRequest): Response<AuthResponse>
+    suspend fun emailEntry(@Body body: EmailEntryRequest): Response<ResponseBody>
 
     /** Code confirm: logs in (registered) or creates the account (unregistered). */
     @POST("api/auth/email-entry/confirm")

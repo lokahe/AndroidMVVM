@@ -49,23 +49,31 @@ class RovortexRepository @Inject constructor(
     // ---- AuthRepository ----
 
     /**
-     * Unified email entry: 200 carries AuthResponse (direct login); 202 has
-     * no body (verification email sent). Both are "successful" HTTP, so the
-     * two outcomes are split by status code before wrapping into ApiResult.
+     * Unified email entry: 200 carries AuthResponse (direct login); 202 has an
+     * empty body (verification email sent). The endpoint is typed as raw
+     * ResponseBody because the Gson converter throws on the empty 202 body —
+     * the JSON is decoded manually only on 200.
      */
     override fun emailEntry(email: String, password: String): Flow<ApiResult<AuthEntryOutcome>> =
         flow {
             emit(ApiResult.Loading)
-            val result = runCatching {
+            val result: ApiResult<AuthEntryOutcome> = runCatching {
                 apiService.emailEntry(EmailEntryRequest(email.trim(), password))
             }.fold(
                 { response ->
-                    if (response.code() == 200 && response.body() != null) {
-                        ApiResult.Success(AuthEntryOutcome.LoggedIn(response.body()!!.toAuthResult()))
-                    } else if (response.isSuccessful) {
-                        ApiResult.Success(AuthEntryOutcome.CodeSent)
-                    } else {
-                        ApiResult.Failure(
+                    when {
+                        response.code() == 200 -> {
+                            val json = response.body()?.string()
+                            val auth = json?.let { GsonProvider.authResponse(it) }
+                            if (auth != null) {
+                                ApiResult.Success(AuthEntryOutcome.LoggedIn(auth.toAuthResult()))
+                            } else {
+                                ApiResult.Failure(parseErrorResponse(200, json))
+                            }
+                        }
+
+                        response.isSuccessful -> ApiResult.Success(AuthEntryOutcome.CodeSent)
+                        else -> ApiResult.Failure(
                             parseErrorResponse(response.code(), response.errorBody()?.string())
                         )
                     }

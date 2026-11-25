@@ -83,6 +83,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.emailEntry(login.trim(), password).cole()
                 .onSuccess { outcome ->
+                    L.d("emailEntry") { "outcome: $outcome" }
                     when (outcome) {
                         is AuthEntryOutcome.LoggedIn -> {
                             pendingEntryEmail = null
