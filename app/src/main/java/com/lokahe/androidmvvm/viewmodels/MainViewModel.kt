@@ -128,8 +128,6 @@ class MainViewModel @Inject constructor(
         _entryCodeSent.value = false
     }
 
-    val pendingEntryEmailFlow: String? get() = pendingEntryEmail
-
     fun requestPasswordReset(email: String) {
         viewModelScope.launch {
             authRepository.requestPasswordReset(email).cole()

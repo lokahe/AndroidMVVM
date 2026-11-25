@@ -53,8 +53,7 @@
     <string name="sign_out">sign out</string>
     <string name="sign_out_confirm">Confirm to sign out</string>
     <string name="refresh">refresh</string>
-    <string name="code_sent_to_generic">Verification code sent — check your inbox</string>
-    <string name="code_sent_to">Verification code sent to %1$s. It expires in 15 minutes.</string>
+    <string name="code_sent_to_generic">Verification email sent — enter the code</string>
     <string name="back_to_entry">Wrong email? Back</string>
     <string name="dark_mode">Dark mode</string>
     <string name="invalid_password_format">Password must be 8-128 characters</string>

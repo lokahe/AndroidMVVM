@@ -171,7 +171,7 @@ fun SignInDialog() {
             Column {
                 if (codeSent) {
                     Text(
-                        text = stringResource(R.string.code_sent_to, viewModel.pendingEntryEmailFlow ?: email),
+                        text = stringResource(R.string.code_sent_to_generic),
                         style = MaterialTheme.typography.bodySmall
                     )
                     OtpInputField(modifier = Modifier.fillMaxWidth()) { code = it }
